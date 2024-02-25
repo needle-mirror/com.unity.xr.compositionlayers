@@ -1,0 +1,116 @@
+// This file is generated. Do not modify by hand.
+// XML documentation file not found. To check if public methods have XML comments,
+// make sure the XML doc file is present and located next to the scraped dll
+namespace Unity.XR.CompositionLayers
+{
+    [UnityEngine.AddComponentMenu(@"XR/Composition Layers/Composition Layer")] [UnityEngine.DisallowMultipleComponent] [UnityEngine.ExecuteAlways] [UnityEngine.Icon(@"Packages/com.unity.xr.compositionlayers/Editor/Icons/d_LayerUniversal.png")] public sealed class CompositionLayer : UnityEngine.MonoBehaviour
+    {
+        public Unity.XR.CompositionLayers.Layers.LayerData LayerData { get; }
+        public int Order { get; set; }
+        public bool OrderInitialized { get; }
+        public CompositionLayer() {}
+        public void ChangeLayerDataType<T>() where T : Unity.XR.CompositionLayers.Layers.LayerData;
+        public void ChangeLayerDataType(string typeFullName);
+        public void ChangeLayerDataType(System.Type type);
+        public void ChangeLayerDataType(Unity.XR.CompositionLayers.Layers.LayerData layer);
+        public void ChangeLayerDataType(Unity.XR.CompositionLayers.Layers.LayerDataDescriptor descriptor);
+    }
+}
+
+namespace Unity.XR.CompositionLayers.Layers
+{
+    [System.AttributeUsage(4, Inherited = false)] public sealed class CompositionLayerDataAttribute : System.Attribute
+    {
+        public string Description;
+        public string IconPath;
+        public string InspectorIcon;
+        public string ListViewIcon;
+        public string Name;
+        public bool PreferOverlay;
+        public string Provider;
+        public System.Type[] SuggestedExtenstionTypes;
+        public CompositionLayerDataAttribute() {}
+    }
+
+    public class LayerData
+    {
+        protected System.Action ReportStateChange;
+        public LayerData() {}
+        public virtual void CopyFrom(Unity.XR.CompositionLayers.Layers.LayerData layerData);
+        protected virtual void OnValidate();
+        protected T UpdateValue<T>(T oldValue, T newValue);
+    }
+
+    [System.Runtime.CompilerServices.IsReadOnly] public struct LayerDataDescriptor : System.IEquatable<Unity.XR.CompositionLayers.Layers.LayerDataDescriptor>
+    {
+        public readonly System.Type DataType;
+        public readonly string Description;
+        public readonly string IconPath;
+        public readonly string InspectorIcon;
+        public readonly string ListViewIcon;
+        public readonly string Name;
+        public readonly bool PreferOverlay;
+        public readonly string Provider;
+        public readonly System.Type[] SuggestedExtensions;
+        public readonly string TypeFullName;
+        public static Unity.XR.CompositionLayers.Layers.LayerDataDescriptor Empty { get; }
+        public LayerDataDescriptor(string provider, string name, string typeFullName, string description, string iconPath, string inspectorIcon, string listViewIcon, bool preferOverlay, System.Type dataType, System.Type[] suggestedExtensions) {}
+        public virtual bool Equals(object obj);
+        public virtual bool Equals(Unity.XR.CompositionLayers.Layers.LayerDataDescriptor other);
+        public virtual int GetHashCode();
+        public static bool operator ==(Unity.XR.CompositionLayers.Layers.LayerDataDescriptor left, Unity.XR.CompositionLayers.Layers.LayerDataDescriptor right);
+        public static bool operator !=(Unity.XR.CompositionLayers.Layers.LayerDataDescriptor left, Unity.XR.CompositionLayers.Layers.LayerDataDescriptor right);
+    }
+}
+
+namespace Unity.XR.CompositionLayers.Provider
+{
+    public interface ILayerProvider
+    {
+        public abstract void CleanupState();
+        public abstract void LateUpdate();
+        public abstract void SetInitialState(System.Collections.Generic.List<Unity.XR.CompositionLayers.Services.CompositionLayerManager.LayerInfo> layers);
+        public abstract void UpdateLayers(System.Collections.Generic.List<Unity.XR.CompositionLayers.Services.CompositionLayerManager.LayerInfo> createdLayers, System.Collections.Generic.List<int> removedLayers, System.Collections.Generic.List<Unity.XR.CompositionLayers.Services.CompositionLayerManager.LayerInfo> modifiedLayers, System.Collections.Generic.List<Unity.XR.CompositionLayers.Services.CompositionLayerManager.LayerInfo> activeLayers);
+    }
+}
+
+namespace Unity.XR.CompositionLayers.Services
+{
+    public sealed class CompositionLayerManager
+    {
+        public Unity.XR.CompositionLayers.CompositionLayer DefaultSceneCompositionLayer { get; }
+        public static Unity.XR.CompositionLayers.Services.CompositionLayerManager Instance { get; }
+        public Unity.XR.CompositionLayers.Provider.ILayerProvider LayerProvider { get; set; }
+        public CompositionLayerManager() {}
+        public void CompositionLayerCreated(Unity.XR.CompositionLayers.CompositionLayer layer);
+        public void CompositionLayerDestroyed(Unity.XR.CompositionLayers.CompositionLayer layer);
+        public void CompositionLayerDisabled(Unity.XR.CompositionLayers.CompositionLayer layer);
+        public void CompositionLayerEnabled(Unity.XR.CompositionLayers.CompositionLayer layer);
+        public void CompositionLayerStateChanged(Unity.XR.CompositionLayers.CompositionLayer layer);
+        protected virtual void Finalize();
+        public static int GetFirstUnusedLayer();
+        public static int GetFirstUnusedLayer(bool overlay);
+        public static int GetNextUnusedLayer(int order);
+        public static int GetNextUnusedLayer(int order, bool overlay);
+        public void ResetDefaultSceneCompositionLayer();
+        public void SetDefaultSceneCompositionLayer(Unity.XR.CompositionLayers.CompositionLayer compositionLayer);
+        public struct LayerInfo
+        {
+            public int Id;
+            public Unity.XR.CompositionLayers.CompositionLayer Layer;
+        }
+    }
+
+    [System.Runtime.CompilerServices.Extension] public static class CompositionLayerUtils
+    {
+        [System.Runtime.CompilerServices.Extension] public static void AddSuggestedExtensions(Unity.XR.CompositionLayers.CompositionLayer layer);
+        [System.Runtime.CompilerServices.Extension] public static bool CanChangeOrderTo(Unity.XR.CompositionLayers.CompositionLayer layer, int order);
+        public static Unity.XR.CompositionLayers.Layers.LayerData CreateLayerData(string typeFullName);
+        public static Unity.XR.CompositionLayers.Layers.LayerData CreateLayerData(System.Type type);
+        public static System.Collections.Generic.List<Unity.XR.CompositionLayers.Layers.LayerDataDescriptor> GetAllLayerDescriptors();
+        public static Unity.XR.CompositionLayers.Layers.LayerDataDescriptor GetLayerDescriptor(string typeFullName);
+        public static Unity.XR.CompositionLayers.Layers.LayerDataDescriptor GetLayerDescriptor(System.Type type);
+        [System.Runtime.CompilerServices.Extension] public static bool TryChangeLayerOrder(Unity.XR.CompositionLayers.CompositionLayer layer, int oldOrder, int newOrder, bool inEditor = False);
+        [System.Runtime.CompilerServices.Extension] public static bool TrySwapLayers(Unity.XR.CompositionLayers.CompositionLayer lhl, Unity.XR.CompositionLayers.CompositionLayer rhl);
+    }
+}

@@ -1,0 +1,12 @@
+#ifndef XR_SDK_COMPOSITION_LAYERS_CORE_HLSL_INC
+#define XR_SDK_COMPOSITION_LAYERS_CORE_HLSL_INC
+
+#ifndef COMPOSITION_LAYERS_UNIVERSAL
+#ifndef COMPOSITION_LAYERS_HDRENDER
+#define COMPOSITION_LAYERS_UNIVERSAL 1
+#endif
+#endif
+
+#include "Packages/com.unity.xr.compositionlayers/Runtime/Shaders/Core.cginc"
+
+#endif // XR_SDK_COMPOSITION_LAYERS_CORE_HLSL_INC

@@ -1,0 +1,40 @@
+{
+    "name": "Unity.XR.CompositionLayers",
+    "rootNamespace": "UnityEngine.XR.CompositionLayers",
+    "references": [
+        "Unity.XR.CoreUtils",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.HighDefinition.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.modules.vr",
+            "expression": "1.0",
+            "define": "ENABLE_UNITY_VR"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "0.0",
+            "define": "UNITY_RENDER_PIPELINES_UNIVERSAL"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "0.0",
+            "define": "UNITY_RENDER_PIPELINES_HDRENDER"
+        },
+        {
+            "name": "com.unity.render-pipelines.core",
+            "expression": "0.0",
+            "define": "UNITY_RENDER_PIPELINES_CORE"
+        }
+    ],
+    "noEngineReferences": false
+}

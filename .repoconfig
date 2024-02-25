@@ -1,0 +1,10 @@
+[version]
+repoconfig = 7
+
+[format]
+path-ignore=<<EOT
+.*\.md
+|.*\.cpp
+|.*\.meta
+|.*\.h
+EOT

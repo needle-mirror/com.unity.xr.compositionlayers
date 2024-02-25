@@ -1,0 +1,416 @@
+using UnityEditor;
+using UnityEngine;
+using Unity.XR.CompositionLayers.Layers;
+using Unity.XR.CompositionLayers.Extensions;
+using System.Collections.Generic;
+using System;
+using Unity.XR.CompositionLayers.Services;
+
+#if UNITY_XR_INTERACTION_TOOLKIT
+using UnityEngine.UI;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.UI;
+#endif
+
+namespace Unity.XR.CompositionLayers.UIInteraction
+{
+    /// <summary>
+    /// Handles Canvas and Composition Layer Syncing (Size, Scale, etc) 
+    /// and transforming raycasts from the Composition Layer to the attached Canvas
+    /// </summary>
+    [ExecuteAlways]
+    [RequireComponent(typeof(CompositionLayer), typeof(TexturesExtension))]
+    public class InteractableUIMirror : MonoBehaviour
+    {
+#if UNITY_XR_INTERACTION_TOOLKIT
+        // reference to the Interactable for XRI interaction
+        [SerializeField, HideInInspector]
+        private XRSimpleInteractable xrSimpleInteractable;
+
+        // Reference to the camera that will be used to display the UI
+        [SerializeField, HideInInspector]
+        private Camera canvasCamera;
+
+        // Reference to the render texture the UI camera will render to
+        [SerializeField, HideInInspector]
+        private RenderTexture canvasCameraRenderTexture;
+
+        // Reference to the Tracked DeviceGraphic Raycaster for XRI interaction
+        [SerializeField, HideInInspector]
+        private TrackedDeviceGraphicRaycaster trackedDeviceGraphicRaycaster;
+
+        // Reference to the mesh collider for raycasting
+        [SerializeField, HideInInspector]
+        private MeshCollider meshCollider;
+
+        // Reference to either a QuadUIScale or CylinderUIScale to handle colliders
+        [SerializeField, HideInInspector]
+        private LayerUIScale layerUIScale;
+
+        // Reference to a canvas group which allows for raycast control
+        [SerializeField, HideInInspector]
+        private CanvasGroup canvasGroup;
+
+        // Reference to the texture extension that the camera render texture will hook into
+        [SerializeField, HideInInspector]
+        private TexturesExtension texturesExtension;
+
+        // Reference to the composition layer the UI will be mirroring to
+        [SerializeField, HideInInspector]
+        private CompositionLayer compositionLayer;
+
+        private List<XRRayInteractor> rayInteractors = new List<XRRayInteractor>();
+        private Canvas canvas;
+        private ProxyInteractorFactory proxyInteractorFactory;
+        private CanvasHitCalculator canvasHitCalculator;
+
+        private CanvasAndCameraSynchronizer canvasAndCameraSynchronizer;
+        private CameraTargetTextureFactory cameraTargetTextureFactory;
+#if UNITY_EDITOR
+        private CanvasLayerController canvasLayerController;
+#endif
+
+        private void Start()
+        {
+            InitializeCanvas();
+            compositionLayer = GetComponent<CompositionLayer>();
+            proxyInteractorFactory = new ProxyInteractorFactory();
+            canvasHitCalculator = new CanvasHitCalculator(canvas, gameObject);
+
+#if UNITY_EDITOR
+            // Hide textures extension component
+            texturesExtension = GetComponent<TexturesExtension>();
+            texturesExtension.hideFlags = HideFlags.HideInInspector;
+
+            // Force canvas into WorldSpace render mode and set it's gameObject layer
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvasLayerController = new CanvasLayerController();
+            canvasLayerController.CreateAndSetCanvasLayer(canvas);
+#endif
+
+            // Only add components and init synchronizer if the Editor is not playing (like when creating or duplicating an object within the Inspector)
+            if (!Application.isPlaying)
+            {
+                AddComponents();
+            }
+            else
+            {
+                // Subscribe to hover events for when application is actually running.
+                xrSimpleInteractable.hoverEntered.AddListener(OnHoverEnter);
+                xrSimpleInteractable.hoverExited.AddListener(OnHoverExit);
+            }
+
+            // Synchronize the canvas and camera.
+            canvasAndCameraSynchronizer = new CanvasAndCameraSynchronizer(canvas, canvasCamera);
+            SyncTexturesExtensionWithCameraTarget();
+
+#if !UNITY_EDITOR
+            CompositionLayerUtils.UserLayers.OccupyBlankLayer(canvas.gameObject);
+            canvasCamera.cullingMask = 1 << canvas.gameObject.layer;
+#endif
+        }
+
+        private void InitializeCanvas()
+        {
+            canvas = GetComponentInChildren<Canvas>();
+
+            if (canvas == null) 
+                return;
+
+            canvas.renderMode = RenderMode.WorldSpace;
+            GetOrAddComponent<CanvasScaler>(canvas.gameObject);
+            GetOrAddComponent<GraphicRaycaster>(canvas.gameObject);
+#if UNITY_EDITOR
+            // Create default panel if no children exist
+            if (canvas.transform.childCount == 0)
+            {
+                GameObject panelGameObject = DefaultControls.CreatePanel(new DefaultControls.Resources { background = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd") });
+                panelGameObject.transform.SetParent(canvas.transform, false);
+                panelGameObject.GetComponent<UnityEngine.UI.Image>().color = Color.white;
+                panelGameObject.layer = canvas.gameObject.layer;
+                panelGameObject.transform.SetParent(canvas.transform, false);
+                Undo.RegisterCreatedObjectUndo(panelGameObject, "Created ui panel");
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Updates the texture extension with the new render textures 
+        /// if there was a change in the canvas rect or scale
+        /// </summary>
+        private void SyncTexturesExtensionWithCameraTarget()
+        {
+#if UNITY_EDITOR
+            if (canvasAndCameraSynchronizer != null)
+            {
+                if (canvasAndCameraSynchronizer.Sync())
+                {
+                    texturesExtension.LeftTexture = canvasCamera.targetTexture;
+                    texturesExtension.RightTexture = canvasCamera.targetTexture;
+                }
+            }
+            else if (canvas != null && canvasCamera != null)
+            {
+                canvasAndCameraSynchronizer = new CanvasAndCameraSynchronizer(canvas, canvasCamera);
+            }
+#endif
+        }
+
+        private void Update()
+        {
+#if UNITY_EDITOR
+            // Keep everything in sync if developer edits the canvas or comp layer sizes.
+            SyncTexturesExtensionWithCameraTarget();
+            SyncLayerUIScaleWithLayerType();
+#endif
+
+            // Calculate canvas hits with interactors that have been registered inside OnHoverEnter
+            foreach (var rayInteractor in rayInteractors)
+            {
+                var proxyInteractor = proxyInteractorFactory.GetProxy(rayInteractor);
+                if (proxyInteractor == null)
+                    continue;
+
+                if (canvasHitCalculator.CalculateCanvasHit(rayInteractor, out Pose hitPose))
+                {
+                    proxyInteractor.transform.position = hitPose.position;
+                    proxyInteractor.transform.rotation = hitPose.rotation;
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Creates a camera to be used for rendering the UI canvas
+        /// The created camera is assigned to canvasCamera
+        /// </summary>
+        /// <seealso cref="canvasCamera"/>
+        private void CreateCamera()
+        {
+            // Check in case gameObject has been duplicated.
+            if (canvasCamera == null)
+            {
+                var newCanvasCameraGameObject = new GameObject("CanvasCamera");
+#if UNITY_EDITOR
+                Undo.RegisterCreatedObjectUndo(newCanvasCameraGameObject, "Create canvas camera");
+#endif
+                canvasCamera = newCanvasCameraGameObject.AddComponent<Camera>();
+            }
+
+            var cameraDistance = -100;
+            var cameraGameObject = canvasCamera.gameObject;
+            cameraGameObject.transform.parent = canvas.transform;
+            cameraGameObject.transform.localScale = Vector3.one;
+            cameraGameObject.hideFlags = HideFlags.HideInHierarchy;
+            cameraGameObject.transform.localPosition = new Vector3(0, 0, cameraDistance);
+            cameraGameObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
+            canvasCamera.nearClipPlane = 0f;
+            canvasCamera.clearFlags = CameraClearFlags.SolidColor;
+            canvasCamera.backgroundColor = new Color(0, 0, 0, 0.001f);
+            canvasCamera.cullingMask = 1 << canvas.gameObject.layer;
+            canvasCamera.stereoTargetEye = StereoTargetEyeMask.None;
+            canvasCamera.orthographic = true;
+        }
+
+        /// <summary>
+        /// General initialization such as creating a camera for the ui, adding colliders and interactables to the layer,
+        /// and updating the textures off the composition layer to the UI camera
+        /// </summary>
+        private void AddComponents()
+        {
+            xrSimpleInteractable = GetOrAddComponent<XRSimpleInteractable>(gameObject);
+            meshCollider = GetOrAddComponent<MeshCollider>(gameObject);
+            trackedDeviceGraphicRaycaster = GetOrAddComponent<TrackedDeviceGraphicRaycaster>(canvas.gameObject);
+            SyncLayerUIScaleWithLayerType();
+            CreateCamera();
+            cameraTargetTextureFactory = new CameraTargetTextureFactory();
+            var targetTexture = cameraTargetTextureFactory.CreateTargetTexture(canvasCamera, canvas.GetComponent<RectTransform>().rect);
+            texturesExtension.LeftTexture = targetTexture;
+            texturesExtension.RightTexture = targetTexture;
+
+            // Create canvas group
+            if (!canvas.TryGetComponent<CanvasGroup>(out canvasGroup))
+                canvasGroup = canvas.gameObject.AddComponent<CanvasGroup>();
+
+            canvasGroup.blocksRaycasts = false;
+        }
+
+        /// <summary>
+        /// Adds and removes LayerUIScale components based on their type
+        /// </summary>
+        /// <remarks>(i.e. a changing from a Cylinder to a Quad layer will remove CylinderUIScale and add QuadUIScale)</remarks>
+        private void SyncLayerUIScaleWithLayerType()
+        {
+#if UNITY_EDITOR
+            if (compositionLayer == null)
+                return;
+
+            var layerType = compositionLayer.LayerData.GetType();
+            bool isChangedFromQuad = layerType == typeof(QuadLayerData) && layerUIScale is not QuadUIScale;
+            bool isChangedFromCylinder = layerType == typeof(CylinderLayerData) && layerUIScale is not CylinderUIScale;
+
+            if (!isChangedFromQuad && !isChangedFromCylinder)
+                return;
+
+            if (compositionLayer.LayerData.GetType() == typeof(QuadLayerData))
+            {
+                if (layerUIScale != null && layerUIScale is not QuadUIScale)
+                {
+                    Undo.DestroyObjectImmediate(layerUIScale);
+                    layerUIScale = (LayerUIScale)Undo.AddComponent(this.gameObject, typeof(QuadUIScale));
+                }
+                else
+                    layerUIScale = (LayerUIScale)Undo.AddComponent(this.gameObject, typeof(QuadUIScale));
+            }
+
+            else if (compositionLayer.LayerData.GetType() == typeof(CylinderLayerData))
+            {
+                if (layerUIScale != null && layerUIScale is not CylinderUIScale)
+                {
+                    Undo.DestroyObjectImmediate(layerUIScale);
+                    layerUIScale = (LayerUIScale)Undo.AddComponent(this.gameObject, typeof(CylinderUIScale));
+                }
+                else
+                    layerUIScale = (LayerUIScale)Undo.AddComponent(this.gameObject, typeof(CylinderUIScale));
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Cleans up creations from AddComponents such as the canvas camera, as well as coliders and render textures
+        /// </summary>
+        /// <seealso cref="AddComponents"/>
+        private void DestroyComponents()
+        {
+            // Only do this for when canvas is no longer a child or component is removed.
+            if (gameObject.activeInHierarchy)
+            {
+                DestroyObj(layerUIScale);
+                DestroyObj(xrSimpleInteractable);
+                DestroyObj(meshCollider);
+            }
+
+            // Return for when canvas gameObject is destroyed between stop/play and scene reloads + destroyed by user.
+            if (canvas != null && !canvas.gameObject.activeInHierarchy)
+                return;
+
+            cameraTargetTextureFactory?.ReleaseTargetTexture(canvasCamera);
+            texturesExtension.LeftTexture = null;
+            texturesExtension.RightTexture = null;
+            DestroyObj(canvasCamera.gameObject);
+            DestroyObj(trackedDeviceGraphicRaycaster);
+        }
+
+        /// <summary>
+        /// Looks for a component and returns it if found, else will add and return it.
+        /// </summary>
+        /// <typeparam name="T">The Component to get or add</typeparam>
+        /// <returns>the found component or the added component if not found</returns>
+        private T GetOrAddComponent<T>(GameObject gameObj) where T : Component
+        {
+#if UNITY_EDITOR
+            var component = gameObj.GetComponent<T>();
+            if (component == null)
+                component = Undo.AddComponent<T>(gameObj);
+            return component;
+#else
+            return null;
+#endif
+        }
+
+        private void DestroyObj(UnityEngine.Object obj)
+        {
+            if (obj == null) return;
+
+            if (Application.isPlaying)
+                Destroy(obj);
+            else
+                DestroyImmediate(obj);
+        }
+
+        private void OnHoverEnter(HoverEnterEventArgs args)
+        {
+            if (args.interactorObject is not XRRayInteractor rayInteractor) 
+                return;
+
+            if (!proxyInteractorFactory.TryCreateOrFind(rayInteractor, canvas.transform.position, out var proxyInteractor))
+                return;
+
+            // Set the real interactor and proxy interactor raycast masks.
+            int layerBit = canvas.gameObject.layer;
+
+            // Remove the layer from the real interactor mask
+            rayInteractor.raycastMask &= ~(1 << layerBit);
+
+            // Set the proxy interactor mask layer to this layer 
+            proxyInteractor.GetComponent<XRRayInteractor>().raycastMask = (1 << layerBit);
+
+            // Alow the canvas to receive raycasts 
+            if (canvasGroup)
+                canvasGroup.blocksRaycasts = true;
+
+            rayInteractors.Add(rayInteractor);
+        }
+
+        private void OnHoverExit(HoverExitEventArgs args)
+        {
+            if (args.interactorObject is not XRRayInteractor rayInteractor)
+                return;
+
+            rayInteractors.Remove(rayInteractor);
+        }
+
+        private void OnDestroy()
+        {
+
+#if UNITY_EDITOR
+            if (canvasLayerController != null)
+            {
+                canvasLayerController.SetCanvasLayerToDefault(canvas);
+                canvasLayerController.Dispose();
+            }
+
+            if (xrSimpleInteractable != null)
+            {
+                xrSimpleInteractable.hoverEntered.RemoveListener(OnHoverEnter);
+                xrSimpleInteractable.hoverExited.RemoveListener(OnHoverExit);
+            }
+
+            if (texturesExtension != null)
+                texturesExtension.hideFlags = HideFlags.None;
+            DestroyComponents();
+#else
+            if (canvas != null)
+                CompositionLayerUtils.UserLayers.UnOccupyBlankLayer(canvas.gameObject);
+#endif
+        }
+
+
+#if UNITY_EDITOR
+        void OnEnable()
+        {
+            EditorApplication.hierarchyChanged += OnHierarchyChanged;
+        }
+
+        void OnDisable()
+        {
+            EditorApplication.hierarchyChanged -= OnHierarchyChanged;
+        }
+
+        void OnHierarchyChanged()
+        {
+            RectTransform[] rectTransforms = gameObject.GetComponentsInChildren<RectTransform>(true);
+
+            foreach (RectTransform rectTransform in rectTransforms)
+            {
+                if (rectTransform.TryGetComponent<UIHandle>(out _) || rectTransform.TryGetComponent<Canvas>(out _))
+                    continue;
+
+                rectTransform.gameObject.AddComponent<UIHandle>();
+            }
+        }
+
+#endif //UNITY_EDITOR
+#endif //UNITY_XR_INTERACTION_TOOLKIT
+        }
+}

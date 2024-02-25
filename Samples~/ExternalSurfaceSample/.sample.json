@@ -1,0 +1,5 @@
+{
+    "displayName": "AndriodSurface",
+    "description": "Basic sample showing how to test a still image for andriod surfaces.",
+    "createSeparatePackage": false
+}
