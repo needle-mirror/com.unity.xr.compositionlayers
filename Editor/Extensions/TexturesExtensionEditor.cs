@@ -25,7 +25,6 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
         SerializedProperty m_InEditorEmulationProperty;
         SerializedProperty m_SourceTextureProperty;
         SerializedProperty m_TargetEyeProperty;
-        SerializedProperty m_ResolutionProperty;
         SerializedProperty m_CustomRectProperty;
         SerializedProperty m_CropToAspectProperty;
 
@@ -46,7 +45,6 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             m_InEditorEmulationProperty = serializedObject.FindProperty("m_InEditorEmulation");
             m_SourceTextureProperty = serializedObject.FindProperty("m_SourceTexture");
             m_TargetEyeProperty = serializedObject.FindProperty("m_TargetEye");
-            m_ResolutionProperty = serializedObject.FindProperty("m_Resolution");
             m_CustomRectProperty = serializedObject.FindProperty("m_CustomRects");
             m_CropToAspectProperty = serializedObject.FindProperty("m_CropToAspect");
 

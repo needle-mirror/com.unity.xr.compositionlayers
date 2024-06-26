@@ -59,7 +59,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
             // Remove canvas layer from all cameras
             Tools.visibleLayers &= ~(1 << canvasLayerBit);
-            var cameras = UnityEngine.Object.FindObjectsOfType<Camera>();
+            var cameras = UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
             foreach (var camera in cameras)
             {
                 if (camera.gameObject.layer == canvasLayerBit)

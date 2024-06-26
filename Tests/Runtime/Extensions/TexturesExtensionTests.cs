@@ -12,65 +12,70 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
 {
     class TexturesExtensionTests : CompositionLayerManagerTestBase
     {
-        // [UnityTest]
-        // public IEnumerator TexturesExtensionReportsEyeModification()
-        // {
-        //     var layer = CreateLayerGameObject();
-        //     layer.ChangeLayerDataType(typeof(QuadLayerData));
-        //     layer.gameObject.SetActive(true);
+        [UnityTest]
+        public IEnumerator TexturesExtensionReportsEyeModification()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            var layer = CreateLayerGameObject();
+            layer.ChangeLayerDataType(typeof(QuadLayerData));
+            layer.gameObject.SetActive(true);
 
-        //     layer.AddSuggestedExtensions();
-        //     yield return new WaitForUpdateCall(this);
+            layer.AddSuggestedExtensions();
 
-        //     var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
-        //     Assert.IsNotNull(textureExt);
+            yield return new WaitForUpdateCall(this);
 
-        //     textureExt.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsTrue(hasModifiedLayers);
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsFalse(hasModifiedLayers);
+            var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
+            Assert.IsNotNull(textureExt);
 
-        //     textureExt.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsFalse(hasModifiedLayers);
-        // }
+            textureExt.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
+            yield return new WaitForUpdateCall(this);
+            Assert.IsTrue(hasModifiedLayers);
+            yield return new WaitForUpdateCall(this);
+            Assert.IsFalse(hasModifiedLayers);
 
-        // [UnityTest]
-        // public IEnumerator TexturesExtensionReportsEyeTextureModification()
-        // {
-        //     var layer = CreateLayerGameObject();
-        //     layer.ChangeLayerDataType(typeof(QuadLayerData));
-        //     layer.gameObject.SetActive(true);
+            textureExt.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
+            yield return new WaitForUpdateCall(this);
+            Assert.IsFalse(hasModifiedLayers);
+            LogAssert.ignoreFailingMessages = false;
 
-        //     layer.AddSuggestedExtensions();
-        //     yield return new WaitForUpdateCall(this);
+        }
 
-        //     var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
+        [UnityTest]
+        public IEnumerator TexturesExtensionReportsEyeTextureModification()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            var layer = CreateLayerGameObject();
+            layer.ChangeLayerDataType(typeof(QuadLayerData));
+            layer.gameObject.SetActive(true);
 
-        //     Assert.IsNotNull(textureExt);
+            layer.AddSuggestedExtensions();
+            yield return new WaitForUpdateCall(this);
 
-        //     textureExt.LeftTexture = Texture2D.whiteTexture;
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsTrue(hasModifiedLayers);
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsFalse(hasModifiedLayers);
+            var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
+            Assert.IsNotNull(textureExt);
 
-        //     textureExt.LeftTexture = Texture2D.whiteTexture;
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsFalse(hasModifiedLayers);
+            textureExt.LeftTexture = Texture2D.whiteTexture;
+            yield return new WaitForUpdateCall(this);
+            Assert.IsTrue(hasModifiedLayers);
+            yield return new WaitForUpdateCall(this);
+            Assert.IsFalse(hasModifiedLayers);
 
-        //     textureExt.LeftTexture = Texture2D.blackTexture;
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsTrue(hasModifiedLayers);
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsFalse(hasModifiedLayers);
+            textureExt.LeftTexture = Texture2D.whiteTexture;
+            yield return new WaitForUpdateCall(this);
+            Assert.IsFalse(hasModifiedLayers);
 
-        //     textureExt.LeftTexture = null;
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsTrue(hasModifiedLayers);
-        //     yield return new WaitForUpdateCall(this);
-        //     Assert.IsFalse(hasModifiedLayers);
-        // }
+            textureExt.LeftTexture = Texture2D.blackTexture;
+            yield return new WaitForUpdateCall(this);
+            Assert.IsTrue(hasModifiedLayers);
+            yield return new WaitForUpdateCall(this);
+            Assert.IsFalse(hasModifiedLayers);
+
+            textureExt.LeftTexture = null;
+            yield return new WaitForUpdateCall(this);
+            Assert.IsTrue(hasModifiedLayers);
+            yield return new WaitForUpdateCall(this);
+            Assert.IsFalse(hasModifiedLayers);
+            LogAssert.ignoreFailingMessages = false;
+        }
     }
 }

@@ -51,7 +51,7 @@ namespace Unity.XR.CompositionLayers
 #endif
             if (removeFromAllCameras)
             {
-                var cameras = UnityEngine.Object.FindObjectsOfType<Camera>();
+                var cameras = UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
                 foreach (var camera in cameras)
                 {
                     camera.cullingMask &= ~(1 << layerBit);

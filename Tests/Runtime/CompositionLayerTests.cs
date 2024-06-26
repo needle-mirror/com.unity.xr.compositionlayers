@@ -27,18 +27,18 @@ namespace Unity.XR.CompositionLayers.Tests
             base.Teardown();
         }
 
-        // [Test]
-        // public void CanChangeLayerType()
-        // {
-        //     var lDesc = CompositionLayerUtils.GetLayerDescriptor(typeof(CylinderLayerData).FullName);
-        //     Assert.AreNotEqual(default, lDesc);
+        [Test]
+        public void CanChangeLayerType()
+        {
+            var lDesc = CompositionLayerUtils.GetLayerDescriptor(typeof(CylinderLayerData).FullName);
+            Assert.AreNotEqual(default, lDesc);
 
-        //     var lData = CompositionLayerUtils.CreateLayerData(lDesc.TypeFullName);
-        //     Assert.IsNotNull(lData);
+            var lData = CompositionLayerUtils.CreateLayerData(lDesc.TypeFullName);
+            Assert.IsNotNull(lData);
 
-        //     m_TestLayer.ChangeLayerDataType(lData);
+            m_TestLayer.ChangeLayerDataType(lData);
 
-        //     Assert.IsNotNull(m_TestLayer.LayerData as CylinderLayerData);
-        // }
+            Assert.IsNotNull(m_TestLayer.LayerData as CylinderLayerData);
+        }
     }
 }

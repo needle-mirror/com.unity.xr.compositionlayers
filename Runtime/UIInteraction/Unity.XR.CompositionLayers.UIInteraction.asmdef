@@ -14,11 +14,16 @@
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [
-      {
-        "name": "com.unity.xr.interaction.toolkit",
-        "expression": "0.0",
-        "define": "UNITY_XR_INTERACTION_TOOLKIT"
-      }
+        {
+            "name": "com.unity.xr.interaction.toolkit",
+            "expression": "0.0",
+            "define": "UNITY_XR_INTERACTION_TOOLKIT"
+        },
+        {
+            "name": "com.unity.xr.interaction.toolkit",
+            "expression": "3.0.0",
+            "define": "UNITY_XR_INTERACTION_TOOLKIT_3_0"
+        }
     ],
     "noEngineReferences": false
 }

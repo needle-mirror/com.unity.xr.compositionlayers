@@ -341,7 +341,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             {
                 var camera = Camera.main;
                 if (camera == null)
-                    camera = FindObjectOfType<Camera>();
+                    camera = FindFirstObjectByType<Camera>();
 
                 if (camera == null || camera.clearFlags == CameraClearFlags.Skybox)
                 {

@@ -11,7 +11,6 @@ namespace Unity.XR.CompositionLayers
     /// Useful for UI that has a different aspect ratio then the child canvas, leaving empty space
     /// </summary>
     [ExecuteInEditMode]
-    [RequireComponent(typeof(CompositionLayer))]
     public class CompositionOutline : MonoBehaviour
     {
         private Mesh outlineMesh;
@@ -22,14 +21,18 @@ namespace Unity.XR.CompositionLayers
         void Awake()
         {
             TryGetComponent<CompositionLayer>(out m_CompositionLayer);
+        }
 
-            this.hideFlags = HideFlags.HideInInspector;
+        void Start()
+        {
+            hideFlags = HideFlags.HideInInspector;
         }
 
         void OnDrawGizmos()
         {
-            if(!m_CompositionLayer) 
+            if (m_CompositionLayer == null)
             {
+                Debug.LogWarning("A Composition Layer is required to generate an outline.");
                 DestroyImmediate(this);
                 return;
             }
@@ -37,13 +40,13 @@ namespace Unity.XR.CompositionLayers
             // Check if the layer type has changed
             // If changed, delete the old outline mesh
             LayerData layerData = m_CompositionLayer.LayerData;
-            if(previousLayerData != layerData)
+            if (previousLayerData != layerData)
             {
                 previousLayerData = layerData;
                 outlineMesh = null;
             }
 
-            if(layerData is QuadLayerData quad)
+            if (layerData is QuadLayerData quad)
             {
                 GenerateQuadOutline(quad);
             }
@@ -73,7 +76,7 @@ namespace Unity.XR.CompositionLayers
             var bottomLeftVertex = outlineMesh.vertices[0];
 
             // Loop through each vertex and connect it to the next one
-            for(int i = 0; i < outlineMesh.vertices.Length - 1; i++)
+            for (int i = 0; i < outlineMesh.vertices.Length - 1; i++)
             {
                 var currentVertex = transform.TransformPoint(outlineMesh.vertices[i]);
                 var nextVertex = transform.TransformPoint(outlineMesh.vertices[i + 1]);
@@ -108,14 +111,14 @@ namespace Unity.XR.CompositionLayers
             var bottomLeftVertex = transform.TransformPoint(outlineMesh.vertices[1]);
 
             // Loop through each vertex and connect it to the next one
-            for(int i = 0; i < outlineMesh.vertices.Length - 2; i++)
+            for (int i = 0; i < outlineMesh.vertices.Length - 2; i++)
             {
                 var currentVertex = transform.TransformPoint(outlineMesh.vertices[i]);
                 var nextVertex = transform.TransformPoint(outlineMesh.vertices[i + 2]);
-                
+
                 Gizmos.DrawLine(currentVertex, nextVertex);
             }
-            
+
             // Connect the top left and bottom left to finish out the left side
             Gizmos.DrawLine(topLeftVertex, bottomLeftVertex);
 

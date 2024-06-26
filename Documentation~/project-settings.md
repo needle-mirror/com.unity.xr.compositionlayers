@@ -14,7 +14,7 @@ The XR Composition Layers package adds the following settings to the Unity **Pre
 | :------ | :---------- |
 | **Display Angles As** | Choose whether the various angle values that you can set in the Composition Layer components use **degrees** or **radians**. |
 | **Emulation in Scene** | Show composition layers in the Scene view. |
-| **Emulation In Play Mode** | Show composition layers in the Game view while in Play mode. |
+| **Emulation In Play Mode** | Show composition layers in the Game view while in Play mode when no XR provider is active or no headset connected. |
 
 > [!TIP]
 > Emulation of composition layers is not perfect and can sometimes interfere with normal scene editing and troubleshooting. You can use the emulation preferences to turn off emulation in such cases.
@@ -82,3 +82,11 @@ To support layer emulation in projects using the Universal Renderer Pipeline (UR
    
    ![](images/add-render-feature.png)  
     
+> [!NOTE]
+> If on MacOS with URP, Compatibility Mode (Render Graph Disable) must be selected to render emulated layers.
+1. Open the **Project Settings** window (menu: **Edit > Project Settings**).
+2. Select the **Graphics** section.
+3. Click on the URP Tab.
+4. Under the Render Graph section select **Compatibility Mode (Render Graph Disable)** button.
+
+   ![](images/graphics-compatability-mode.png) 

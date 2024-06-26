@@ -1,43 +1,47 @@
-using UnityEngine;
-using UnityEngine.UIElements;
-using Unity.XR.CompositionLayers.Services;
-using UnityEditor;
+//********This was used for setting and unsetting a layer to be the default scene layer. 
+//********But with our updated implementation, this is not allowed and eye layer will always be the default layer 
+//********To be discussed, comment it out for now
 
-namespace Unity.XR.CompositionLayers.Tests.Editor
-{
-    [CustomEditor(typeof(UserDefaultLayerTestComponent))]
-    class UserDefaultLayerTestComponentEditor : UnityEditor.Editor
-    {
-        SerializedProperty m_CompositionLayerProperty;
+// using UnityEngine;
+// using UnityEngine.UIElements;
+// using Unity.XR.CompositionLayers.Services;
+// using UnityEditor;
 
-        public override VisualElement CreateInspectorGUI()
-        {
-            var rootElement = new VisualElement();
+// namespace Unity.XR.CompositionLayers.Tests.Editor
+// {
+//     [CustomEditor(typeof(UserDefaultLayerTestComponent))]
+//     class UserDefaultLayerTestComponentEditor : UnityEditor.Editor
+//     {
+//         SerializedProperty m_CompositionLayerProperty;
 
-            m_CompositionLayerProperty = serializedObject.FindProperty("m_CompositionLayer");
+//         public override VisualElement CreateInspectorGUI()
+//         {
+//             var rootElement = new VisualElement();
 
-            var setDefaultSceneLayerElement = new Button(OnSetDefaultSceneLayerElement);
-            setDefaultSceneLayerElement.text = "Set as Scene Layer";
-            rootElement.Add(setDefaultSceneLayerElement);
+//             m_CompositionLayerProperty = serializedObject.FindProperty("m_CompositionLayer");
 
-            var unsetDefaultSceneLayerElement = new Button(OnUnsetDefaultSceneLayerElement);
-            unsetDefaultSceneLayerElement.text = "Unset Scene Layer";
-            rootElement.Add(unsetDefaultSceneLayerElement);
+//             var setDefaultSceneLayerElement = new Button(OnSetDefaultSceneLayerElement);
+//             setDefaultSceneLayerElement.text = "Set as Scene Layer";
+//             rootElement.Add(setDefaultSceneLayerElement);
 
-            return rootElement;
-        }
+//             var unsetDefaultSceneLayerElement = new Button(OnUnsetDefaultSceneLayerElement);
+//             unsetDefaultSceneLayerElement.text = "Unset Scene Layer";
+//             rootElement.Add(unsetDefaultSceneLayerElement);
 
-        void OnSetDefaultSceneLayerElement()
-        {
-            var compositionLayer = m_CompositionLayerProperty.objectReferenceValue as CompositionLayer;
+//             return rootElement;
+//         }
 
-            if (CompositionLayerManager.IsLayerSceneValid(compositionLayer))
-                CompositionLayerManager.Instance.SetDefaultSceneCompositionLayer(compositionLayer);
-        }
+//         void OnSetDefaultSceneLayerElement()
+//         {
+//             var compositionLayer = m_CompositionLayerProperty.objectReferenceValue as CompositionLayer;
 
-        static void OnUnsetDefaultSceneLayerElement()
-        {
-            CompositionLayerManager.Instance.ResetDefaultSceneCompositionLayer();
-        }
-    }
-}
+//             if (CompositionLayerManager.IsLayerSceneValid(compositionLayer))
+//                 CompositionLayerManager.Instance.SetDefaultSceneCompositionLayer(compositionLayer);
+//         }
+
+//         static void OnUnsetDefaultSceneLayerElement()
+//         {
+//             CompositionLayerManager.Instance.ResetDefaultSceneCompositionLayer();
+//         }
+//     }
+// }

@@ -10,6 +10,7 @@
     * [Set composition layer transparency](layer-transparency.md)
     * [Projection eye rig](projection-eye-rig.md)
     * [Composition Layer Interactive UI](composition-layer-interactive-UI.md)
+    * [Composition Layer Splash Screen](composition-layer-splash-screen.md)
 * [Composition layer components](component-reference.md)
     * [Composition Layer component](composition-layer-component.md)
     * [Color Bias and Scale extension](color-bias-scale-component.md)

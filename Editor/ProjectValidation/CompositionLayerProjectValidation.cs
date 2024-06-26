@@ -4,6 +4,11 @@ using System.Linq;
 using UnityEngine;
 using Unity.XR.CompositionLayers;
 
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+using UnityEngine.Rendering.Universal;
+using Unity.XR.CompositionLayers.Emulation;
+#endif
+
 namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 {
     public static class CompositionLayerProjectValidation
@@ -31,7 +36,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
             },
             new CompositionLayerBuildValidationRule
             {
-                Message = "Install OpenXR Plugin Experimental package 1.11.0-exp.1 to enable composition layer runtime support.",
+                Message = "Install OpenXR Plugin Experimental package 1.12.0-exp.1 to enable composition layer runtime support.",
                 CheckPredicate = () =>
                 {
 #if UNITY_XR_OPENXR_COMPLAYER
@@ -44,7 +49,29 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
                 FixItAutomatic = false,
                 FixItMessage = "Open Package Manager to install proper OpenXR package version.",
                 Error = false,
-            }
+            },
+            new CompositionLayerBuildValidationRule
+            {
+                Message = 
+                    "Add the EmulationLayerUniversalScriptableRendererFeature to the current Scriptable Render Pipeline's Renderer Features List to enable Composition Layer emulation.",
+                CheckPredicate = () => 
+                {
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+                    return CheckForRenderFeature();
+#else
+                    return true;
+#endif
+                },
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+                FixIt = () => AddEmulationLayerUniversalScriptableRendererFeature(),
+                FixItAutomatic = true,
+#else
+                FixIt = null,
+                FixItAutomatic = false,
+#endif
+                FixItMessage =  "Add EmulationLayerUniversalScriptableRendererFeature to the current Scriptable Render Pipeline's Renderer Features List.",
+                Error = false,
+            },
         };
 
         private static readonly List<CompositionLayerBuildValidationRule> CachedValidationList = new List<CompositionLayerBuildValidationRule>(BuiltinValidationRules.Length);
@@ -70,6 +97,112 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
             return false;
         }
 
+        /// <summary>
+        /// Checks for Render Feature in the current Scriptable Render Pipeline
+        /// </summary>
+        /// <returns></returns>
+        private static bool CheckForRenderFeature()
+        {
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+            var renderData = GetDefaultRenderer();
+
+            foreach (var feature in renderData.rendererFeatures)
+                if (feature.GetType() == typeof(EmulationLayerUniversalScriptableRendererFeature))
+                    return true;
+
+            return false;
+#else
+            return true;
+#endif
+        }
+
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+        /// <summary>
+        /// Adds the EmulationLayerUniversalScriptableRendererFeature to the current renderer
+        /// </summary>
+        /// <remarks>
+        /// Some hackery is required as we can't directly modify the renderer data list.
+        /// </remarks>
+        private static void AddEmulationLayerUniversalScriptableRendererFeature()
+        {
+            // Get the default renderer
+            ScriptableRendererData data = GetDefaultRenderer();
+
+            // Create the EmulationLayerUniversalScriptableRendererFeature
+            EmulationLayerUniversalScriptableRendererFeature feature = 
+                ScriptableObject.CreateInstance<EmulationLayerUniversalScriptableRendererFeature>();
+            feature.name = nameof(EmulationLayerUniversalScriptableRendererFeature);
+
+            // Store the feature as a sub-asset
+            if (EditorUtility.IsPersistent(data))
+            {
+                EditorUtility.SetDirty(feature);
+                AssetDatabase.AddObjectToAsset(feature, data);
+            }
+
+            // Add the feature to the renderer
+            data.rendererFeatures.Add(feature);
+
+            // Invoke the private method "ValidateRendererFeatures" to validate the renderer features
+            var method = data.GetType().GetMethod("ValidateRendererFeatures", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            method.Invoke(data, null);
+
+            // Force save the feature
+            if (EditorUtility.IsPersistent(data))
+            {
+                EditorUtility.SetDirty(data);
+                AssetDatabase.SaveAssetIfDirty(data);
+            }
+
+            // Force domain reload to ensure the feature is properly added
+            EditorUtility.RequestScriptReload();
+        }
+
+        /// <summary>
+        /// Gets the renderer from the current pipeline asset that's marked as default
+        /// </summary>
+        /// <returns></returns>
+        public static ScriptableRendererData GetDefaultRenderer()
+        {
+            if (UniversalRenderPipeline.asset)
+            {
+                int defaultRendererIndex = GetDefaultRendererIndex(UniversalRenderPipeline.asset);
+                return GetRendererDataList(UniversalRenderPipeline.asset)[defaultRendererIndex];
+            }
+            else
+            {
+                Debug.LogError("No Universal Render Pipeline is currently active.");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the default renderer index from the current pipeline asset
+        /// </summary>
+        private static int GetDefaultRendererIndex(UniversalRenderPipelineAsset asset)
+        {
+            return (int)typeof(UniversalRenderPipelineAsset)
+                .GetField("m_DefaultRendererIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .GetValue(asset);
+        }
+
+        /// <summary>
+        /// Gets the renderer data list from the current pipeline asset
+        /// Unity 2023.3+ uses a public property, while older versions use a private field, so we need to check for both.
+        /// </summary>
+        private static System.ReadOnlySpan<ScriptableRendererData> GetRendererDataList(UniversalRenderPipelineAsset asset)
+        {
+#if UNITY_2023_3_OR_NEWER
+            return asset.rendererDataList;
+#else
+            return new System.ReadOnlySpan<ScriptableRendererData>((ScriptableRendererData[])typeof(UniversalRenderPipelineAsset)
+                .GetField("m_RendererDataList", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .GetValue(asset));
+#endif
+        }
+
+#endif
         /// <summary>
         /// Opens Graphics Settings Window
         /// </summary>

@@ -10,3 +10,4 @@ uid: xr-layer-known-issues
 * Equirect layer type - Upon entering play mode while the Equirect layer is present in the scene, the Equirect layer will extend to occupy the entire field of view within the HMD, completely filling the visual space.
 * Cube layer type - Textures with Mipmaps aren't supported.
 * Projection layer type - Single Pass Instanced rendering is not currently supported, which likely affect performance. Future releases will add Single Pass Instance rendering support.
+* Layer textures have "fade in" effects from a certain distance. To work around it, try to set the texture format to RGBA 32bit.

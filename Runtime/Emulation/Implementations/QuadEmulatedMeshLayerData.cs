@@ -1,6 +1,7 @@
 using Unity.XR.CompositionLayers.Extensions;
 using UnityEngine;
 using Unity.XR.CompositionLayers.Layers;
+using UnityEngine.XR;
 
 namespace Unity.XR.CompositionLayers.Emulation.Implementations
 {
@@ -9,7 +10,17 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
     {
         Vector2 m_Size;
 
-        public override bool IsSupported(Camera camera) => true;
+        public override bool IsSupported(Camera camera)
+        {
+            if (camera.cameraType == CameraType.SceneView)
+                return true;
+
+            var isSupported = !Application.isPlaying;
+#if ENABLE_UNITY_VR
+            isSupported = isSupported || !XRSettings.isDeviceActive;
+#endif
+            return isSupported;
+        }
 
         protected override void UpdateMesh(ref Mesh mesh)
         {

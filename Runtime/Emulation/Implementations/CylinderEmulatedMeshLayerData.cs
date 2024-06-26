@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.XR.CompositionLayers.Extensions;
 using Unity.XR.CompositionLayers.Layers;
 using UnityEngine;
+using UnityEngine.XR;
 
 namespace Unity.XR.CompositionLayers.Emulation.Implementations
 {
@@ -18,7 +19,17 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
 
         Vector3 m_AdjustmentScale = Vector3.one;
 
-        public override bool IsSupported(Camera camera) => true;
+        public override bool IsSupported(Camera camera)
+        {
+            if (camera.cameraType == CameraType.SceneView)
+                return true;
+
+            var isSupported = !Application.isPlaying;
+#if ENABLE_UNITY_VR
+            isSupported = isSupported || !XRSettings.isDeviceActive;
+#endif
+            return isSupported;
+        }
 
         private bool m_ApplyTransformScale = false;
 
@@ -71,8 +82,8 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             vertices.Add(leftTop);
             vertices.Add(leftBottom);
 
-            uvs.Add(new Vector2(1f, 1f));
-            uvs.Add(new Vector2(1f, 0f));
+            uvs.Add(new Vector2(0f, 1f));
+            uvs.Add(new Vector2(0f, 0f));
 
             for (var i = 0; i < stepCount; i++)
             {
@@ -87,8 +98,8 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 vertices.Add(rightTop);
                 vertices.Add(rightBottom);
 
-                uvs.Add(new Vector2(1f - uvStep * (i + 1), 1f));
-                uvs.Add(new Vector2(1f - uvStep * (i + 1), 0f));
+                uvs.Add(new Vector2(uvStep * (i + 1), 1f));
+                uvs.Add(new Vector2(uvStep * (i + 1), 0f));
 
                 foreach (var index in quadIndices)
                 {

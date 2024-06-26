@@ -231,7 +231,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                             }
 #endif
                             if ((texturesExtension.RightTexture != null) && (texturesExtension.InEditorEmulation == 1) && 
-                                (texturesExtension.TargetEye == TexturesExtension.TargetEyeEnum.Individual) && (CompositionLayer.LayerData.GetType() == typeof(ProjectionLayerData)))
+                                (CompositionLayer.LayerData.GetType() == typeof(ProjectionLayerData)))
                             {
                                 eyeIndex = 1;
                                 texture = texturesExtension.RightTexture;
@@ -260,8 +260,8 @@ namespace Unity.XR.CompositionLayers.Emulation
                                 var srcRect = eyeIndex == 0 ? texturesExtension.LeftEyeSourceRect : texturesExtension.RightEyeSourceRect;
                                 var dstRect = eyeIndex == 0 ? texturesExtension.LeftEyeDestinationRect : texturesExtension.RightEyeDestinationRect;
 
-                                EmulationMaterial.SetVector(k_SourceRect, ToVector4XYFlipped(srcRect));
-                                EmulationMaterial.SetVector(k_DestRect, ToVector4XYFlipped(dstRect));
+                                EmulationMaterial.SetVector(k_SourceRect, ToVector4YFlipped(srcRect));
+                                EmulationMaterial.SetVector(k_DestRect, ToVector4YFlipped(dstRect));
                                 hasCustomRects = true;
                             }
 
@@ -412,11 +412,10 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         protected static Vector4 ToVector4(Rect rect)
         {
-            // To match the behaviour on RectsDrawer.
-            return new Vector4(rect.x, 1.0f - (rect.y + rect.height), rect.width, rect.height);
+            return new Vector4(rect.x, rect.y, rect.width, rect.height);
         }
 
-        static Vector4 ToVector4XYFlipped(Rect rect)
+        protected static Vector4 ToVector4XYFlipped(Rect rect)
         {
             // To match the behaviour on RectsDrawer.
             return new Vector4(1.0f - (rect.x + rect.width), 1.0f - (rect.y + rect.height), rect.width, rect.height);

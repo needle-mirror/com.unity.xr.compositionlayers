@@ -156,7 +156,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             {
                 mesh.triangles = new int[] { 0, 1, 2, 2, 3, 0 };
                 mesh.normals = new Vector3[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
-                mesh.uv = new Vector2[] { new(1f, 0f), new(1f, 1f), new(0f, 1f), new(0f, 0f) };
+                mesh.uv = new Vector2[] { new(0f, 0f), new(0f, 1f), new(1f, 1f), new(1f, 0f) };
             }
 
             mesh.UploadMeshData(false);

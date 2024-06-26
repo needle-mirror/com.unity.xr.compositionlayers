@@ -5,7 +5,6 @@ using UnityEngine;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Provider;
 using Unity.XR.CoreUtils;
-using UnityObject = UnityEngine.Object;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -318,6 +317,21 @@ namespace Unity.XR.CompositionLayers.Services
         }
 
         /// <summary>
+        /// Can be called to help scripts locate individual composition layers.
+        /// </summary>
+        /// <param name="findFunction">Predicate function used to find some layer.</param>
+        public CompositionLayer FindCompositionLayer(Predicate<CompositionLayer> findFunction)
+        {
+            foreach (var layer in m_KnownLayers.Keys)
+            {
+                if (findFunction(layer))
+                    return layer;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Called to report that a new instance of a <see cref="CompositionLayer" /> is
         /// created. By default this is called from calls to Awake on a
         /// <see cref="CompositionLayer" /> instance.
@@ -494,7 +508,8 @@ namespace Unity.XR.CompositionLayers.Services
                 CompositionLayerEnabled(DefaultSceneCompositionLayer);
             }
 
-            var foundLayers = UnityObject.FindObjectsOfType<CompositionLayer>(!isPlaying);
+            var foundLayers = UnityEngine.Object.FindObjectsByType<CompositionLayer>(isPlaying ? FindObjectsInactive.Exclude : FindObjectsInactive.Include, FindObjectsSortMode.None);
+
             foreach (var layer in foundLayers)
             {
                 if (!IsLayerSceneValid(layer))

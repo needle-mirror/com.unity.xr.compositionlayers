@@ -1,44 +1,71 @@
-## Description
+<!-- Prefix title with version number and Jira ID. The format should be [<version>][<jira-id>] <Title>
+Exmaple: "[3.1][XR-1234] Title" -->
 
-<!-- Replace this comment with the details of your PR -->
-
-__Jira__: <!-- Replace this comment with the JIRA link if applicable -->
-
-## Reviewers
-
-Please consider adding the following team members to the PR
+# Purpose of this PR
+<!-- Description of the feature/change. For bug fixes, add the root cause of the bug and a brief explanation of the solution. Include screenshots and/or links to design documentation if applicable. Include any contextual information necessary to preserve understanding and support your reviewers. -->
 
 
-| Engineer | Design | QA  |
-| :--- | :--- | :--- |
-| Tanya Li (@tianyang-li) | Du Hoang (@du-hoang) | Jason Cuenco (@jason-cuenco) |
-| Jason Diehi (@jason-diehl) |        | Taylor Philpott (@taylor-philpott) |
-| Lianne Gill (@lianne-gill) | 
-| Shelby Juno (@shelby-juno) | 
+# Notes to Reviewers
+<!-- Provide notes that are relevant and important to all reviewers -->
 
 
-# Testing Status
+# Dev Pre-Review Checklist
 
-<!-- Describe the test you did and expected behavior -->
+## Jira Stories/Bug, or dependencies
+<!-- Bulleted list of links to all the Jira work item which represents the changes made in this PR. If this PR requires the changes in another PR or branch, provide links to those related PRs and branches. -->
+- [XR-nnn](https://jira.unity3d.com/browse/XR-nnn)
 
-## Sample Configuration Testing
+## Public API changes?
+<!-- Does this PR add or modify any public API surface in any of our packages? Link to architecture review document. -->
+- [ ] Yes
+- [ ] No
 
-Samples to test:
+## Documentation Updated?
+<!-- Is a documentation change necessary as a result of this PR? Consider feature documentation, What's New, and Upgrade Guide pages if present. Did you make a change and why? -->
 
-* Shape Sample Scene 
 
-  * <i>Test general functionality</i>
+### API Documentation
+- [ ] Yes
+- [ ] No
+- [ ] N/A
 
-Configurations to test:
+### Manual Documentation
+- [ ] Yes
+- [ ] No
+- [ ] N/A
 
-(Please make sure to test all the configurations as below)
+## Changelog Entry
+- [ ] Yes
+- [ ] No
 
-* [ ] Scene Emulation and Playmode Emulation behavior
+# Dev Testing
+<!-- Provide evidence of unit tests, validation details and testing steps, relevant information (platforms/devices, OS versions, Unity versions, and platform architecture) below. -->
 
-* [ ] Editor Playmode with and without OpenXR SDK enabled
 
-* [ ] Quest 2 Link Standalone with OpenXR SDK enabled
+## Unit Tests
+- [ ] Yes
+- [ ] No
+- [ ] N/A
 
-* [ ] Quest 2 Android Vulkan with OpenXR SDK enabled
+## Known Issues
+<!-- Bulleted list of links or descriptions of all known issues -->
 
-* [ ] Quest 2 Android GLES with OpenXR SDK enabled
+
+## Tested in Editor and On Device?
+- [ ] Editor (Play mode)
+- [ ] Device (Built and deployed)
+
+# Notes To QA
+<!-- Provide any helpful notes for QA, like testing instructions, test scenes, supported platforms, release date target, code freeze date, and customer requirements. -->
+
+
+# Notes From QA
+<!-- Optional section reserved for QA. Example of this section would be an area expert provide information on how to test a PR based on their expertise to guide testing for someone who is not an area expert taking on this work as part of workload balancing. -->
+
+
+# Product Risk
+
+[Reference](https://confluence.unity3d.com/pages/viewpage.action?spaceKey=RM&title=Testing+Status%2C+Complexity+and+Halo+Effect+for+your+PR)
+
+**Technical Risk**: (0 - 3)
+**Halo Effect**: (0 - 3)

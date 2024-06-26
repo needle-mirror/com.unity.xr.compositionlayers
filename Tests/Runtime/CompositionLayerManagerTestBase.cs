@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.XR.CompositionLayers.Provider;
 using Unity.XR.CompositionLayers.Services;
 using UnityEngine;
+using UnityEngine.TestTools;
 using LayerInfo = Unity.XR.CompositionLayers.Services.CompositionLayerManager.LayerInfo;
 
 using UnityObject = UnityEngine.Object;
@@ -48,7 +49,9 @@ namespace Unity.XR.CompositionLayers.Tests
             lastModifiedLayers.Clear();
             lastActiveLayers.Clear();
 
-            CompositionLayerManager.Instance.ClearAllState();
+            LogAssert.ignoreFailingMessages = true;
+            CompositionLayerManager.Instance?.ClearAllState();
+            CompositionLayerManager.Instance?.EnsureSceneCompositionManager();
         }
 
         protected virtual void Teardown()
@@ -59,7 +62,7 @@ namespace Unity.XR.CompositionLayers.Tests
                     UnityObject.Destroy(layer.Layer.gameObject);
             }
 
-            CompositionLayerManager.Instance.ClearAllState();
+            CompositionLayerManager.Instance?.ClearAllState();
 
             lastCreatedLayers.Clear();
             lastRemovedLayers.Clear();

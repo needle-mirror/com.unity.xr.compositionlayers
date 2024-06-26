@@ -19,6 +19,7 @@ namespace Unity.XR.CompositionLayers
     [AddComponentMenu("XR/Composition Layers/Composition Layer")]
     [Icon(CompositionLayerConstants.IconPath + "d_LayerUniversal.png")]
     [CompositionLayersHelpURL(typeof(CompositionLayer))]
+    [DefaultExecutionOrder(int.MinValue)]
     public sealed class CompositionLayer : MonoBehaviour
     {
 #if UNITY_EDITOR
@@ -168,7 +169,6 @@ namespace Unity.XR.CompositionLayers
         /// <inheritdoc cref="MonoBehaviour"/>=
         void Awake()
         {
-            
             // Apply the CompositionOutline component when the object is created
             // to handle drawing outlines for quad and cylinder layers
 #if UNITY_EDITOR

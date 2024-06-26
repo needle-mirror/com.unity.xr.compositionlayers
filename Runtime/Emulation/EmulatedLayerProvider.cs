@@ -23,15 +23,11 @@ namespace Unity.XR.CompositionLayers.Emulation
         static EmulatedLayerProvider s_Instance; // Note: EmulatedLayerProvider is singleton.
         static bool s_WarnUnsupportedEmulation;
 
-        const string EmulationPlayModeCameraName = "EmulationInPlayModeCamera";
-
         Dictionary<int, EmulatedCompositionLayer> m_AllCompositionLayers = new();
 
         List<EmulatedCompositionLayer> m_SortedLayers = new();
 
         HashSet<EmulatedCameraData> m_ActiveCameras = new();
-
-        Camera m_EmulationInPlayModeCamera;
 
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]
@@ -64,9 +60,6 @@ namespace Unity.XR.CompositionLayers.Emulation
                 return;
 
             CompositionLayerManager.Instance.EmulationLayerProvider = s_Instance;
-
-            if (Application.isPlaying)
-                CreateEmulationInPlayModeCamera();
         }
 
         static void OnCompositionLayerManagerStopped()
@@ -81,12 +74,6 @@ namespace Unity.XR.CompositionLayers.Emulation
 
             if (CompositionLayerManager.Instance.EmulationLayerProvider == s_Instance)
                 CompositionLayerManager.Instance.EmulationLayerProvider = null;
-
-            if (s_Instance.m_EmulationInPlayModeCamera != null)
-            {
-                GameObject.Destroy(s_Instance.m_EmulationInPlayModeCamera.gameObject);
-                s_Instance.m_EmulationInPlayModeCamera = null;
-            }
         }
 
         EmulatedCompositionLayer CreateEmulationLayerObject(CompositionLayerManager.LayerInfo layerInfo)
@@ -115,45 +102,6 @@ namespace Unity.XR.CompositionLayers.Emulation
                 m_AllCompositionLayers[layerInfo.Id] = emulatedLayer;
 
             return emulatedLayer;
-        }
-
-        private static void CreateEmulationInPlayModeCamera()
-        {
-            if (s_Instance.m_EmulationInPlayModeCamera != null)
-                return;
-
-            var mainCam = Camera.main;
-
-            if (mainCam == null)
-            {
-                Debug.LogError("A camera tagged as MainCamera is required for composition layer emulation.");
-                return;
-            }
-
-            var emulationCameraGameObject = new GameObject(EmulationPlayModeCameraName);
-            emulationCameraGameObject.transform.parent = mainCam.transform;
-            emulationCameraGameObject.transform.localPosition = Vector3.zero;
-            emulationCameraGameObject.transform.localRotation = Quaternion.identity;
-            emulationCameraGameObject.transform.localScale = Vector3.one;
-            emulationCameraGameObject.hideFlags = HideFlags.HideInHierarchy;
-
-            var emulationCamera = emulationCameraGameObject.AddComponent<Camera>();
-            emulationCamera.fieldOfView = mainCam.fieldOfView;
-            emulationCamera.targetDisplay = mainCam.targetDisplay;
-            emulationCamera.depth = mainCam.depth + 1;
-            emulationCamera.cullingMask = 0x0;
-            emulationCamera.clearFlags = CameraClearFlags.Depth;
-            emulationCamera.stereoTargetEye = StereoTargetEyeMask.None;
-
-// Stack the EmulationCamera onto the MainCamera when using URP
-#if UNITY_RENDER_PIPELINES_UNIVERSAL
-            var emulationURPCameraData = emulationCameraGameObject.AddComponent<UniversalAdditionalCameraData>();
-            var mainURPCameraData = mainCam.GetComponent<UniversalAdditionalCameraData>();
-            emulationURPCameraData.renderType = CameraRenderType.Overlay;
-            mainURPCameraData?.cameraStack.Add(emulationCamera);
-#endif
-
-            s_Instance.m_EmulationInPlayModeCamera = emulationCamera;
         }
 
         public void SetInitialState(List<CompositionLayerManager.LayerInfo> layers)
@@ -362,23 +310,21 @@ namespace Unity.XR.CompositionLayers.Emulation
                 return;
 
             m_ActiveCameras.Clear();
-#if UNITY_EDITOR
-            if (EmulatedCompositionLayerUtils.EmulationInScene)
+            if (Application.isPlaying)
             {
-                foreach (var sceneViewObject in SceneView.sceneViews)
+                var mainCamera = Camera.main;
+                if (mainCamera)
                 {
-                    if (sceneViewObject is SceneView sceneView)
-                        m_ActiveCameras.Add(new EmulatedCameraData(sceneView.camera));
+                    if (EmulatedCompositionLayerUtils.EmulationInPlayMode || EmulatedCompositionLayerUtils.EmulationInStandalone)
+                        m_ActiveCameras.Add(new EmulatedCameraData(mainCamera));
                 }
             }
-#endif
-#if UNITY_EDITOR || UNITY_STANDALONE
-            if (EmulatedCompositionLayerUtils.EmulationInPlayMode || EmulatedCompositionLayerUtils.EmulationInStandalone)
+
+#if UNITY_EDITOR
+            foreach (var sceneViewObject in SceneView.sceneViews)
             {
-                if (Application.isPlaying && s_Instance.m_EmulationInPlayModeCamera != null)
-                {
-                    m_ActiveCameras.Add(new EmulatedCameraData(s_Instance.m_EmulationInPlayModeCamera));
-                }
+                if (sceneViewObject is SceneView sceneView)
+                    m_ActiveCameras.Add(new EmulatedCameraData(sceneView.camera));
             }
 #endif
 
@@ -435,10 +381,7 @@ namespace Unity.XR.CompositionLayers.Emulation
         {
             if (s_WarnUnsupportedEmulation)
             {
-                var layerName = layer.gameObject.name;
-                var layerDataType = layer.LayerData.GetType();
-                Debug.LogWarning($"Emulation of {layerDataType} on {layerName} is not supported on this " +
-                    $"{camera.name}, but may still display on device.");
+                Debug.LogWarning($"Emulation of composition layers in Game View is not supported when XR device is connected and active.");
                 s_WarnUnsupportedEmulation = false;
             }
         }

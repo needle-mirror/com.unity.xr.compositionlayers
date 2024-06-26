@@ -15,7 +15,17 @@ namespace UnityEngine.XR.CompositionLayers.Emulation.Implementations
     {
         const float k_Size = 10000f;
 
-        public override bool IsSupported(Camera camera) => true;
+        public override bool IsSupported(Camera camera)
+        {
+            if (camera.cameraType == CameraType.SceneView)
+                return true;
+
+            var isSupported = !Application.isPlaying;
+#if ENABLE_UNITY_VR
+            isSupported = isSupported || !XRSettings.isDeviceActive;
+#endif
+            return isSupported;
+        }
 
         protected override string GetShaderLayerTypeKeyword()
         {

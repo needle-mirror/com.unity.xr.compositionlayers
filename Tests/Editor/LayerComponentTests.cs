@@ -8,7 +8,7 @@ using Unity.XR.CompositionLayers.Services;
 
 namespace Unity.XR.CompositionLayers.Tests.Editor
 {
-    class LayerTests : CompositionLayerManagerTestBase
+    class LayerComponentTests : CompositionLayerManagerTestBase
     {
         [UnityTest]
         public IEnumerator AddingLayerAddsExpectedExtensions()

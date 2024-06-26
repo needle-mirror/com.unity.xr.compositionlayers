@@ -14,6 +14,18 @@ When updating the Changelog, please ensure we follow the standards for ordering 
 Under ## headers, ### \<type\> headers are listed in this order: Added, Changed, Deprecated, Removed, Fixed, Security
 ```
 
+## [0.6.0] - 2024-06-26
+
+### Added
+* Added a projection validation to check if EmulationLayerUniversalScriptableRendererFeature is added to the current pipeline for URP. Click "Fix" button will automatically add the emulation render feature to enable URP Editor emulation.
+* Added composition layer splash screen support. See Composition Layer Splash Screen section in documentation for details.
+
+### Changed
+* Emulation In Playmode or Standalone now is only available when no XR provider is active or no headset is connected for visual approximation and preview purposes.
+
+### Fixed
+* Fixed error spamming issue when creating a UI canvas and drag it into a quad layer.
+
 ## [0.5.0] - 2024-02-25
 
 ### This is the first experimental release of *Unity Package XR CompositionLayers \<com.unity.xr.compositionlayers\>*.

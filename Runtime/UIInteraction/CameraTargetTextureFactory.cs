@@ -8,6 +8,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
     /// <seealso cref="InteractableUIMirror"/>
     internal class CameraTargetTextureFactory
     {
+        const int MINIMUM_RENDER_TEXTURE_SIZE = 100;
         // Desired size of render texture
         private Vector2 renderTextureSize = new Vector2(500, 500);
 
@@ -30,7 +31,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <returns></returns>
         public RenderTexture CreateTargetTexture(Camera camera, Rect rect)
         {
-            renderTextureSize = new Vector2(rect.width, rect.height);
+            renderTextureSize = new Vector2(Mathf.Max(MINIMUM_RENDER_TEXTURE_SIZE, (int)rect.width), 
+                                            Mathf.Max(MINIMUM_RENDER_TEXTURE_SIZE, (int)rect.height));
             var rt = new RenderTexture((int)renderTextureSize.x, (int)renderTextureSize.y, 24, RenderTextureFormat.ARGB32);
             camera.targetTexture = rt;
             return rt;

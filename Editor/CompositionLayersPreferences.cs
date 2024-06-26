@@ -29,7 +29,7 @@ namespace Unity.XR.CompositionLayers
         bool m_EmulationInScene = true;
 
         [SerializeField]
-        [Tooltip("Enable or disable emulation of composition layers in the game view in editor during play mode.")]
+        [Tooltip("Enable or disable emulation of composition layers in the game view in editor during play mode when no XR provider is active or no headset connected.")]
         bool m_EmulationInPlayMode = true;
 
         internal AngleDisplayType DisplayAnglesAs => m_DisplayAnglesAs;

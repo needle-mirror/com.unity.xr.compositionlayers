@@ -1,15 +1,19 @@
+using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using Unity.XR.CompositionLayers.Layers;
-using Unity.XR.CompositionLayers.Extensions;
-using System.Collections.Generic;
-using System;
 using Unity.XR.CompositionLayers.Services;
+using Unity.XR.CompositionLayers.Extensions;
 
 #if UNITY_XR_INTERACTION_TOOLKIT
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.UI;
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+#endif
 #endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction
@@ -22,6 +26,9 @@ namespace Unity.XR.CompositionLayers.UIInteraction
     [RequireComponent(typeof(CompositionLayer), typeof(TexturesExtension))]
     public class InteractableUIMirror : MonoBehaviour
     {
+        // Minimum size for the canvas to prevent it from being too small
+        const float MINIMUM_CANVAS_SIZE = 0.001f;
+
 #if UNITY_XR_INTERACTION_TOOLKIT
         // reference to the Interactable for XRI interaction
         [SerializeField, HideInInspector]
@@ -59,7 +66,11 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         [SerializeField, HideInInspector]
         private CompositionLayer compositionLayer;
 
-        private List<XRRayInteractor> rayInteractors = new List<XRRayInteractor>();
+        // Reference to the RectTransform of the canvas
+        [SerializeField, HideInInspector]
+        private RectTransform canvasRectTransform;
+
+        private List<IXRRayProvider> interactors = new List<IXRRayProvider>();
         private Canvas canvas;
         private ProxyInteractorFactory proxyInteractorFactory;
         private CanvasHitCalculator canvasHitCalculator;
@@ -117,6 +128,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             if (canvas == null) 
                 return;
 
+            canvasRectTransform = canvas.GetComponent<RectTransform>();
+
             canvas.renderMode = RenderMode.WorldSpace;
             GetOrAddComponent<CanvasScaler>(canvas.gameObject);
             GetOrAddComponent<GraphicRaycaster>(canvas.gameObject);
@@ -162,16 +175,18 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             // Keep everything in sync if developer edits the canvas or comp layer sizes.
             SyncTexturesExtensionWithCameraTarget();
             SyncLayerUIScaleWithLayerType();
+            HandleCanvasSize();
+
 #endif
 
             // Calculate canvas hits with interactors that have been registered inside OnHoverEnter
-            foreach (var rayInteractor in rayInteractors)
+            foreach (var interactor in interactors)
             {
-                var proxyInteractor = proxyInteractorFactory.GetProxy(rayInteractor);
+                var proxyInteractor = proxyInteractorFactory.GetProxy(interactor);
                 if (proxyInteractor == null)
                     continue;
 
-                if (canvasHitCalculator.CalculateCanvasHit(rayInteractor, out Pose hitPose))
+                if (canvasHitCalculator.CalculateCanvasHit(interactor, out Pose hitPose))
                 {
                     proxyInteractor.transform.position = hitPose.position;
                     proxyInteractor.transform.rotation = hitPose.rotation;
@@ -277,6 +292,18 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         }
 
         /// <summary>
+        /// Ensures the canvas is at least MINIMUM_CANVAS_SIZE on both width and height
+        /// </summary>
+        private void HandleCanvasSize()
+        {
+            var width = Mathf.Max(canvasRectTransform.rect.width, MINIMUM_CANVAS_SIZE);
+            var height = Mathf.Max(canvasRectTransform.rect.height, MINIMUM_CANVAS_SIZE);
+
+            if(width != canvasRectTransform.rect.width || height != canvasRectTransform.rect.height)
+                canvasRectTransform.sizeDelta = new Vector2(width, height);
+        }
+
+        /// <summary>
         /// Cleans up creations from AddComponents such as the canvas camera, as well as coliders and render textures
         /// </summary>
         /// <seealso cref="AddComponents"/>
@@ -330,34 +357,44 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
         private void OnHoverEnter(HoverEnterEventArgs args)
         {
-            if (args.interactorObject is not XRRayInteractor rayInteractor) 
+            if (args.interactorObject is not IXRRayProvider interactor) 
                 return;
 
-            if (!proxyInteractorFactory.TryCreateOrFind(rayInteractor, canvas.transform.position, out var proxyInteractor))
+            if (!proxyInteractorFactory.TryCreateOrFind(interactor, canvas.transform.position, out var proxyInteractor))
                 return;
 
             // Set the real interactor and proxy interactor raycast masks.
             int layerBit = canvas.gameObject.layer;
 
-            // Remove the layer from the real interactor mask
-            rayInteractor.raycastMask &= ~(1 << layerBit);
+            switch(interactor)
+            {
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0
+                case NearFarInteractor:
+                    break;
+#endif
+                case XRRayInteractor:
+                    // Remove the layer from the real interactor mask
+                    (interactor as XRRayInteractor).raycastMask &= ~(1 << layerBit);
 
-            // Set the proxy interactor mask layer to this layer 
-            proxyInteractor.GetComponent<XRRayInteractor>().raycastMask = (1 << layerBit);
+                    // Set the proxy interactor mask layer to this layer 
+                    (proxyInteractor as XRRayInteractor).raycastMask = (1 << layerBit);
+                    break;
+            }
+
 
             // Alow the canvas to receive raycasts 
             if (canvasGroup)
                 canvasGroup.blocksRaycasts = true;
 
-            rayInteractors.Add(rayInteractor);
+            interactors.Add(interactor);
         }
 
         private void OnHoverExit(HoverExitEventArgs args)
         {
-            if (args.interactorObject is not XRRayInteractor rayInteractor)
+            if (args.interactorObject is not IXRRayProvider interactor)
                 return;
 
-            rayInteractors.Remove(rayInteractor);
+            interactors.Remove(interactor);
         }
 
         private void OnDestroy()
@@ -412,5 +449,5 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
 #endif //UNITY_EDITOR
 #endif //UNITY_XR_INTERACTION_TOOLKIT
-        }
+            }
 }

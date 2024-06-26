@@ -8,7 +8,8 @@
         "Unity.InputSystem",
         "Unity.XR.Management",
         "Unity.XR.Management.Editor",
-        "Unity.XR.CompositionLayers.UIInteraction"
+        "Unity.XR.CompositionLayers.UIInteraction",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"
@@ -27,8 +28,13 @@
         },
         {
             "name": "com.unity.xr.openxr",
-            "expression": "1.11.0-exp.1",
+            "expression": "1.12.0-exp.1",
             "define": "UNITY_XR_OPENXR_COMPLAYER"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "0.0",
+            "define": "UNITY_RENDER_PIPELINES_UNIVERSAL"
         }
     ],
     "noEngineReferences": false

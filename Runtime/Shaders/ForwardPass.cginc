@@ -100,9 +100,6 @@ v2f vert(appdata v)
 {
     v2f o;
     ForwardPassVertex(o, v);
-#if !COMPOSITION_LAYERTYPE_EQUIRECT
-    o.uv.x = 1 - o.uv.x; // Flip X
-#endif
 
     return o;
 }

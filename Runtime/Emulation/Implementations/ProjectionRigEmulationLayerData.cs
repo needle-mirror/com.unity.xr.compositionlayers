@@ -60,6 +60,11 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
 
             // Ensure that the projection rig cameras have the same local pose offset as the main camera.
             leftCam?.transform.parent.SetWorldPose(GetTotalLocalPoseOffset(mainCameraCache.transform));
+            if (Application.isPlaying && !XRSettings.isDeviceActive) //For emulation cases only: project rig cams follow mainCam transform.
+            {
+                leftCam?.transform.SetPositionAndRotation(mainCameraCache.transform.position, mainCameraCache.transform.rotation);
+                rightCam?.transform.SetPositionAndRotation(mainCameraCache.transform.position, mainCameraCache.transform.rotation);
+            }
         }
 
         private Pose GetTotalLocalPoseOffset(Transform currentTransform)
