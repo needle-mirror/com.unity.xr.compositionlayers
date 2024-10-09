@@ -38,7 +38,9 @@ To enable layer emulation in a standalone **Win, Mac, Linux** build:
 
 XR Composition Layers Emulation relys on a specific shader that must be added to the [Always Include Shaders list](#always-include-shaders-list) for the project.
 
-If the project uses the Universal Render Pipeline (URP), then you must add the [Emulation Layer Renderer Feature](#emulation-layer-renderer-feature) to the **Universal Render Data** asset.
+If the project uses the Universal Render Pipeline (URP), the [Emulation Layer Renderer Feature](#emulation-layer-renderer-feature) is automatically added.
+
+If the project uses the High Definition Render Pipeline (HDRP), the [Emulation Layer Custom Pass](#emulation-layer-custom-pass) is automatically added to the global `CustomPassVolume`.
 
 <a id="always-include-shaders-list"></a>
 ### Always Include Shaders list
@@ -65,28 +67,21 @@ For emulation of layers in a standalone **Win, Mac, Linux** build, add the `Unli
 <a id="emulation-layer-renderer-feature"></a>
 ### Emulation Layer Renderer Feature (URP)
 
-To support layer emulation in projects using the Universal Renderer Pipeline (URP, add the `EmulationLayerUniversalScriptableRendererFeature` to the Universal Renderer Data asset that the project uses:
+To support layer emulation in projects using the Universal Renderer Pipeline (URP), the `EmulationLayerUniversalScriptableRendererFeaturePass`(ScriptableRendererPass) is automatically added with `ScriptableRenderer.EnqueuePass()`.
+> [!TIP]
+> No need to `Add Renderer Feature` to the Universal Renderer Data asset. It had to be set manually in the past version.
 
-1. Open the **Project Settings** window (menu: **Edit > Project Settings**).
-2. Select the **Graphics** section.
-3. Click on the asset assigned to the **Scriptable Render Pipeline Settings** field to locate the asset in the Project panel.
-   
-   ![](images/render-pipeline-settings.png)
-   
-4. Select the asset in the Project panel to view its properties in the Inspector window.
-5. Edit each item in the **Renderer List**, to add the renderer feature:
-
-   * Open the Universal Render Data asset in the Inspector.
-   * At the bottom of the window, click the **Add Renderer Feature** button.
-   * In the pop-up menu, choose the **Emulation Layer Universal Scriptable Renderer Feature**.
-   
-   ![](images/add-render-feature.png)  
-    
 > [!NOTE]
-> If on MacOS with URP, Compatibility Mode (Render Graph Disable) must be selected to render emulated layers.
+> If using Underlays with URP in Unity 6, Compatibility Mode (Render Graph Disable) must be selected to render emulated underlay layers.
 1. Open the **Project Settings** window (menu: **Edit > Project Settings**).
 2. Select the **Graphics** section.
 3. Click on the URP Tab.
 4. Under the Render Graph section select **Compatibility Mode (Render Graph Disable)** button.
 
    ![](images/graphics-compatability-mode.png) 
+
+<a id="#emulation-layer-custom-pass"></a>
+### Emulation Layer Custom Pass (HDRP)
+
+To support layer emulation in projects using the High Definition Render Pipeline (HDRP), the `EmulationLayerHighDefinitionOverlayCustomPass` and `EmulationLayerHighDefinitionUnderlayCustomPass` are automatically added to the global `CustomPassVolume`.
+The GmaeObject which has CustomPassVolume is hidden in hierarchy.

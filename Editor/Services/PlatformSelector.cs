@@ -124,7 +124,7 @@ namespace Unity.XR.CompositionLayers.Services.Editor
             }
 
             var managerSettings = generalSettings.AssignedSettings;
-            return managerSettings.activeLoaders.ToArray();
+            return managerSettings?.activeLoaders?.ToArray();
         }
 
         static string s_XRGeneralSettingsAssetPath;

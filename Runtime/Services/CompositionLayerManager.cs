@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Unity.Profiling;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Provider;
 using Unity.XR.CoreUtils;
@@ -83,7 +84,9 @@ namespace Unity.XR.CompositionLayers.Services
             get
             {
                 if (s_ManagerStopped)
+                {
                     return null;
+                }
 
                 if (s_Instance == null || s_ComponentInstance == null)
                     StartCompositionLayerManager();
@@ -92,32 +95,83 @@ namespace Unity.XR.CompositionLayers.Services
             }
         }
 
+        static readonly ProfilerMarker s_AwakeMarker = new ProfilerMarker("CompositionLayerManager.Awake");
+        static readonly ProfilerMarker s_StartMarker = new ProfilerMarker("CompositionLayerManager.StartCompositionLayerManager");
+        static readonly ProfilerMarker s_StopMarker = new ProfilerMarker("CompositionLayerManager.StopCompositionLayerManager");
+        static readonly ProfilerMarker s_UpdateMarker = new ProfilerMarker("CompositionLayerManager.Update");
+        static readonly ProfilerMarker s_LateUpdateMarker = new ProfilerMarker("CompositionLayerManager.LateUpdate");
+        static readonly ProfilerMarker s_LayerProviderUpdateMarker = new ProfilerMarker("CompositionLayerManager.LayerProvider.Update");
+        static readonly ProfilerMarker s_EmulatedLayerProviderUpdateMarker = new ProfilerMarker("CompositionLayerManager.EmulatedLayerProvider.Update");
+        static readonly ProfilerMarker s_InternalLayerProviderUpdateMarker = new ProfilerMarker("CompositionLayerManager.InternalLayerProviders.Update");
+        static readonly ProfilerMarker s_LayerCreatedMarker = new ProfilerMarker("CompositionLayerManager.CompositionLayerCreated");
+        static readonly ProfilerMarker s_LayerEnabledMarker = new ProfilerMarker("CompositionLayerManager.CompositionLayerEnabled");
+        static readonly ProfilerMarker s_LayerDestroyedMarker = new ProfilerMarker("CompositionLayerManager.CompositionLayerDestroyed");
+        static readonly ProfilerMarker s_LayerDisabledMarker = new ProfilerMarker("CompositionLayerManager.CompositionLayerDisabled");
+        static readonly ProfilerMarker s_LayerStateChangededMarker = new ProfilerMarker("CompositionLayerManager.CompositionLayerStateChanged");
+
+        /// <summary>
+        /// Main camera cache accessor
+        /// </summary>
+        public static Camera mainCameraCache
+        {
+            get
+            {
+                if (_mainCameraCache == null)
+                    _mainCameraCache = Camera.main;
+
+                return _mainCameraCache;
+            }
+        }
+
+        static Camera _mainCameraCache;
         static ILayerProvider s_LayerProvider;
         static ILayerProvider s_EmulationLayerProvider;
+        static List<ILayerProvider> s_InternalLayerProviders;
         static CallbackComponent s_ComponentInstance;
-        static CompositionLayer s_FallbackDefaultSceneCompositionLayer;
         static CompositionLayer s_DefaultSceneCompositionLayer;
+
         static bool s_ManagerStopped;
 
         internal static Action OccupiedLayersUpdated;
         internal static Action ManagerStarted;
         internal static Action ManagerStopped;
-
-        internal CompositionLayer FallbackDefaultSceneCompositionLayer => s_FallbackDefaultSceneCompositionLayer;
+        //d
         /// <summary>
         /// The <see cref="CompositionLayer"/> that is being used to render the default scene layer in a composition.
         /// </summary>
-        public CompositionLayer DefaultSceneCompositionLayer => s_DefaultSceneCompositionLayer;
+        public CompositionLayer DefaultSceneCompositionLayer
+        {
+            get
+            {
+                return s_DefaultSceneCompositionLayer;
+            }
+
+            internal set
+            {
+                if (value == null || value.LayerData is not DefaultLayerData)
+                    return;
+
+                if (s_DefaultSceneCompositionLayer == null)
+                {
+                    s_DefaultSceneCompositionLayer = value;
+                }
+                else if (!s_DefaultSceneCompositionLayer.gameObject.activeSelf)
+                {
+                    s_DefaultSceneCompositionLayer.Order = GetFirstUnusedLayer();
+                    value.Order = 0;
+                    s_DefaultSceneCompositionLayer = value;
+                }
+            }
+        }
 
         readonly Dictionary<CompositionLayer, LayerInfo> m_KnownLayers = new Dictionary<CompositionLayer, LayerInfo>();
-
         readonly List<LayerInfo> m_CreatedLayers = new List<LayerInfo>();
         readonly List<int> m_RemovedLayers = new List<int>();
         readonly List<LayerInfo> m_ModifiedLayers = new List<LayerInfo>();
         readonly List<LayerInfo> m_ActiveLayers = new List<LayerInfo>();
+        readonly List<LayerInfo> m_EmptyList = new List<LayerInfo>();
         internal readonly Dictionary<int, CompositionLayer> OccupiedLayers = new Dictionary<int, CompositionLayer>();
         internal bool OccupiedLayersDirty;
-
         ProjectionRigOffsetSynchronizer m_ProjectionRigOffsetSynchronizer;
 
         /// <summary>
@@ -161,131 +215,132 @@ namespace Unity.XR.CompositionLayers.Services
             }
         }
 
+        internal void AddInternalLayerProvider(ILayerProvider layerProvider)
+        {
+            if (s_InternalLayerProviders == null)
+                s_InternalLayerProviders = new List<ILayerProvider>();
+
+            if (layerProvider != null && !s_InternalLayerProviders.Contains(layerProvider))
+            {
+                s_InternalLayerProviders.Add(layerProvider);
+                layerProvider.SetInitialState(m_KnownLayers.Values.ToList());
+            }
+        }
+
+        internal void RemoveInternalLayerProvider(ILayerProvider layerProvider)
+        {
+            if(s_InternalLayerProviders == null)
+                return;
+
+            if (layerProvider != null && s_InternalLayerProviders.Contains(layerProvider))
+            {
+                s_InternalLayerProviders.Remove(layerProvider);
+                layerProvider.CleanupState();
+            }
+        }
+
+        /// <summary>
+        /// Can be used for other scripts to easily find existing composition layers.
+        /// </summary>
+        public IReadOnlyCollection<CompositionLayer> CompositionLayers => Instance?.m_KnownLayers.Keys;
+
         internal static bool ManagerActive => s_Instance != null;
 
         internal static void StartCompositionLayerManager()
         {
+            s_StartMarker.Begin();
             // Ensures manager can be started from external script without
             // needing to directly call the 'instance' from that script.s
             if (s_Instance == null)
             {
                 s_ManagerStopped = false;
                 s_Instance = new CompositionLayerManager();
-                s_Instance.m_ProjectionRigOffsetSynchronizer = new ProjectionRigOffsetSynchronizer();
+                ManagerStarted?.Invoke();
             }
 
-            if (s_ComponentInstance == null)
-                s_Instance.EnsureSceneCompositionManager();
-
-            ManagerStarted?.Invoke();
+            s_StartMarker.End();
         }
 
         internal static void StopCompositionLayerManager()
         {
+            s_StopMarker.Begin();
+
             if (s_ManagerStopped)
+            {
+                s_StopMarker.End();
                 return;
+            }
 
             s_ManagerStopped = true;
 
-            if (s_Instance != null)
-            {
-                s_Instance.ClearAllState();
-                s_Instance = null;
-            }
-
             if (s_ComponentInstance != null)
             {
-                s_ComponentInstance.Awoke = null;
-                s_ComponentInstance.Updated = null;
-                s_ComponentInstance.LateUpdated = null;
-                s_ComponentInstance.Destroyed = null;
-
+                s_ComponentInstance.OnAwake = null;
+                s_ComponentInstance.OnUpdate = null;
+                s_ComponentInstance.OnLateUpdate = null;
                 UnityObjectUtils.Destroy(s_ComponentInstance.gameObject);
                 s_ComponentInstance = null;
             }
 
-            if (s_FallbackDefaultSceneCompositionLayer != null)
+            if (s_DefaultSceneCompositionLayer != null)
             {
-                UnityObjectUtils.Destroy(s_FallbackDefaultSceneCompositionLayer.gameObject);
-                s_FallbackDefaultSceneCompositionLayer = null;
+                UnityObjectUtils.Destroy(s_DefaultSceneCompositionLayer.gameObject);
+                s_DefaultSceneCompositionLayer = null;
+            }
+
+            if (s_Instance != null)
+            {
+                s_Instance.UpdateProviders(s_Instance.m_EmptyList, s_Instance.m_RemovedLayers, s_Instance.m_EmptyList, s_Instance.m_EmptyList);
+                s_Instance.ClearAllState();
+                s_Instance.m_ProjectionRigOffsetSynchronizer = null;
+                s_Instance = null;
             }
 
             ManagerStopped?.Invoke();
+            s_StopMarker.End();
         }
 
+        
         internal void EnsureSceneCompositionManager()
         {
-            var sceneGameObject = GameObject.Find(CompositionLayerConstants.SceneManagerName);
+            if (s_ComponentInstance != null)
+                return;
 
-            if (sceneGameObject == null)
-            {
-                sceneGameObject = new GameObject(CompositionLayerConstants.SceneManagerName);
-                sceneGameObject.hideFlags = HideFlags.HideAndDontSave;
-                s_ComponentInstance = null;
-            }
-
+            s_Instance.m_ProjectionRigOffsetSynchronizer = new ProjectionRigOffsetSynchronizer();
+            //ddd
+            var sceneGameObject = new GameObject(CompositionLayerConstants.SceneManagerName);
+            sceneGameObject.hideFlags = HideFlags.HideAndDontSave;
+            
             sceneGameObject.SetActive(false);
 
-            s_ComponentInstance = sceneGameObject.GetComponent<CallbackComponent>();
-            if (s_ComponentInstance == null)
-                s_ComponentInstance = sceneGameObject.AddComponent<CallbackComponent>();
+            s_ComponentInstance = sceneGameObject.AddComponent<CallbackComponent>();
+            // Using assignments since send message cannot be called in awake.
+            s_ComponentInstance.OnAwake = Awake;
+            s_ComponentInstance.OnUpdate = Update;
+            s_ComponentInstance.OnLateUpdate = LateUpdate;
 
-            // Using assignments since send message cannot be called in awake
-            s_ComponentInstance.Awoke = Awake;
-            s_ComponentInstance.Updated = Update;
-            s_ComponentInstance.LateUpdated = LateUpdate;
-            s_ComponentInstance.Destroyed = OnSceneComponentDestroyed;
-
-            EnsureFallbackSceneCompositionLayer();
             sceneGameObject.SetActive(true);
         }
 
         internal void EnsureFallbackSceneCompositionLayer()
         {
-            GameObject sceneGameObject;
+            if (OccupiedLayers.Count == 0 || OccupiedLayers.ContainsKey(0))
+                return;
 
-            if (s_FallbackDefaultSceneCompositionLayer != null && s_FallbackDefaultSceneCompositionLayer.gameObject != null)
+            if (DefaultSceneCompositionLayer != null)
             {
-                sceneGameObject = s_FallbackDefaultSceneCompositionLayer.gameObject;
-            }
-            else
-            {
-                sceneGameObject = GameObject.Find(CompositionLayerConstants.DefaultSceneLayerName);
-
-                if (sceneGameObject == null)
-                {
-                    sceneGameObject = new GameObject(CompositionLayerConstants.DefaultSceneLayerName);
-                    sceneGameObject.hideFlags = HideFlags.HideAndDontSave;
-                }
+                CompositionLayerCreated(DefaultSceneCompositionLayer);
+                return;
             }
 
-            s_FallbackDefaultSceneCompositionLayer = sceneGameObject.GetComponent<CompositionLayer>();
-            if (s_FallbackDefaultSceneCompositionLayer == null)
-                s_FallbackDefaultSceneCompositionLayer = sceneGameObject.AddComponent<CompositionLayer>();
-
-            if (s_FallbackDefaultSceneCompositionLayer.LayerData == null)
-            {
-                s_FallbackDefaultSceneCompositionLayer.LayerData = CompositionLayerUtils.CreateLayerData(typeof(DefaultLayerData).FullName);
-            }
-
-            if (s_DefaultSceneCompositionLayer == null)
-                SetDefaultSceneCompositionLayer(s_FallbackDefaultSceneCompositionLayer);
-
-            OccupiedLayersDirty = true;
-            OccupiedLayersUpdated?.Invoke();
-        }
-
-        static void OnSceneComponentDestroyed()
-        {
-#if UNITY_EDITOR
-            EditorApplication.delayCall += () =>
-            {
-                Instance.ClearAllState();
-                if (s_ComponentInstance == null)
-                    Instance.EnsureSceneCompositionManager();
-                Instance.FindAllLayersInScene();
-            };
-#endif
+            var sceneGameObject = new GameObject(CompositionLayerConstants.DefaultSceneLayerName);
+            sceneGameObject.hideFlags = HideFlags.HideAndDontSave;
+            sceneGameObject.SetActive(false);
+            var layerData = CompositionLayerUtils.CreateLayerData(typeof(DefaultLayerData).FullName);
+            var compLayer = sceneGameObject.AddComponent<CompositionLayer>();
+            compLayer.LayerData = layerData;
+            compLayer.Order = 0;
+            sceneGameObject.SetActive(true);
         }
 
         internal void ClearAllState()
@@ -317,21 +372,6 @@ namespace Unity.XR.CompositionLayers.Services
         }
 
         /// <summary>
-        /// Can be called to help scripts locate individual composition layers.
-        /// </summary>
-        /// <param name="findFunction">Predicate function used to find some layer.</param>
-        public CompositionLayer FindCompositionLayer(Predicate<CompositionLayer> findFunction)
-        {
-            foreach (var layer in m_KnownLayers.Keys)
-            {
-                if (findFunction(layer))
-                    return layer;
-            }
-
-            return null;
-        }
-
-        /// <summary>
         /// Called to report that a new instance of a <see cref="CompositionLayer" /> is
         /// created. By default this is called from calls to Awake on a
         /// <see cref="CompositionLayer" /> instance.
@@ -339,35 +379,45 @@ namespace Unity.XR.CompositionLayers.Services
         /// <param name="layer">New layer to add to management.</param>
         public void CompositionLayerCreated(CompositionLayer layer)
         {
-            if (!IsLayerSceneValid(layer))
-                return;
+            EnsureSceneCompositionManager();
+
+            s_LayerCreatedMarker.Begin();
 
             var layerKnown = m_KnownLayers.ContainsKey(layer);
-            if (layerKnown || !OccupiedLayers.TryGetValue(layer.Order, out var occupiedLayer))
+            if (!OccupiedLayers.TryGetValue(layer.Order, out var occupiedLayer))
             {
-                OccupiedLayers.TryAdd(layer.Order, layer);
-                OccupiedLayersUpdated?.Invoke();
+                if(OccupiedLayers.TryAdd(layer.Order, layer))
+                    OccupiedLayersUpdated?.Invoke();
             }
             else if (occupiedLayer != layer)
             {
-                var orderInitialized = layer.OrderInitialized;
-                if (orderInitialized)
+                var orderInitializeAndNotDefault = layer.OrderInitialized; //&& layer.LayerData is not DefaultLayerData;
+                if (orderInitializeAndNotDefault)
+                {
                     CompositionLayerUtils.LogLayerOrderCannotBeSet(layer, layer.Order);
-
+                }
                 var order = GetNextUnusedLayer(layer.Order);
                 layer.Order = order;
-                if (orderInitialized)
+                if (orderInitializeAndNotDefault)
                     Debug.Log($"{layer.gameObject.name} is set to next available Layer Order: {order.ToString()}.");
             }
 
             if (layerKnown)
+            {
+                s_LayerCreatedMarker.End();
                 return;
-
+            }
+        
             var li = new LayerInfo() { Layer = layer, Id = layer.GetInstanceID() };
             m_KnownLayers.Add(layer, li);
             m_CreatedLayers.Add(li);
+
+            EnsureFallbackSceneCompositionLayer();
+
+            s_LayerCreatedMarker.End();
         }
 
+        //d
         /// <summary>
         /// Called to report that an instance of a <see cref="CompositionLayer" /> is
         /// active and ready to be rendered. By default this is called from calls to
@@ -382,9 +432,8 @@ namespace Unity.XR.CompositionLayers.Services
         /// </summary>
         /// <param name="layer">Currently managed layer to set to active.</param>
         public void CompositionLayerEnabled(CompositionLayer layer)
-        {
-            if (!IsLayerSceneValid(layer))
-                return;
+        {//dd
+            s_LayerEnabledMarker.Begin();
 
             if (!m_KnownLayers.ContainsKey(layer))
                 CompositionLayerCreated(layer);
@@ -402,6 +451,8 @@ namespace Unity.XR.CompositionLayers.Services
                 OccupiedLayers.Add(layer.Order, layer);
                 OccupiedLayersUpdated?.Invoke();
             }
+
+            s_LayerEnabledMarker.End();
         }
 
         /// <summary>
@@ -419,8 +470,13 @@ namespace Unity.XR.CompositionLayers.Services
         /// <param name="layer">Currently managed layer to set to disabled.</param>
         public void CompositionLayerDisabled(CompositionLayer layer)
         {
+            s_LayerDisabledMarker.Begin();
+
             if (!m_KnownLayers.ContainsKey(layer))
+            {
+                s_LayerDisabledMarker.End();
                 return;
+            }
 
             var li = m_KnownLayers[layer];
             if (m_ActiveLayers.Contains(li))
@@ -428,6 +484,8 @@ namespace Unity.XR.CompositionLayers.Services
 
             if (!m_ModifiedLayers.Contains(li))
                 m_ModifiedLayers.Add(li);
+
+            s_LayerDisabledMarker.End();
         }
 
         /// <summary>
@@ -445,6 +503,8 @@ namespace Unity.XR.CompositionLayers.Services
         /// <param name="layer">Currently managed layer to remove from management.</param>
         public void CompositionLayerDestroyed(CompositionLayer layer)
         {
+            s_LayerDestroyedMarker.Begin();
+
             if (m_KnownLayers.ContainsKey(layer))
             {
                 var li = m_KnownLayers[layer];
@@ -467,7 +527,12 @@ namespace Unity.XR.CompositionLayers.Services
                 OccupiedLayersUpdated?.Invoke();
             }
 
-            CheckIfShutDownManager();
+            if (IsActiveLayersDestroyed)
+            {
+                StopCompositionLayerManager();
+            }
+
+            s_LayerDestroyedMarker.End();
         }
 
         /// <summary>
@@ -477,8 +542,13 @@ namespace Unity.XR.CompositionLayers.Services
         /// <param name="layer">The <see cref="CompositionLayer"/> that is modified.</param>
         public void CompositionLayerStateChanged(CompositionLayer layer)
         {
+            s_LayerStateChangededMarker.Begin();
+
             if (layer == null || !m_KnownLayers.ContainsKey(layer))
+            {
+                s_LayerStateChangededMarker.End();
                 return;
+            }
 
             var li = m_KnownLayers[layer];
 
@@ -492,6 +562,8 @@ namespace Unity.XR.CompositionLayers.Services
                     // remove layer that may have previously been a projection rig layer.
                     m_ProjectionRigOffsetSynchronizer.RemoveProjectionRig(layer.GetInstanceID());
             }
+
+            s_LayerStateChangededMarker.End();
         }
 
         internal void FindAllLayersInScene()
@@ -502,18 +574,31 @@ namespace Unity.XR.CompositionLayers.Services
             else
                 OccupiedLayers.Clear();
 
-            if (DefaultSceneCompositionLayer == s_FallbackDefaultSceneCompositionLayer)
-            {
-                CompositionLayerCreated(DefaultSceneCompositionLayer);
-                CompositionLayerEnabled(DefaultSceneCompositionLayer);
-            }
-
             var foundLayers = UnityEngine.Object.FindObjectsByType<CompositionLayer>(isPlaying ? FindObjectsInactive.Exclude : FindObjectsInactive.Include, FindObjectsSortMode.None);
 
             foreach (var layer in foundLayers)
             {
                 if (!IsLayerSceneValid(layer))
                     continue;
+
+                if (layer.LayerData is DefaultLayerData)
+                {
+                    if (layer.gameObject.hideFlags == HideFlags.HideInHierarchy)
+                        layer.gameObject.hideFlags = HideFlags.HideAndDontSave;
+
+                    DefaultSceneCompositionLayer = layer;
+
+                    break;
+                }
+            }
+
+            foreach (var layer in foundLayers)
+            {
+                if (!IsLayerSceneValid(layer))
+                    continue;
+
+                if (!layer.OrderInitialized)
+                    layer.InitializeLayerOrder();
 
                 CompositionLayerCreated(layer);
                 if (layer.enabled && layer.gameObject.activeInHierarchy)
@@ -523,16 +608,48 @@ namespace Unity.XR.CompositionLayers.Services
             OccupiedLayersUpdated?.Invoke();
         }
 
+        void UpdateProviders(List<LayerInfo> createdLayers, List<int> removedLayers, List<LayerInfo> modifiedLayers, List<LayerInfo> activeLayers)
+        {
+            if (s_LayerProvider != null)
+            {
+                s_LayerProviderUpdateMarker.Begin();
+                m_ActiveLayers.Sort(LayerSorter);
+                s_LayerProvider.UpdateLayers(createdLayers, removedLayers, modifiedLayers, activeLayers);
+                s_LayerProviderUpdateMarker.End();
+            }
+
+            if (s_EmulationLayerProvider != null)
+            {
+                s_EmulatedLayerProviderUpdateMarker.Begin();
+                m_ActiveLayers.Sort(LayerSorter);
+                s_EmulationLayerProvider.UpdateLayers(createdLayers, removedLayers, modifiedLayers,
+                    m_ActiveLayers);
+                s_EmulatedLayerProviderUpdateMarker.End();
+            }
+
+            if (s_InternalLayerProviders != null)
+            {
+                s_InternalLayerProviderUpdateMarker.Begin();
+                foreach (var layerProvider in s_InternalLayerProviders)
+                {
+                    layerProvider?.UpdateLayers(createdLayers, removedLayers, modifiedLayers, activeLayers);
+                }
+                s_InternalLayerProviderUpdateMarker.End();
+            }
+
+        }
+
         void Awake()
         {
+            s_AwakeMarker.Begin();
             ClearAllState();
             FindAllLayersInScene();
+            s_AwakeMarker.End();
         }
 
         internal void Update()
         {
-            if (DefaultSceneCompositionLayer == null || !DefaultSceneCompositionLayer.isActiveAndEnabled)
-                ResetDefaultSceneCompositionLayer();
+            s_UpdateMarker.Begin();
 
             // This is to for when deactivated game objects are deleted in the editor
             if (OccupiedLayersDirty)
@@ -543,26 +660,33 @@ namespace Unity.XR.CompositionLayers.Services
                 OccupiedLayersDirty = false;
             }
 
-            if (s_LayerProvider != null)
+            UpdateProviders(m_CreatedLayers, m_RemovedLayers, m_ModifiedLayers, m_ActiveLayers);
+            EnsureFallbackSceneCompositionLayer();
+           
+            if (IsActiveLayersDestroyed)
             {
-                m_ActiveLayers.Sort(LayerSorter);
-                s_LayerProvider.UpdateLayers(m_CreatedLayers, m_RemovedLayers, m_ModifiedLayers, m_ActiveLayers);
-            }
-            if (s_EmulationLayerProvider != null)
-            {
-                m_ActiveLayers.Sort(LayerSorter);
-                s_EmulationLayerProvider.UpdateLayers(m_CreatedLayers, m_RemovedLayers, m_ModifiedLayers,
-                    m_ActiveLayers);
+                StopCompositionLayerManager();
             }
 
             ClearSingleShotState();
+
+            s_UpdateMarker.End();
         }
 
         internal void LateUpdate()
         {
+            s_LateUpdateMarker.Begin();
             s_LayerProvider?.LateUpdate();
             s_EmulationLayerProvider?.LateUpdate();
-            m_ProjectionRigOffsetSynchronizer.SyncRigsWithMainCameraParentOffsets();
+            if(s_InternalLayerProviders != null)
+            {
+                foreach (var layerProvider in s_InternalLayerProviders)
+                {
+                    layerProvider?.LateUpdate(); // Note: Undo/Redo cause null referencing in Editor.
+                }
+            }
+            m_ProjectionRigOffsetSynchronizer?.SyncRigsWithMainCameraParentOffsets();
+            s_LateUpdateMarker.End();
         }
 
         internal static void GetOccupiedLayers(List<CompositionLayer> layers)
@@ -575,12 +699,10 @@ namespace Unity.XR.CompositionLayers.Services
 
         internal static bool IsLayerSceneValid(CompositionLayer layer)
         {
-            // Default layer is a free game object and not part of a normal scene
-            if (layer == s_FallbackDefaultSceneCompositionLayer)
-                return true;
-
             if (!layer.gameObject.scene.IsValid())
+            {
                 return false;
+            }
 
 #if UNITY_EDITOR
             // Check if the layer is being created in the active scene
@@ -667,106 +789,24 @@ namespace Unity.XR.CompositionLayers.Services
 
             return order;
         }
-
-        /// <summary>
-        /// Sets the <see cref="CompositionLayer"/> to be used as the <see cref="DefaultSceneCompositionLayer"/>. This
-        /// will unset and disable the previous <see cref="DefaultSceneCompositionLayer"/>. If the
-        /// <see cref="DefaultSceneCompositionLayer"/> fails to be set to the <see cref="CompositionLayer"/> a fallback
-        /// will be used.
-        /// </summary>
-        /// <param name="compositionLayer">The layer to use as the <see cref="DefaultSceneCompositionLayer"/>.</param>
-        public void SetDefaultSceneCompositionLayer(CompositionLayer compositionLayer)
+        //ddddddd
+        bool IsActiveLayersDestroyed
         {
-            if (compositionLayer != null
-                && DefaultSceneCompositionLayer == compositionLayer
-                && compositionLayer.Order == 0
-                && OccupiedLayers.TryGetValue(0, out var otherLayer)
-                && otherLayer == compositionLayer)
-                return;
-
-            if (DefaultSceneCompositionLayer != compositionLayer)
-                UnsetPreviousDefaultSceneCompositionLayer();
-
-            if (compositionLayer == null)
+            get
             {
-                EnsureFallbackSceneCompositionLayer();
-                return;
-            }
+                var isEmpty = m_ActiveLayers.Count == 0;
+                if (isEmpty)
+                    return true;
 
-
-            var parentTransform = compositionLayer.gameObject.transform.parent;
-            if (!compositionLayer.gameObject.activeInHierarchy && parentTransform != null && !parentTransform.gameObject.activeInHierarchy)
-            {
-                Debug.LogWarning($"Cannot use {compositionLayer.gameObject.name} as default scene layer! " +
-                    "Cannot activate the GameObject in the hierarchy.");
-                s_DefaultSceneCompositionLayer = s_FallbackDefaultSceneCompositionLayer;
-                EnsureFallbackSceneCompositionLayer();
-                return;
-            }
-
-            s_DefaultSceneCompositionLayer = compositionLayer;
-
-            compositionLayer.Order = 0;
-            compositionLayer.gameObject.SetActive(true);
-            compositionLayer.enabled = true;
-
-            OccupiedLayersDirty = true;
-            OccupiedLayersUpdated?.Invoke();
-        }
-
-        /// <summary>
-        /// Reset the <see cref="DefaultSceneCompositionLayer"/> back to the fallback <see cref="CompositionLayer"/>
-        /// provided byt the <see cref="CompositionLayerManager"/>.
-        /// </summary>
-        public void ResetDefaultSceneCompositionLayer()
-        {
-            if (DefaultSceneCompositionLayer == s_FallbackDefaultSceneCompositionLayer)
-            {
-                EnsureFallbackSceneCompositionLayer();
-                return;
-            }
-
-            SetDefaultSceneCompositionLayer(null);
-        }
-
-        void UnsetPreviousDefaultSceneCompositionLayer()
-        {
-            var previousSceneLayer = s_DefaultSceneCompositionLayer;
-            s_DefaultSceneCompositionLayer = null;
-
-            if (previousSceneLayer == null)
-                return;
-
-            if (previousSceneLayer.Order == 0 && OccupiedLayers.ContainsKey(0) && OccupiedLayers[0] == previousSceneLayer)
-            {
-                OccupiedLayers.Remove(0);
-                previousSceneLayer.enabled = false;
-                Debug.Log($"{previousSceneLayer.gameObject}'s is no longer the Default Scene Composition Layer and is now disabled.");
-            }
-
-            if (s_FallbackDefaultSceneCompositionLayer != previousSceneLayer &&
-                (previousSceneLayer.Order == 0 || !previousSceneLayer.CanChangeOrderTo(previousSceneLayer.Order)))
-            {
-                var previousSceneLayerData = previousSceneLayer.LayerData;
-                var preferOverlay = previousSceneLayerData == null
-                    || CompositionLayerUtils.GetLayerDescriptor(previousSceneLayerData.GetType()).PreferOverlay;
-
-                previousSceneLayer.Order = GetFirstUnusedLayer(preferOverlay);
+                if (m_ActiveLayers.Count == 1)
+                {
+                    var lastLayer = m_ActiveLayers.First().Layer;
+                    return lastLayer.LayerData is DefaultLayerData && lastLayer.gameObject.hideFlags.HasFlag(HideFlags.HideAndDontSave);
+                }
+                return false;
             }
         }
 
-        void CheckIfShutDownManager()
-        {
-            if (OccupiedLayers.Count == 1 && OccupiedLayers.TryGetValue(0, out var occupiedLayer)
-                && occupiedLayer == s_FallbackDefaultSceneCompositionLayer)
-            {
-                // Update for the newly removed layers before stopping.
-                if (m_RemovedLayers.Count > 0) 
-                    Update();
-
-                StopCompositionLayerManager();
-            }
-        }
 
         // This class syncs the transforms of the projection rig composition layers to be at the same total offset of the main camera's parents.
         private class ProjectionRigOffsetSynchronizer
@@ -776,12 +816,12 @@ namespace Unity.XR.CompositionLayers.Services
 
             public ProjectionRigOffsetSynchronizer()
             {
-                mainCameraTransform = Camera.main?.transform;
+                mainCameraTransform = mainCameraCache?.transform;
             }
 
             public void AddProjectionRig(CompositionLayer projectionRig)
             {
-                // Early out if this rig's transform has already been added
+                // Early out if this rig's transform has already been added.
                 if (projectionRigs.ContainsKey(projectionRig.GetInstanceID()))
                     return;
 
@@ -814,7 +854,7 @@ namespace Unity.XR.CompositionLayers.Services
             bool ParentsHaveChanged()
             {
                 if (mainCameraTransform == null)
-                    mainCameraTransform = Camera.main?.transform;
+                    mainCameraTransform = mainCameraCache?.transform;
 
                 bool parentsHaveChanged = false;
                 var currentParent = mainCameraTransform?.parent;
@@ -836,7 +876,7 @@ namespace Unity.XR.CompositionLayers.Services
             Pose GetTotalLocalPoseOffsetOfMainCameraParents()
             {
                 if (mainCameraTransform == null)
-                    mainCameraTransform = Camera.main?.transform;
+                    mainCameraTransform = mainCameraCache?.transform;
 
                 var totalLocalPoseOffset = Pose.identity;
                 Transform currentParent = mainCameraTransform?.parent;

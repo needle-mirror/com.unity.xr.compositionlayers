@@ -19,6 +19,9 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
 
         Vector3 m_AdjustmentScale = Vector3.one;
 
+        bool m_ApplyTransformScale = false;
+        bool m_ValuesChanged = true;
+
         public override bool IsSupported(Camera camera)
         {
             if (camera.cameraType == CameraType.SceneView)
@@ -31,7 +34,6 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             return isSupported;
         }
 
-        private bool m_ApplyTransformScale = false;
 
         protected internal override void UpdateEmulatedLayerData()
         {
@@ -42,18 +44,48 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 Debug.LogError("LayerData isn't CylinderLayerData. Please check EmulatedLayerDataTypeAttribute.");
                 return;
             }
-            m_ApplyTransformScale = cylinderLayer.ApplyTransformScale;
-            m_AdjustmentScale = (m_ApplyTransformScale ? Transform.lossyScale : Vector3.one);
-            m_Radius = cylinderLayer.Radius * m_AdjustmentScale.z;
-            m_CentralAngle = cylinderLayer.CentralAngle * m_AdjustmentScale.x / m_AdjustmentScale.z;
-            m_Height = cylinderLayer.GetHeight() * m_AdjustmentScale.y;
-            m_AspectRatio = (m_Radius * m_CentralAngle) / m_Height;
 
-            m_Size = Mathf.Max(m_Radius, m_Height * 0.5f);
+            m_ValuesChanged = UpdateValue(ref m_ApplyTransformScale, cylinderLayer.ApplyTransformScale);
+            m_ValuesChanged |= UpdateValue(ref m_AdjustmentScale, (m_ApplyTransformScale ? Transform.lossyScale : Vector3.one));
+            m_ValuesChanged |= UpdateValue(ref m_Radius, cylinderLayer.Radius * m_AdjustmentScale.z);
+            m_ValuesChanged |= UpdateValue(ref m_CentralAngle, cylinderLayer.CentralAngle * m_AdjustmentScale.x / m_AdjustmentScale.z);
+            m_ValuesChanged |= UpdateValue(ref m_Height, cylinderLayer.GetHeight() * m_AdjustmentScale.y);
+            m_ValuesChanged |= UpdateValue(ref m_AspectRatio, (m_Radius * m_CentralAngle) / m_Height);
+            m_ValuesChanged |= UpdateValue(ref m_Size, Mathf.Max(m_Radius, m_Height * 0.5f));
+        }
+
+        bool UpdateValue(ref float currentValue, float newValue) 
+        {
+            if (currentValue == newValue)
+                return false;
+
+            currentValue = newValue;
+            return true;
+        }
+
+        bool UpdateValue(ref bool currentValue, bool newValue)
+        {
+            if (currentValue == newValue)
+                return false;
+
+            currentValue = newValue;
+            return true;
+        }
+
+        bool UpdateValue(ref Vector3 currentValue, Vector3 newValue)
+        {
+            if (currentValue == newValue)
+                return false;
+
+            currentValue = newValue;
+            return true;
         }
 
         protected override void UpdateMesh(ref Mesh mesh)
         {
+            if (mesh != null && !m_ValuesChanged)
+                return;
+
             // TODO dynamic step count was causing an issue when scrubbing the fov slider.
             // var stepCount = (int)m_FOV / 10;
             // Cropping to maintain aspect ratio if enabled.
@@ -132,13 +164,15 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                         if (textureExt.CropToAspect)
                         {
                             float texRatio = 1f;
+
+
                             if (textureExt.sourceTexture == TexturesExtension.SourceTextureEnum.LocalTexture)
                             {
                                 if (textureExt.LeftTexture == null)
                                     break;
                                 texRatio = (float)textureExt.LeftTexture.width / (float)textureExt.LeftTexture.height;
                             }
-                            else
+                            else if (textureExt.sourceTexture == TexturesExtension.SourceTextureEnum.AndroidSurface)
                             {
                                 texRatio = (float)textureExt.Resolution.x / (float)textureExt.Resolution.y;
                             }

@@ -13,35 +13,27 @@ namespace Unity.XR.CompositionLayers.Services
     class CallbackComponent : MonoBehaviour
     {
         /// <summary> Called at end of <see cref="Awake"/> </summary>
-        internal Action Awoke;
+        internal Action OnAwake;
 
         /// <summary> Called at end of  <see cref="Update"/> </summary>
-        internal Action Updated;
+        internal Action OnUpdate;
 
         /// <summary> Called at end of  <see cref="LateUpdate"/> </summary>
-        internal Action LateUpdated;
-
-        /// <summary> Called at end of  <see cref="OnDestroy"/> </summary>
-        internal Action Destroyed;
+        internal Action OnLateUpdate;
 
         void Awake()
         {
-            Awoke?.Invoke();
+            OnAwake?.Invoke();
         }
 
         void Update()
         {
-            Updated?.Invoke();
+            OnUpdate?.Invoke();
         }
 
         void LateUpdate()
         {
-            LateUpdated?.Invoke();
-        }
-
-        void OnDestroy()
-        {
-            Destroyed?.Invoke();
+            OnLateUpdate?.Invoke();
         }
     }
 }

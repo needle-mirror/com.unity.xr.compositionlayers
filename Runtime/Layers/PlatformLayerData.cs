@@ -28,5 +28,31 @@ namespace Unity.XR.CompositionLayers.Layers
             if (!string.IsNullOrEmpty(text))
                 JsonUtility.FromJsonOverwrite(text, this);
         }
+
+        /// <summary>
+        /// Check to support binary serialize/deserialize.
+        /// </summary>
+        /// <returns>true if target platform supports binary serialize/deserialize.</returns>
+        public virtual bool IsSupportedSerializeBinary()
+        {
+            return false;
+        }
+
+        /// <summary>
+        /// Serialize all properties to binary.
+        /// </summary>
+        /// <returns>Serialized binary.</returns>
+        public virtual int[] SerializeBinary()
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Deserialize all properties from binary.
+        /// </summary>
+        /// <param name="binary">Serialized binary.</param>
+        public virtual void DeserializeBinary(int[] binary)
+        {
+        }
     }
 }

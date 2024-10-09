@@ -49,7 +49,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 {
                     case NearFarInteractor:
                         proxyGameObject = CreateProxy(interactor as NearFarInteractor, position);
-                        Debug.Log("create near far proxy");
                         break;
                     case XRRayInteractor:
                         proxyGameObject = CreateProxy(interactor as XRRayInteractor, position);

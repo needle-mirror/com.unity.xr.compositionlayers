@@ -79,7 +79,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
                         IsRuleEnabled = () =>
                         {
                             // If Composition Layers isn't enabled, no need to show the rule
-                            if (CompositionLayerManager.Instance == null)
+                            if (!CompositionLayerManager.ManagerActive)
                                 return false;
 
                             return true;

@@ -12,6 +12,30 @@ namespace Unity.XR.CompositionLayers.Layers.Internal.Editor
     internal static class UIHelper
     {
         const string k_WarningIconPath = "d_console.warnicon.sml";
+        const string k_ErrorIconPath = "d_console.erroricon.sml";
+
+        static int s_PushDisabledCount = 0;
+
+        /// <summary>
+        /// Push GUI enabled state.
+        /// </summary>
+        public static void PushEnabled(bool isEnabled)
+        {
+            GUI.enabled = GUI.enabled && isEnabled;
+            if (!GUI.enabled)
+                ++s_PushDisabledCount;
+        }
+
+        /// <summary>
+        /// Pop GUI enabled state.
+        /// </summary>
+        public static void PopEnabled()
+        {
+            if (s_PushDisabledCount > 0 && --s_PushDisabledCount == 0)
+            {
+                GUI.enabled = true;
+            }
+        }
 
         /// <summary>
         /// Get the warning icon for CompositionLayerEditor.
@@ -21,6 +45,15 @@ namespace Unity.XR.CompositionLayers.Layers.Internal.Editor
         public static Texture GetWarningIcon()
         {
             return EditorGUIUtility.Load(k_WarningIconPath) as Texture;
+        }
+
+        /// <summary>
+        /// Get the error icon for HDRTonemappingEditor.
+        /// </summary>
+        /// <returns>Texture for the error icon.</returns>
+        public static Texture GetErrorIcon()
+        {
+            return EditorGUIUtility.Load(k_ErrorIconPath) as Texture;
         }
 
         /// <summary>
@@ -151,13 +184,22 @@ namespace Unity.XR.CompositionLayers.Layers.Internal.Editor
                 return "Default";
 
             var layerProviderType = platformProvider.LayerProviderType;
-            if (layerProviderType == null)
-                return "Default";
+            if (layerProviderType != null)
+            {
+                var name = layerProviderType.Name;
+                name = RemovePostfix(name, "LayerProvider");
+                name = RemovePostfix(name, "Provider");
+                return name;
+            }
 
-            var name = layerProviderType.Name;
-            name = RemovePostfix(name, "LayerProvider");
-            name = RemovePostfix(name, "Provider");
-            return name;
+            var xrLoader = platformProvider.XRLoaderType;
+            if (xrLoader != null)
+            {
+                var name = xrLoader.Name;
+                return name;
+            }
+
+            return "Default";
         }
 
         /// <summary>

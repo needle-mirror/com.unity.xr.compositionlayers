@@ -1,10 +1,12 @@
 using UnityEditor;
+using Unity.XR.CompositionLayers.Services;
+using System.Collections.Generic;
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
     static class CompositionLayerMenuItems
     {
-        [MenuItem("GameObject/XR/Composition Layers/Quad Layer UI Panel")]
+        [MenuItem("GameObject/XR/Composition Layers/Quad Layer UI Panel", false, 100)]
         static void CreateQuadLayerUIPanel()
         {
             CompositionLayerEditorUtils.CreateLayerGameObjectMenuItem(typeof(QuadLayerData));
@@ -29,7 +31,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             return CompositionLayerEditorUtils.ValidateCreateLayerComponentMenuItem();
         }
 
-        [MenuItem("GameObject/XR/Composition Layers/Cylinder Layer UI Panel")]
+        [MenuItem("GameObject/XR/Composition Layers/Cylinder Layer UI Panel", false, 101)]
         static void CreateCylinderLayerUIPanel()
         {
             CompositionLayerEditorUtils.CreateLayerGameObjectMenuItem(typeof(CylinderLayerData));
@@ -42,7 +44,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             CompositionLayerEditorUtils.CreateLayerGameObjectMenuItem(typeof(CylinderLayerData));
         }
 
-        [MenuItem("Component/XR/Composition Layers/Cylinder Layer", false,102)]
+        [MenuItem("Component/XR/Composition Layers/Cylinder Layer", false, 102)]
         static void CreateCylinderLayerComponent()
         {
             CompositionLayerEditorUtils.CreateLayerComponentMenuItem(typeof(CylinderLayerData));
@@ -108,7 +110,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             return CompositionLayerEditorUtils.ValidateCreateLayerComponentMenuItem();
         }
 
-        [MenuItem("GameObject/XR/Composition Layers/Projection Eye Rig", false, 30)]
+        [MenuItem("GameObject/XR/Composition Layers/Projection Eye Rig", false, 100)]
         static void CreateProjectionLayerRig()
         {
             CompositionLayerEditorUtils.CreateLayerGameObjectMenuItem(typeof(ProjectionLayerRigData));
@@ -124,6 +126,31 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         static bool ValidateProjectionLayerRigComponent()
         {
             return CompositionLayerEditorUtils.ValidateCreateLayerComponentMenuItem();
+        }
+
+        [MenuItem("GameObject/XR/Composition Layers/Default Scene Layer", false, 16)]
+        static void CreateDefaultSceneLayer()
+        {
+            if (!CompositionLayerManager.ManagerActive)
+                CompositionLayerManager.StartCompositionLayerManager();
+            else
+                CompositionLayerManager.Instance.EnsureFallbackSceneCompositionLayer();
+
+            var layers = new List<CompositionLayer>();
+            CompositionLayerManager.GetOccupiedLayers(layers);
+            foreach (var layer in layers)
+            {
+                if (layer.LayerData.GetType() == typeof(DefaultLayerData))
+                {
+                    if (layer.gameObject.hideFlags == UnityEngine.HideFlags.None)
+                        UnityEngine.Debug.Log("Cannot create a Default Scene Layer because one already exists in the scene.");
+                    else
+                        layer.gameObject.hideFlags = UnityEngine.HideFlags.None;
+
+                    EditorGUIUtility.PingObject(layer.gameObject);
+                    break;
+                }
+            }
         }
     }
 }

@@ -71,14 +71,11 @@ inline void ForwardPassVertex(inout v2f o, in appdata v)
     COMPOSITION_LAYERS_INITIALIZE_FORWARD_PASS_VERTEX(o, v);
 
 #if COMPOSITION_LAYERTYPE_PROJECTION
-    o.vertex = TransformProjectionPos(v.vertex);
+    o.vertex = TRANSFORM_PROJECTION_POS(v.vertex);
 #elif COMPOSITION_LAYERTYPE_CUBEMAP
     o.vertex = TransformCubePos(v.vertex);
 #else
-    if(_TransformMatrixType == COMPOSITION_LAYERS_TRANSFORM_MATRIX_TYPE_MODEL_VIEW)
-        o.vertex = TransformModelViewObjectPos(v.vertex, _TransformMatrix);
-    else
-        o.vertex = TransformWorldObjectPos(v.vertex);
+    o.vertex = TRANSFORM_OBJECT_POS(v.vertex);
 #endif
 
 #if COMPOSITION_LAYERTYPE_LAYER || COMPOSITION_LAYERTYPE_PROJECTION // for Layer / Projection
@@ -160,12 +157,14 @@ inline float4 ForwardPassFragment(in v2f i)
     float4 color = ForwardPassFragmentColor(i);
 
 #if _ALPHATEST_ON
-    clip(color.a - _Cutoff);
+    clip(color.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff));
 #endif
 
 #if COLOR_SCALE_BIAS_ON
     APPLY_COLOR_SCALE_BIAS(color);
 #endif
+
+    APPLY_HDR_TONEMAP(color.rgb, UnityPerMaterial);
 
     return color;
 }

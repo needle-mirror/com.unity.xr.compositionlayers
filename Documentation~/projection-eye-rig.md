@@ -31,8 +31,3 @@ This action will cull the object from the main camera, and add it to the hidden 
 Unlike the standard Projection Layer where you can manually assign textures to the layer, the Project layer eye rig will not allow for texture assignment. Instead it will generate its own textures from a number of cameras that mimic the active cameras during edit time, play mode, and runtime.
 
 In edit time, the eye rig will follow the Scene Camera. During Play Mode, it will follow the Main Camera, and at runtime it will render from the two eye cameras.
-
-Note: Projection Layer Emulation is not supported in Gameview during Play Mode and Standalone build Mirror View Emulation.
-
-
-

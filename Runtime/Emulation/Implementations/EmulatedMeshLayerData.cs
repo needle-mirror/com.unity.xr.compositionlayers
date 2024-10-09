@@ -56,7 +56,8 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             }
             else
             {
-                customTransformData.SetWorldPoseMatrix(this.Transform);
+                if (this.Transform != null)
+                    customTransformData.SetWorldPoseMatrix(this.Transform);
             }
 
 #if UNITY_EDITOR
@@ -75,7 +76,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
 
                 m_CustomTransformDataInSceneView = customTransformDataInSceneView;
                 m_MaterialPropertyBlockSceneView.SetMatrix(k_TransformMatrix, customTransformDataInSceneView.Matrix);
-                m_MaterialPropertyBlockSceneView.SetInt(k_TransformMatrixType, (int)customTransformDataInSceneView.MatrixType);
+                m_MaterialPropertyBlockSceneView.SetInteger(k_TransformMatrixType, (int)customTransformDataInSceneView.MatrixType);
             }
 #endif
 
@@ -84,15 +85,21 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 m_CommandBufferTemp.IsInvalidated = true;
                 m_CommandBufferTempSceneView.IsInvalidated = true;
                 m_CustomTransformData = customTransformData;
-                EmulationMaterial.SetMatrix(k_TransformMatrix, customTransformData.Matrix);
-                EmulationMaterial.SetInt(k_TransformMatrixType, (int)customTransformData.MatrixType);
+                if (EmulationMaterial != null)
+                {
+                    EmulationMaterial.SetMatrix(k_TransformMatrix, customTransformData.Matrix);
+                    EmulationMaterial.SetInteger(k_TransformMatrixType, (int)customTransformData.MatrixType);
+                }
             }
 
             UpdateMesh(ref m_Mesh);
         }
 
-        protected override void AddCommands(CommandBuffer commandBuffer, CommandArgs commandArgs)
+        protected override void AddCommands(RenderContext renderContext, CommandArgs commandArgs)
         {
+            if (EmulationMaterial == null)
+                return;
+
             MaterialPropertyBlock properties = null;
             Matrix4x4 transformMatrix = m_CustomTransformData.Matrix;
 #if UNITY_EDITOR
@@ -102,7 +109,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 transformMatrix = m_CustomTransformDataInSceneView.Matrix;
             }
 #endif
-            commandBuffer.DrawMesh(m_Mesh, transformMatrix, EmulationMaterial, 0, -1, properties);
+            renderContext.DrawMesh(m_Mesh, transformMatrix, EmulationMaterial, 0, -1, properties);
         }
 
         public override void Dispose()

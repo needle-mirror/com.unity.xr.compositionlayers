@@ -62,29 +62,10 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             if (compositionLayer == null || platformLayerData == null)
                 return;
 
-            var platformLayerDataTypeName = platformLayerData.GetType().FullName;
-
-            var keys = compositionLayer.m_PlatformLayerDataKeys;
-            var texts = compositionLayer.m_PlatformLayerDataTexts;
-            var keyLength = keys != null ? keys.Length : 0;
-            var textsLength = texts != null ? texts.Length : 0;
-            int length = Math.Min(keyLength, textsLength);
-
-            for (int i = 0; i < length; ++i)
-            {
-                if (keys[i] == platformLayerDataTypeName)
-                {
-                    texts[i] = platformLayerData.Serialize();
-                    return;
-                }
-            }
-
-            Array.Resize(ref keys, length + 1);
-            Array.Resize(ref texts, length + 1);
-            keys[length] = platformLayerDataTypeName;
-            texts[length] = platformLayerData.Serialize();
-            compositionLayer.m_PlatformLayerDataKeys = keys;
-            compositionLayer.m_PlatformLayerDataTexts = texts;
+            compositionLayer.SerializePlatformLayerData(platformLayerData);
+            // Feedback to current platform layer data cache (m_PlatformLayerData) immediately.
+            if (compositionLayer.m_PlatformLayerData != null && compositionLayer.m_PlatformLayerData.GetType() == platformLayerData.GetType() && compositionLayer.m_PlatformLayerData != platformLayerData)
+                compositionLayer.DeserializePlatformLayerData(ref compositionLayer.m_PlatformLayerData);
         }
 
         /// <summary>
@@ -99,25 +80,10 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             if (compositionLayer == null || platformLayerData == null)
                 return;
 
-            var platformLayerDataTypeName = platformLayerData.GetType().FullName;
-
-            var keys = compositionLayer.m_PlatformLayerDataKeys;
-            var texts = compositionLayer.m_PlatformLayerDataTexts;
-            var keyLength = keys != null ? keys.Length : 0;
-            var textsLength = texts != null ? texts.Length : 0;
-            int length = Math.Min(keyLength, textsLength);
-
-            for (int i = 0; i < length; ++i)
-            {
-                if (keys[i] == platformLayerDataTypeName)
-                {
-                    platformLayerData.Deserialize(texts[i]);
-                    return;
-                }
-            }
-
-            var tempPlatformLayerData = Activator.CreateInstance(platformLayerData.GetType()) as PlatformLayerData;
-            platformLayerData.Deserialize(tempPlatformLayerData.Serialize());
+            compositionLayer.DeserializePlatformLayerData(ref platformLayerData);
+            // Feedback to current platform layer data cache (m_PlatformLayerData) immediately.
+            if (compositionLayer.m_PlatformLayerData != null && compositionLayer.m_PlatformLayerData.GetType() == platformLayerData.GetType() && compositionLayer.m_PlatformLayerData != platformLayerData)
+                compositionLayer.DeserializePlatformLayerData(ref compositionLayer.m_PlatformLayerData);
         }
 
         // Private functions
@@ -132,17 +98,18 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             CompactPlatformLayerDataArray(compositionLayer, activePlatformLayerDataTypes);
 
             var keys = compositionLayer.m_PlatformLayerDataKeys;
-            var texts = compositionLayer.m_PlatformLayerDataTexts;
-            int length = Math.Min(keys != null ? keys.Length : 0, texts != null ? texts.Length : 0);
+            var keyLength = keys != null ? keys.Length : 0;
 
             // Deserialize PlatformLayerData from CompositionLayer.m_PlatformLayerDataKeys / m_PlatformLayerDataValues
-            for (int i = 0; i < length; ++i)
+            for (int i = 0; i < keyLength; ++i)
             {
                 var platformLayerDataType = GetPlatformLayerDataTypeFromKey(activePlatformLayerDataTypes, keys[i]);
                 if (platformLayerDataType != null)
                 {
-                    var platformLayerData = Activator.CreateInstance(platformLayerDataType) as PlatformLayerData;
-                    platformLayerData.Deserialize(texts[i]);
+                    var platformLayerData = compositionLayer.DeserializePlatformLayerData(platformLayerDataType);
+                    if (platformLayerData == null)
+                        platformLayerData = Activator.CreateInstance(platformLayerDataType) as PlatformLayerData;
+
                     platformLayerDataList.Add(platformLayerData);
                 }
             }
@@ -154,21 +121,24 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         {
             var keys = compositionLayer.m_PlatformLayerDataKeys;
             var texts = compositionLayer.m_PlatformLayerDataTexts;
+            var binaries = CompositionLayer.ToBinaryDataList(compositionLayer.m_PlatformLayerDataBinary);
             var keyLength = keys != null ? keys.Length : 0;
-            var textsLength = texts != null ? texts.Length : 0;
-            int length = Math.Min(keyLength, textsLength);
+            var textLength = texts != null ? texts.Length : 0;
+            var binaryLength = binaries != null ? binaries.Length : 0;
 
-            bool isUpdated = keyLength != textsLength;
+            bool isUpdated = (keyLength < textLength) || (keyLength < binaryLength);
 
-            var newKeys = new List<string>(length);
-            var newTexts = new List<string>(length);
+            var newKeys = new List<string>(keyLength);
+            var newTexts = new List<string>(keyLength);
+            var newBinaries = new List<int[]>(keyLength);
 
-            for (int i = 0; i < length; ++i)
+            for (int i = 0; i < keyLength; ++i)
             {
                 if (GetPlatformLayerDataTypeFromKey(platformLayerDataTypes, keys[i]) != null)
                 {
                     newKeys.Add(keys[i]);
-                    newTexts.Add(texts[i]);
+                    newTexts.Add(i < textLength ? texts[i] : null);
+                    newBinaries.Add(i < binaryLength ? binaries[i] : null);
                 }
                 else
                 {
@@ -178,8 +148,14 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
             if (isUpdated)
             {
+                var newTextsArray = newTexts.ToArray();
+                var newBinariesArray = newBinaries.ToArray();
+                CompositionLayer.CompactArray(ref newTextsArray);
+                CompositionLayer.CompactArray(ref newBinariesArray);
+
                 compositionLayer.m_PlatformLayerDataKeys = newKeys.ToArray();
-                compositionLayer.m_PlatformLayerDataTexts = newTexts.ToArray();
+                compositionLayer.m_PlatformLayerDataTexts = newTextsArray;
+                compositionLayer.m_PlatformLayerDataBinary = CompositionLayer.FromBinaryDataList(newBinariesArray);
             }
         }
 

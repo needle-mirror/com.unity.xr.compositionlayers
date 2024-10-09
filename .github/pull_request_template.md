@@ -1,5 +1,5 @@
 <!-- Prefix title with version number and Jira ID. The format should be [<version>][<jira-id>] <Title>
-Exmaple: "[3.1][XR-1234] Title" -->
+Example: "[3.1][XR-1234] Title" -->
 
 # Purpose of this PR
 <!-- Description of the feature/change. For bug fixes, add the root cause of the bug and a brief explanation of the solution. Include screenshots and/or links to design documentation if applicable. Include any contextual information necessary to preserve understanding and support your reviewers. -->

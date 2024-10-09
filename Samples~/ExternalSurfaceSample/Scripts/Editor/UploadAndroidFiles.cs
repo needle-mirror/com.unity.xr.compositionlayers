@@ -24,7 +24,7 @@ public class UploadAndroidFiles : IPostGenerateGradleAndroidProject
     public void OnPostGenerateGradleAndroidProject(string path)
     {
         
-        string sourceFolder = Path.Combine(Application.dataPath, "Samples/XR Composition Layers/0.6.0/Sample External Android Surface Project/StreamingAssets");
+        string sourceFolder = Path.Combine(Application.dataPath, "Samples/XR Composition Layers/1.0.0/Sample External Android Surface Project/StreamingAssets");
         string destinationFolder = Path.Combine(path, "src/main/assets");
         
         // Create the destination folder if it does not exist

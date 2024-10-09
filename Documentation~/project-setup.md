@@ -14,7 +14,7 @@ For more information, refer to the following topics:
 
 | Topic | Description |
 | :---- | :---------- |
-| [Install  XR Composition Layers](xref:xr-layers-install) | How to install the package. |
+| [Install XR Composition Layers](xref:xr-layers-install) | How to install the package. |
 | [Settings](xref:xr-layers-settings) | Describes the project-level settings that affect Composition Layers. |
 
 ## Prerequisites

@@ -164,6 +164,8 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                     if (!propertyAttributes.TryGetValue(currentProperty.name, out propertyAttribute))
                         propertyAttribute = null;
 
+                    m_PlatformLayerDataField.TrackPropertyValue(currentProperty, OnPropertyChanged); //Fix: Need to call TrackPropertyValue() for each child property.
+
                     var element = new PropertyElement(currentProperty, propertyAttribute);
                     m_PropertyElements.Add(element);
                 }

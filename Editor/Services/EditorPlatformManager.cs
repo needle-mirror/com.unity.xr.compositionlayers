@@ -26,8 +26,11 @@ namespace Unity.XR.CompositionLayers.Services.Editor
         /// </summary>
         internal static IReadOnlyList<Type> ActivePlatformLayerDataTypes { get => s_ActivePlatformLayerDataTypes; }
 
+        internal static IReadOnlyList<PlatformProvider> SupportingHDRProviders { get => m_supportingHDRProviders; }
+
         static List<PlatformProvider> s_ActivePlatformProviders;
         static List<Type> s_ActivePlatformLayerDataTypes;
+        static List<PlatformProvider> m_supportingHDRProviders;
 
         static EditorPlatformManager()
         {
@@ -54,6 +57,28 @@ namespace Unity.XR.CompositionLayers.Services.Editor
             {
                 s_ActivePlatformProviders.Add(new DefaultPlatformProvider(typeof(EmulatedLayerProvider)));
             }
+
+            RefreshSupportingHDRProviders();
+        }
+
+        static void RefreshSupportingHDRProviders()
+        {
+            if (m_supportingHDRProviders == null)
+                m_supportingHDRProviders = new List<PlatformProvider>();
+            else
+                m_supportingHDRProviders.Clear();
+
+            var activePlatformProviders = EditorPlatformManager.ActivePlatformProviders;
+            if (activePlatformProviders != null)
+            {
+                foreach (var provider in activePlatformProviders)
+                {
+                    if (!provider.IsInternal() && provider.IsSupportedHDR)
+                        m_supportingHDRProviders.Add(provider);
+                }
+            }
+
+            PlatformManager.IsSupportedHDR = m_supportingHDRProviders.Count > 0;
         }
 
         static List<PlatformProvider> GetActivePlatformProviders()
@@ -113,6 +138,22 @@ namespace Unity.XR.CompositionLayers.Services.Editor
                 return true;
 
             return supportedLayerDataTypes.FirstOrDefault(x => x.FullName == layerDataFullName) != null;
+        }
+
+        /// <summary>
+        /// Check PlatformProvider attribute which is internal.
+        /// </summary>
+        /// <param name="platformProvider">Target platform provider. Need to return LayerProviderType.</param>
+        /// <return>Display name string.</return>
+        internal static bool IsInternal(this PlatformProvider provider)
+        {
+            var layerProviderType = provider.LayerProviderType;
+            if (layerProviderType != null)
+            {
+                return layerProviderType == typeof(Rendering.MirrorViewLayerProvider) || layerProviderType == typeof(Emulation.EmulatedLayerProvider);
+            }
+
+            return false;
         }
 
         /// <summary>

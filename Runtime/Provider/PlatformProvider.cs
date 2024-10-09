@@ -1,19 +1,29 @@
 using System;
 using Unity.XR.CompositionLayers.Layers;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
+using UnityEngine;
 
 namespace Unity.XR.CompositionLayers.Provider
 {
     /// <summary>
     /// The default implementation that defines the API for an PlatformProvider.
     /// </summary>
-#if UNITY_EDITOR
-    [InitializeOnLoad]
-#endif
     public abstract class PlatformProvider
     {
+        /// <summary>
+        /// HDR Params.
+        /// </summary>
+        public struct HDRParams
+        {
+            public ColorGamut ColorGamut;
+            public float NitsForPaperWhite;
+            public float MaxDisplayNits;
+
+            public static HDRParams GetDefault()
+            {
+                return new HDRParams() { ColorGamut = ColorGamut.sRGB };
+            }
+        }
+
         /// <summary>
         /// Default coordinate system string.
         /// </summary>
@@ -51,6 +61,25 @@ namespace Unity.XR.CompositionLayers.Provider
         /// Supports underlay layers.
         /// </summary>
         public virtual bool IsSupportedUnderlayLayers { get => true; }
+
+        /// <summary>
+        /// Supports HDR on the target platform.
+        /// </summary>
+        /// <remarks>
+        /// This information is referenced from HDRTonemapping. If this value is false, HDRTonemapping is disabled on target platform.
+        /// </remarks>
+        public virtual bool IsSupportedHDR { get => false; }
+
+        /// <summary>
+        /// Prefered HDR Params on the target platform. (Optional)
+        /// </summary>
+        /// <remarks>
+        /// This information is referenced from HDRTonemapping. This class can give hints to set proper settings.
+        /// </remarks>
+        public virtual HDRParams GetPreferredHDRParams()
+        {
+            return HDRParams.GetDefault();
+        }
 
         /// <summary>
         /// Supported coordinate system names.

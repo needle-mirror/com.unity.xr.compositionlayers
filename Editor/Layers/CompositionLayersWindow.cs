@@ -121,7 +121,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 return;
             }
 
-            var isDefault = CompositionLayerManager.Instance.FallbackDefaultSceneCompositionLayer == compositionLayer;
+            var isDefault = compositionLayer.LayerData?.GetType() == typeof(DefaultLayerData);
             using (new EditorGUI.DisabledScope(!compositionLayer.isActiveAndEnabled))
             {
                 var layerName = isDefault ? "Default Scene Layer" : compositionLayer.gameObject.name;
@@ -166,10 +166,12 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 // Ping the composition layer GameObject
                 case { isMouse: true, clickCount: 1, type: EventType.MouseDown } when rect.Contains(current.mousePosition):
                 {
-                    if (rect.Contains(current.mousePosition) && !isDefault)
+                    if (rect.Contains(current.mousePosition))
                     {
                         EditorGUIUtility.PingObject(compositionLayer);
                         Selection.activeGameObject = compositionLayer.gameObject;
+                        if (isDefault && compositionLayer.gameObject.hideFlags.HasFlag(HideFlags.HideAndDontSave))
+                            compositionLayer.gameObject.hideFlags = HideFlags.None;
                     }
 
                     if (m_Renaming && m_RenamingRect != rect)

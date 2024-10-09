@@ -67,7 +67,7 @@ namespace Unity.XR.CompositionLayers.Layers
         /// <returns>The world pose matrix for transforming.</returns>
         static Matrix4x4 GetWorldPoseMatrix(Transform transform)
         {
-            var pose = transform.GetWorldPose();
+            var pose = transform != null ? transform.GetWorldPose() : new Pose(Vector3.zero, Quaternion.identity);
             return Matrix4x4.TRS(pose.position, pose.rotation, Vector3.one);
         }
 
@@ -78,7 +78,7 @@ namespace Unity.XR.CompositionLayers.Layers
         /// <returns>The local pose matrix for transforming.</returns>
         static Matrix4x4 GetLocalPoseMatrix(Transform transform)
         {
-            var pose = transform.GetLocalPose();
+            var pose = transform != null ? transform.GetLocalPose() : new Pose(Vector3.zero, Quaternion.identity);
             return Matrix4x4.TRS(pose.position, pose.rotation, Vector3.one);
         }
 

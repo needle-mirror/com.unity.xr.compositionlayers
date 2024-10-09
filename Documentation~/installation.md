@@ -18,7 +18,7 @@ The XR Composition Layers package contains interfaces, types, and emulation for 
 
 | Provider plug-in package | Version |
 | :----------------------- | :------ |
-| OpenXR                   | [1.12.0-exp.1](com.unity3d.kharma:upmpackage/com.unity.xr.openxr@1.12.0-exp.1)   |
+| OpenXR                   | [1.13.0](com.unity3d.kharma:upmpackage/com.unity.xr.openxr@1.13.0)   |
 
 <a id="installation"></a>
 ## Installation
@@ -32,7 +32,7 @@ To install this package in Unity 2022.3+:
 
    ![](images/install.png)
 
-3. (Optional) Enter the full version number, such as `0.4.0`, to install. If left blank, Unity chooses the "best" version -- typically the latest, release version for the current Unity Editor.  See the [Changelog](xref:xr-layers-changelog) for a list of versions available at the time this documentation page was published.
+3. (Optional) Enter the full version number, such as `1.0.0`, to install. If left blank, Unity chooses the "best" version -- typically the latest, release version for the current Unity Editor.  Refer to the [Changelog](xref:xr-layers-changelog) for a list of versions available at the time this documentation page was published.
 4. Click **Add**.
 
 After you install the package, refer to [Settings](xref:xr-layers-settings) for additional configuration information.

@@ -16,6 +16,12 @@
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 #endif
 
+#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
+#include "ColorGamut.hlsl"
+#else
+#include "ColorGamut.cginc"
+#endif
+
 //----------------------------------------------------------------------------------------------------------------------------------
 
 #ifndef COMPOSITION_LAYERS_DECLARE_PROPERTIES_USER_DEFINED
@@ -54,52 +60,68 @@
 
 #if CUSTOM_RECTS_ON
 #define COMPOSITION_LAYERS_DECLARE_PROPERTIES_CUSTOM_RECTS \
-    UNITY_DEFINE_INSTANCED_PROP(float4, _SourceRect); \
-    UNITY_DEFINE_INSTANCED_PROP(float4, _DestRect);
+    UNITY_DEFINE_INSTANCED_PROP(float4, _SourceRect) \
+    UNITY_DEFINE_INSTANCED_PROP(float4, _DestRect)
 #else
 #define COMPOSITION_LAYERS_DECLARE_PROPERTIES_CUSTOM_RECTS
 #endif
 
 #if COLOR_SCALE_BIAS_ON
 #define COMPOSITION_LAYERS_DECLARE_PROPERTIES_COLOR_SCALE_BIAS \
-    UNITY_DEFINE_INSTANCED_PROP(float4, _ColorScale); \
-    UNITY_DEFINE_INSTANCED_PROP(float4, _ColorBias);
+    UNITY_DEFINE_INSTANCED_PROP(float4, _ColorScale) \
+    UNITY_DEFINE_INSTANCED_PROP(float4, _ColorBias)
 #else
 #define COMPOSITION_LAYERS_DECLARE_PROPERTIES_COLOR_SCALE_BIAS
 #endif
 
 #if COMPOSITION_LAYERTYPE_EQUIRECT
 #define COMPOSITION_LAYERS_DECLARE_PROPERTIES_EQUIRECT \
-    UNITY_DEFINE_INSTANCED_PROP(float, _centralHorizontalAngle); \
-    UNITY_DEFINE_INSTANCED_PROP(float, _upperVerticalAngle); \
-    UNITY_DEFINE_INSTANCED_PROP(float, _lowerVerticalAngle);
+    UNITY_DEFINE_INSTANCED_PROP(float, _centralHorizontalAngle) \
+    UNITY_DEFINE_INSTANCED_PROP(float, _upperVerticalAngle) \
+    UNITY_DEFINE_INSTANCED_PROP(float, _lowerVerticalAngle)
 #else
 #define COMPOSITION_LAYERS_DECLARE_PROPERTIES_EQUIRECT
 #endif
 
-#if _ALPHATEST_ON
 #define COMPOSITION_LAYERS_DECLARE_PROPERTIES_ALPHA_CUTOFF \
-    UNITY_DEFINE_INSTANCED_PROP(float, _Cutoff);
-#else
-#define COMPOSITION_LAYERS_DECLARE_PROPERTIES_ALPHA_CUTOFF
-#endif
-
-#define COMPOSITION_LAYERS_DECLARE_PROPERTIES_TRANSFORM_MATRIX_TYPE \
-    UNITY_DEFINE_INSTANCED_PROP(int, _TransformMatrixType);
+    UNITY_DEFINE_INSTANCED_PROP(float, _Cutoff)
 
 #define COMPOSITION_LAYERS_DECLARE_PROPERTIES_TRANSFORM_MATRIX \
-    UNITY_DEFINE_INSTANCED_PROP(float4x4, _TransformMatrix);
+    UNITY_DEFINE_INSTANCED_PROP(int, _TransformMatrixType) \
+    UNITY_DEFINE_INSTANCED_PROP(float4x4, _TransformMatrix)
+
+#if COMPOSITION_LAYERS_HDRENDER
+#define COMPOSITION_LAYERS_DECLARE_PROPERTIES_SHADER_VARIABLES_GLOBAL \
+    UNITY_DEFINE_INSTANCED_PROP(float4x4, _CompositionLayers_ViewMatrix) \
+    UNITY_DEFINE_INSTANCED_PROP(float4x4, _CompositionLayers_ProjectionMatrix) \
+    UNITY_DEFINE_INSTANCED_PROP(float4, _CompositionLayers_ProjectionParams)
+#else
+#define COMPOSITION_LAYERS_DECLARE_PROPERTIES_SHADER_VARIABLES_GLOBAL
+#endif
+
+#define COMPOSITION_LAYERS_DECLARE_PROPERTIES_STEREO_EYE_IDNEX \
+    UNITY_DEFINE_INSTANCED_PROP(int, _CompositionLayers_StereoEyeIndex)
+
+#define COMPOSITION_LAYERS_DECLARE_PROPERTIES_HDR_DISPLAY \
+    UNITY_DEFINE_INSTANCED_PROP(float, _SourceNitsForPaperWhite) \
+    UNITY_DEFINE_INSTANCED_PROP(int, _SourceColorGamut) \
+    UNITY_DEFINE_INSTANCED_PROP(float, _SourceMaxDisplayNits) \
+    UNITY_DEFINE_INSTANCED_PROP(float, _NitsForPaperWhite) \
+    UNITY_DEFINE_INSTANCED_PROP(int, _ColorGamut) \
+    UNITY_DEFINE_INSTANCED_PROP(float, _MaxDisplayNits)
 
 #define COMPOSITION_LAYERS_DECLARE_PROPERTIES \
-    UNITY_INSTANCING_BUFFER_START(CompositionLayersProps) \
+    UNITY_INSTANCING_BUFFER_START(UnityPerMaterial) \
         COMPOSITION_LAYERS_DECLARE_PROPERTIES_USER_DEFINED \
         COMPOSITION_LAYERS_DECLARE_PROPERTIES_CUSTOM_RECTS \
         COMPOSITION_LAYERS_DECLARE_PROPERTIES_COLOR_SCALE_BIAS \
         COMPOSITION_LAYERS_DECLARE_PROPERTIES_EQUIRECT \
         COMPOSITION_LAYERS_DECLARE_PROPERTIES_ALPHA_CUTOFF \
-        COMPOSITION_LAYERS_DECLARE_PROPERTIES_TRANSFORM_MATRIX_TYPE \
         COMPOSITION_LAYERS_DECLARE_PROPERTIES_TRANSFORM_MATRIX \
-    UNITY_INSTANCING_BUFFER_END(CompositionLayersProps)
+        COMPOSITION_LAYERS_DECLARE_PROPERTIES_SHADER_VARIABLES_GLOBAL \
+        COMPOSITION_LAYERS_DECLARE_PROPERTIES_STEREO_EYE_IDNEX \
+        COMPOSITION_LAYERS_DECLARE_PROPERTIES_HDR_DISPLAY \
+    UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 #define COMPOSITION_LAYERS_TRANSFORM_MATRIX_TYPE_MODEL (0)
 #define COMPOSITION_LAYERS_TRANSFORM_MATRIX_TYPE_MODEL_VIEW (1)
@@ -152,8 +174,8 @@ inline float4 GetCoordsWithCustomRects(float2 coords, float4 sourceRects, float4
 
 #if CUSTOM_RECTS_ON
 #define GET_COORDS_WITH_CUSTOM_RECTS(COORDS_) GetCoordsWithCustomRects(COORDS_, \
-    UNITY_ACCESS_INSTANCED_PROP(CompositionLayersProps, _SourceRect), \
-    UNITY_ACCESS_INSTANCED_PROP(CompositionLayersProps, _DestRect))
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SourceRect), \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DestRect))
 #else // CUSTOM_RECTS_ON
 #define GET_COORDS_WITH_CUSTOM_RECTS(COORDS_) (COORDS_)
 #endif // CUSTOM_RECTS_ON
@@ -228,9 +250,9 @@ inline float4 CheckCoordsRangeEquirect(float4 color, float4 coords, float centra
 }
 
 #define CHECK_COORDS_RANGE_EQUIRECT(COLOR_, COORDS_) COLOR_ = CheckCoordsRangeEquirect(COLOR_, COORDS_, \
-    UNITY_ACCESS_INSTANCED_PROP(CompositionLayersProps, _centralHorizontalAngle), \
-    UNITY_ACCESS_INSTANCED_PROP(CompositionLayersProps, _lowerVerticalAngle), \
-    UNITY_ACCESS_INSTANCED_PROP(CompositionLayersProps, _upperVerticalAngle))
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _centralHorizontalAngle), \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lowerVerticalAngle), \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _upperVerticalAngle))
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -253,8 +275,8 @@ inline float4 ApplyColorScaleBias(float4 color, float4 scale, float4 bias)
 
 #if COLOR_SCALE_BIAS_ON
 #define APPLY_COLOR_SCALE_BIAS(COLOR_) COLOR_ = ApplyColorScaleBias(COLOR_, \
-    UNITY_ACCESS_INSTANCED_PROP(CompositionLayersProps, _ColorScale), \
-    UNITY_ACCESS_INSTANCED_PROP(CompositionLayersProps, _ColorBias))
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _ColorScale), \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _ColorBias))
 #endif
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -314,6 +336,14 @@ inline float4 TransformWorldObjectPos(float4 pos)
     return PostfixTransformObjectPos(pos);
 }
 
+inline float4 TransformResolveCameraForwardZ(float4 pos, in float4x4 viewMatrix)
+{
+    // Note: viewMatrix.GetColumn(2) is reversed on BiRP/URP.
+    // Note: viewMatrix.GetColumn(2) is reversed when CameraRelativeRendering is enabled on HDRP.
+    pos.z *= sign(dot(cross(viewMatrix._m00_m10_m20, viewMatrix._m01_m11_m21), viewMatrix._m02_m12_m22));
+    return pos;
+}
+
 inline float4 TransformModelViewObjectPos(float4 pos, float4x4 modelViewMatrix)
 {
 #if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
@@ -323,16 +353,56 @@ inline float4 TransformModelViewObjectPos(float4 pos, float4x4 modelViewMatrix)
 #endif
     // Note: Can't use UNITY_MATRIX_M / UNITY_MATRIX_V immediately when CameraRelativeRendering(SHADEROPTIONS_CAMERA_RELATIVE_RENDERING) is enabled on HDRP. See also, "Packages/High Definition RP Config/Runtime/ShaderConfig.cs" in the Project Window.
     pos = mul(modelViewMatrix, pos);
-    // Note: worldToViewMatrix[2][2] is scaled with -1.0 when CameraRelativeRendering is enabled on HDRP.
-    // Note: worldToViewMatrix[2][2] is scaled with -1.0 on BiRP/URP.
-    pos.z *= sign(worldToViewMatrix[2][2]);
+    pos = TransformResolveCameraForwardZ(pos, worldToViewMatrix);
     pos = mul(viewToHClipMatrix, pos);
     return PostfixTransformObjectPos(pos);
 }
 
-inline float4 TransformProjectionPos(float4 pos)
+inline float4 TransformObjectPos(float4 pos, int transformMatrixType, float4x4 transformMatrix)
 {
-    pos.y *= _ProjectionParams.x;
+    if (transformMatrixType == COMPOSITION_LAYERS_TRANSFORM_MATRIX_TYPE_MODEL)
+    {
+        return TransformWorldObjectPos(pos);
+    }
+    else // transformMatrixType == COMPOSITION_LAYERS_TRANSFORM_MATRIX_TYPE_MODEL_VIEW
+    {
+        return TransformModelViewObjectPos(pos, transformMatrix);
+    }
+}
+
+inline float4 TransformObjectPos(float4 pos, int transformMatrixType, float4x4 transformMatrix, float4x4 viewMatrix, float4x4 projectionMatrix)
+{
+    if (transformMatrixType == COMPOSITION_LAYERS_TRANSFORM_MATRIX_TYPE_MODEL)
+    {
+        pos = mul(transformMatrix, pos);
+        pos = mul(viewMatrix, pos);
+        pos = mul(projectionMatrix, pos);
+    }
+    else // transformMatrixType == COMPOSITION_LAYERS_TRANSFORM_MATRIX_TYPE_MODEL_VIEW
+    {
+        pos = mul(transformMatrix, pos);
+        pos = TransformResolveCameraForwardZ(pos, viewMatrix);
+        pos = mul(projectionMatrix, pos);
+    }
+
+    return PostfixTransformObjectPos(pos);
+}
+
+#if COMPOSITION_LAYERS_OVERRIDE_SHADER_VARIABLES_GLOBAL
+#define TRANSFORM_OBJECT_POS(POS_) TransformObjectPos(POS_, \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _TransformMatrixType), \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _TransformMatrix), \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CompositionLayers_ViewMatrix), \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CompositionLayers_ProjectionMatrix))
+#else
+#define TRANSFORM_OBJECT_POS(POS_) TransformObjectPos(POS_, \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _TransformMatrixType), \
+    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _TransformMatrix))
+#endif
+
+inline float4 TransformProjectionPos(float4 pos, float4 projectionParams)
+{
+    pos.y *= projectionParams.x;
 #if DEPTH_NEAREST
     pos.z = COMPOSITION_LAYERS_NEARET_DEPTH;
 #elif DEPTH_FARTHEST
@@ -340,5 +410,18 @@ inline float4 TransformProjectionPos(float4 pos)
 #endif
     return float4(pos.xyz, 1.0);
 }
+
+#if COMPOSITION_LAYERS_OVERRIDE_SHADER_VARIABLES_GLOBAL
+#define TRANSFORM_PROJECTION_POS(POS_) TransformProjectionPos(POS_, UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CompositionLayers_ProjectionParams))
+#else
+#define TRANSFORM_PROJECTION_POS(POS_) TransformProjectionPos(POS_, _ProjectionParams)
+#endif
+
+inline int GetStereoEyeIndex(int stereoEyeIndex)
+{
+    return stereoEyeIndex | unity_StereoEyeIndex;
+}
+
+#define GET_STEREOEYEINDEX() GetStereoEyeIndex(UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CompositionLayers_StereoEyeIndex))
 
 #endif // XR_SDK_COMPOSITION_LAYERS_CORE_INC

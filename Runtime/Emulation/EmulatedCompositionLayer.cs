@@ -74,8 +74,10 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         public void ModifyLayer()
         {
+            if (CompositionLayer == null)
+                return;
             var emulatedLayerDataType = EmulatedCompositionLayerUtils.GetEmulatedLayerDataType(CompositionLayer.LayerData?.GetType());
-            if (CompositionLayer.LayerData == null || emulatedLayerDataType == null)
+            if (CompositionLayer == null || CompositionLayer.LayerData == null || emulatedLayerDataType == null)
             {
                 EmulatedLayerData?.Dispose();
                 EmulatedLayerData = null;
@@ -125,41 +127,41 @@ namespace Unity.XR.CompositionLayers.Emulation
             EmulatedLayerData = null;
         }
 
-        internal virtual void AddCommandBuffer(IEnumerable<EmulatedCameraData> cameras)
+        internal virtual void AddCommandBuffer(List<Camera> cameras)
         {
-            foreach (var cameraData in cameras)
+            foreach (var camera in cameras)
             {
-                if (EmulatedLayerData.IsSupported(cameraData.Camera))
+                if (EmulatedLayerData.IsSupported(camera))
                 {
-                    var commandArgs = new EmulatedLayerData.CommandArgs(cameraData);
+                    var commandArgs = new EmulatedLayerData.CommandArgs(camera);
                     var commandBuffer = EmulatedLayerData.UpdateCommandBuffer(commandArgs);
                     var cameraEvents = Order >= 0 ?
-                        EmulatedLayerProvider.GetOverlayCameraEvents(cameraData.Camera) :
-                        EmulatedLayerProvider.GetUnderlayCameraEvents(cameraData.Camera);
+                        EmulatedLayerProvider.GetOverlayCameraEvents(camera) :
+                        EmulatedLayerProvider.GetUnderlayCameraEvents(camera);
 
                     foreach (var cameraEvent in cameraEvents)
                     {
-                        cameraData.Camera.AddCommandBuffer(cameraEvent, commandBuffer);
+                        camera.AddCommandBuffer(cameraEvent, commandBuffer);
                     }
 
-                    m_LayerCommandBuffers.Add(cameraData.Camera, new CameraCommandBufferData(commandBuffer, cameraEvents));
+                    m_LayerCommandBuffers.Add(camera, new CameraCommandBufferData(commandBuffer, cameraEvents));
                 }
                 else
                 {
-                    EmulatedLayerProvider.WarnUnsupportedEmulation(cameraData.Camera, CompositionLayer);
+                    EmulatedLayerProvider.WarnUnsupportedEmulation(camera, CompositionLayer);
                 }
             }
         }
 
-        internal virtual void RemoveCommandBuffer(IEnumerable<EmulatedCameraData> cameras)
+        internal virtual void RemoveCommandBuffer(List<Camera> cameras)
         {
-            foreach (var cameraData in cameras)
+            foreach (var camera in cameras)
             {
-                if (cameraData.Camera != null && m_LayerCommandBuffers.TryGetValue(cameraData.Camera, out var cameraCommandBufferData)) // camera will be null when camera has been destroyed.
+                if (camera != null && m_LayerCommandBuffers.TryGetValue(camera, out var cameraCommandBufferData)) // camera will be null when camera has been destroyed.
                 {
                     foreach (var cameraEvent in cameraCommandBufferData.CameraEvents)
                     {
-                        cameraData.Camera.RemoveCommandBuffer(cameraEvent, cameraCommandBufferData.CommandBuffer);
+                        camera.RemoveCommandBuffer(cameraEvent, cameraCommandBufferData.CommandBuffer);
                     }
                 }
             }

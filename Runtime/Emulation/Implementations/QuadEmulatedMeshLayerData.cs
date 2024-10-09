@@ -24,7 +24,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
 
         protected override void UpdateMesh(ref Mesh mesh)
         {
-            var lossyScale = Transform.lossyScale;
+            var lossyScale = Transform != null ? Transform.lossyScale : Vector3.one;
             var size = GetMeshScale(lossyScale);
             if (mesh == null || m_Size != size)
             {
@@ -54,7 +54,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                                     break;
                                 texRatio = (float)textureExt.LeftTexture.width / (float)textureExt.LeftTexture.height;
                             }
-                            else
+                            else if (textureExt.sourceTexture == TexturesExtension.SourceTextureEnum.AndroidSurface)
                             {
                                 texRatio = (float)textureExt.Resolution.x / (float)textureExt.Resolution.y;
                             }

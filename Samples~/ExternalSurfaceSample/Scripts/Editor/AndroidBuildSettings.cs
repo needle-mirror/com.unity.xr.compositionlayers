@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -40,3 +41,4 @@ public class AndroidBuildSettings : IPreprocessBuildWithReport
         }
     }
 }
+#endif

@@ -33,6 +33,7 @@ namespace Unity.XR.CompositionLayers
                 if (name == string.Empty && blankLayers[i])
                 {
                     layerBit = i;
+                    blankLayers[i] = false;
                     break;
                 }
             }

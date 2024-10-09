@@ -4,6 +4,9 @@ using Unity.XR.CompositionLayers.Provider;
 using Unity.XR.CompositionLayers.Services;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Profiling;
+using Unity.XR.CompositionLayers.Rendering;
+using Unity.XR.CompositionLayers.Emulation.Implementations;
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
 using UnityEngine.Rendering.Universal;
 #endif
@@ -15,19 +18,25 @@ namespace Unity.XR.CompositionLayers.Emulation
 {
     class EmulatedLayerProvider : ILayerProvider
     {
+        static readonly ProfilerMarker s_EmulatedLayerProviderCreate = new ProfilerMarker("EmulatedLayerProvider.Create");
+        static readonly ProfilerMarker s_EmulatedLayerProviderRemove = new ProfilerMarker("EmulatedLayerProvider.Remove");
+        static readonly ProfilerMarker s_EmulatedLayerProviderModify = new ProfilerMarker("EmulatedLayerProvider.Modify");
+        static readonly ProfilerMarker s_EmulatedLayerProviderActive = new ProfilerMarker("EmulatedLayerProvider.Active");
+        static readonly ProfilerMarker s_EmulatedLayerProviderSetupRenderPipeline = new ProfilerMarker("EmulatedLayerProvider.SetupRenderPipeline");
+
         static readonly CameraEvent[] k_DefaultUnderlayCameraEvents = { CameraEvent.BeforeForwardOpaque };
         static readonly CameraEvent[] k_DefaultOverlayCameraEvents = { CameraEvent.AfterImageEffects };
         static readonly CameraEvent[] k_DeferredUnderlayCameraEvents = { CameraEvent.BeforeGBuffer };
         static readonly CameraEvent[] k_DeferredOverlayCameraEvents = { CameraEvent.AfterImageEffects };
 
-        static EmulatedLayerProvider s_Instance; // Note: EmulatedLayerProvider is singleton.
+        static EmulatedLayerProvider s_Instance;
         static bool s_WarnUnsupportedEmulation;
 
         Dictionary<int, EmulatedCompositionLayer> m_AllCompositionLayers = new();
 
         List<EmulatedCompositionLayer> m_SortedLayers = new();
 
-        HashSet<EmulatedCameraData> m_ActiveCameras = new();
+        List<Camera> m_ActiveCameras = new();
 
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]
@@ -60,12 +69,26 @@ namespace Unity.XR.CompositionLayers.Emulation
                 return;
 
             CompositionLayerManager.Instance.EmulationLayerProvider = s_Instance;
+
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+            EmulationLayerUniversalScriptableRendererPass.RegistScriptableRendererPass();
+#endif
+#if UNITY_RENDER_PIPELINES_HDRENDER
+            EmulationLayerHighDefinitionVolumeManager.ActivateCustomPassVolumes();
+#endif
         }
 
         static void OnCompositionLayerManagerStopped()
         {
             if (s_Instance == null)
                 return;
+
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+            EmulationLayerUniversalScriptableRendererPass.UnregistScriptableRendererPass();
+#endif
+#if UNITY_RENDER_PIPELINES_HDRENDER
+            EmulationLayerHighDefinitionVolumeManager.DeactivateCustomPassVolumes();
+#endif
 
             s_Instance.CleanupState();
 
@@ -112,10 +135,7 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         public void CleanupState()
         {
-            var usingLegacy = GraphicsSettings.currentRenderPipeline == null;
-
-            if (usingLegacy)
-                TearDownLegacyCommandBuffers();
+            TearDownRenderPipelineCommandBuffers();
 
             foreach (var compositionLayer in m_AllCompositionLayers)
             {
@@ -128,22 +148,14 @@ namespace Unity.XR.CompositionLayers.Emulation
         public void UpdateLayers(List<CompositionLayerManager.LayerInfo> createdLayers, List<int> removedLayers,
             List<CompositionLayerManager.LayerInfo> modifiedLayers, List<CompositionLayerManager.LayerInfo> activeLayers)
         {
-            var usingLegacy = GraphicsSettings.currentRenderPipeline == null;
-
-            if (usingLegacy)
-                TearDownLegacyCommandBuffers();
-            else
-                TearDownRenderPipelineCommandBuffers();
+            TearDownRenderPipelineCommandBuffers();
 
             AddCreatedLayers(createdLayers);
             RemoveDestroyedLayers(removedLayers);
             ModifyChangedLayers(modifiedLayers);
             UpdateActiveStateOnLayers(activeLayers);
 
-            if (usingLegacy)
-                SetupLegacyCommandBuffers();
-            else
-                SetupRenderPipelineCommandBuffers();
+            SetupRenderPipelineCommandBuffers();
         }
 
         void ModifyChangedLayers(List<CompositionLayerManager.LayerInfo> modifiedLayers)
@@ -153,10 +165,14 @@ namespace Unity.XR.CompositionLayers.Emulation
 
             foreach (var layerInfo in modifiedLayers)
             {
+                s_EmulatedLayerProviderModify.Begin();
+
                 if (!m_AllCompositionLayers.TryGetValue(layerInfo.Id, out var emulatedLayer))
                     emulatedLayer = CreateEmulationLayerObject(layerInfo);
 
                 emulatedLayer?.ModifyLayer();
+
+                s_EmulatedLayerProviderModify.End();
             }
         }
 
@@ -165,8 +181,11 @@ namespace Unity.XR.CompositionLayers.Emulation
             if (activeLayers.Count == 0)
                 return;
 
+
             foreach (var layerInfo in activeLayers)
             {
+                s_EmulatedLayerProviderActive.Begin();
+
                 if (!m_AllCompositionLayers.TryGetValue(layerInfo.Id, out var emulatedLayer))
                 {
                     emulatedLayer = CreateEmulationLayerObject(layerInfo);
@@ -184,14 +203,18 @@ namespace Unity.XR.CompositionLayers.Emulation
                     }
 
                     if (emulatedLayer == null)
+                    {
+                        s_EmulatedLayerProviderActive.End();
                         return;
+                    }
 
                     if (emulatedLayer.EmulatedLayerData == null)
                         emulatedLayer.ModifyLayer();
 
-
                     emulatedLayer.UpdateLayer();
                 }
+
+                s_EmulatedLayerProviderActive.End();
             }
         }
 
@@ -202,9 +225,14 @@ namespace Unity.XR.CompositionLayers.Emulation
 
             foreach (var layerId in removedLayers)
             {
+                s_EmulatedLayerProviderRemove.Begin();
+
                 if (m_AllCompositionLayers.TryGetValue(layerId, out var emulatedCompositionLayer))
                     emulatedCompositionLayer?.Dispose();
+
                 m_AllCompositionLayers.Remove(layerId);
+
+                s_EmulatedLayerProviderRemove.End();
             }
         }
 
@@ -215,8 +243,12 @@ namespace Unity.XR.CompositionLayers.Emulation
 
             foreach (var layerInfo in createdLayers)
             {
+                s_EmulatedLayerProviderCreate.Begin();
+
                 if (!m_AllCompositionLayers.ContainsKey(layerInfo.Id))
                     CreateEmulationLayerObject(layerInfo);
+
+                s_EmulatedLayerProviderCreate.End();
             }
         }
 
@@ -234,100 +266,103 @@ namespace Unity.XR.CompositionLayers.Emulation
                 k_DefaultOverlayCameraEvents : k_DeferredOverlayCameraEvents;
         }
 
+        internal static bool IsSupported(Camera camera)
+        {
+            return s_Instance.m_ActiveCameras.Contains(camera);
+        }
+
         void SetupRenderPipelineCommandBuffers()
         {
-#if UNITY_RENDER_PIPELINES_UNIVERSAL || UNITY_RENDER_PIPELINES_HDRENDER
             if (!CompositionLayerManager.ManagerActive)
                 return;
 
+            s_EmulatedLayerProviderSetupRenderPipeline.Begin();
+
             UpdateActiveCamerasAndSortedLayers();
 
-#if UNITY_RENDER_PIPELINES_HDRENDER
-#if UNITY_RENDER_PIPELINES_UNIVERSAL
-            bool isHDRP = GraphicsSettings.currentRenderPipeline.name.StartsWith("HDRP"); // Selectable. (Both packages are installed.)
-#else // UNITY_RENDER_PIPELINES_UNIVERSAL
-            bool isHDRP = true; // Always enabled. HDRP package is installed & URP package isn't installed.
-#endif // UNITY_RENDER_PIPELINES_UNIVERSAL
-#else // UNITY_RENDER_PIPELINES_HDRENDER
-            bool isHDRP = false; // Unsupported. HDRP package isn't installed.
-#endif // UNITY_RENDER_PIPELINES_HDRENDER
-            bool isURP = !isHDRP;
-
-#if UNITY_RENDER_PIPELINES_HDRENDER
-            if (isHDRP)
+            if (GraphicsSettings.currentRenderPipeline != null)
             {
-                EmulationLayerHighDefinitionCustomPassManager.Bind(m_ActiveCameras);
-                foreach (var commandBufferLayer in m_SortedLayers)
-                {
-                    EmulationLayerHighDefinitionCustomPassManager.Add(commandBufferLayer.EmulatedLayerData, commandBufferLayer.Order);
-                }
-            }
-#endif // UNITY_RENDER_PIPELINES_HDRENDER
+#if UNITY_RENDER_PIPELINES_UNIVERSAL || UNITY_RENDER_PIPELINES_HDRENDER
+                bool isSupported = false;
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
-            if (isURP)
-            {
-                foreach (var commandBufferLayer in m_SortedLayers)
+                isSupported |= RenderPipelineUtility.IsUniversalRenderPipeline();
+#endif
+#if UNITY_RENDER_PIPELINES_HDRENDER
+                isSupported |= RenderPipelineUtility.IsHDRenderPipeline();
+#endif
+                if (isSupported)
                 {
-                    foreach (var cameraData in m_ActiveCameras)
+                    foreach (var commandBufferLayer in m_SortedLayers)
                     {
-                        if (commandBufferLayer.EmulatedLayerData.IsSupported(cameraData.Camera))
-                        {
-                            var commandArgs = new EmulatedLayerData.CommandArgs(cameraData);
-                            var commandBuffer = commandBufferLayer.EmulatedLayerData.UpdateCommandBuffer(commandArgs);
-                            EmulationLayerUniversalScriptableRendererManager.AddCommandBuffer(cameraData.Camera, commandBuffer, commandBufferLayer.Order);
-                        }
+                        EmulationLayerScriptableRendererManager.Add(commandBufferLayer.EmulatedLayerData, commandBufferLayer.Order);
                     }
+
+                    s_EmulatedLayerProviderSetupRenderPipeline.End();
+                    return;
                 }
+#endif
             }
-#endif // UNITY_RENDER_PIPELINES_UNIVERSAL
-#endif // UNITY_RENDER_PIPELINES_UNIVERSAL || UNITY_RENDER_PIPELINES_HDRENDER
+
+            // for Built-in Render Pipeline.
+            foreach (var commandBufferLayer in m_SortedLayers)
+            {
+                commandBufferLayer.AddCommandBuffer(m_ActiveCameras);
+            }
+
+            s_EmulatedLayerProviderSetupRenderPipeline.End();
         }
 
         void TearDownRenderPipelineCommandBuffers()
         {
-#if UNITY_RENDER_PIPELINES_HDRENDER
-            EmulationLayerHighDefinitionCustomPassManager.Clear();
+#if UNITY_RENDER_PIPELINES_HDRENDER || UNITY_RENDER_PIPELINES_UNIVERSAL
+            EmulationLayerScriptableRendererManager.Clear();
 #endif
-
-#if UNITY_RENDER_PIPELINES_UNIVERSAL
-            EmulationLayerUniversalScriptableRendererManager.Clear();
-#endif
+            // for Built-in Render Pipeline.
+            foreach (var commandBufferLayer in m_SortedLayers)
+            {
+                commandBufferLayer.RemoveCommandBuffer(m_ActiveCameras);
+            }
         }
-
-        void SetupLegacyCommandBuffers()
+        
+        void AddEmulationToActiveCamera()
         {
-            if (!CompositionLayerManager.ManagerActive)
-                return;
-
-            UpdateActiveCamerasAndSortedLayers();
-
-            AddCommandBuffers();
+            var mainCamera = CompositionLayerManager.mainCameraCache;
+            if (mainCamera != null)
+                m_ActiveCameras.Add(mainCamera);
         }
 
         void UpdateActiveCamerasAndSortedLayers()
         {
+#if UNITY_EDITOR || UNITY_STANDALONE 
             if (!CompositionLayerManager.ManagerActive)
                 return;
 
             m_ActiveCameras.Clear();
-            if (Application.isPlaying)
+
+            if (!Application.isPlaying)
             {
-                var mainCamera = Camera.main;
-                if (mainCamera)
+               AddEmulationToActiveCamera();
+            }
+#if UNITY_EDITOR
+            else if (EmulatedCompositionLayerUtils.EmulationInPlayMode)
+            {
+                AddEmulationToActiveCamera();
+            }
+
+            if (EmulatedCompositionLayerUtils.EmulationInScene)
+            {
+                foreach (var sceneViewObject in SceneView.sceneViews)
                 {
-                    if (EmulatedCompositionLayerUtils.EmulationInPlayMode || EmulatedCompositionLayerUtils.EmulationInStandalone)
-                        m_ActiveCameras.Add(new EmulatedCameraData(mainCamera));
+                    if (sceneViewObject is SceneView sceneView)
+                        m_ActiveCameras.Add(sceneView.camera);
                 }
             }
-
-#if UNITY_EDITOR
-            foreach (var sceneViewObject in SceneView.sceneViews)
+#elif UNITY_STANDALONE 
+            if (EmulatedCompositionLayerUtils.EmulationInStandalone)
             {
-                if (sceneViewObject is SceneView sceneView)
-                    m_ActiveCameras.Add(new EmulatedCameraData(sceneView.camera));
+                AddEmulationToActiveCamera();
             }
 #endif
-
             m_SortedLayers.Clear();
 
             // Gather command buffer based layers
@@ -351,25 +386,7 @@ namespace Unity.XR.CompositionLayers.Emulation
 
             // Sort emulated render layers
             m_SortedLayers.Sort(EmulatedLayerDataSorter);
-        }
-
-        void AddCommandBuffers()
-        {
-            foreach (var commandBufferLayer in m_SortedLayers)
-            {
-                commandBufferLayer.AddCommandBuffer(m_ActiveCameras);
-            }
-        }
-
-        void TearDownLegacyCommandBuffers()
-        {
-            if (m_SortedLayers.Count == 0)
-                return;
-
-            foreach (var commandBufferLayer in m_SortedLayers)
-            {
-                commandBufferLayer.RemoveCommandBuffer(m_ActiveCameras);
-            }
+#endif
         }
 
         static int EmulatedLayerDataSorter(EmulatedCompositionLayer lhs, EmulatedCompositionLayer rhs)

@@ -176,9 +176,13 @@ namespace Unity.XR.CompositionLayers.Services
         /// Returns <code>true</code> if the <paramref name="layer"/> is set to the <paramref name="newOrder"/> or is already set to
         /// <paramref name="newOrder"/>.
         /// </returns>
-        public static bool TryChangeLayerOrder(this CompositionLayer layer, int oldOrder, int newOrder,
-            bool inEditor = false)
+        public static bool TryChangeLayerOrder(this CompositionLayer layer, int oldOrder, int newOrder)
         {
+
+            bool inEditor = false;
+#if UNITY_EDITOR
+            inEditor = true;
+#endif
             CompositionLayer occupiedLayer;
             if (!CompositionLayerManager.ManagerActive || !CompositionLayerManager.IsLayerSceneValid(layer))
             {
@@ -323,18 +327,11 @@ namespace Unity.XR.CompositionLayers.Services
 
             CompositionLayer occupiedLayer;
             // Default composition layer can only ever be at order = 0
-            if (CompositionLayerManager.Instance.DefaultSceneCompositionLayer == layer)
-            {
-                if (CompositionLayerManager.Instance.OccupiedLayers.TryGetValue(order, out occupiedLayer))
-                {
-                    if (occupiedLayer != layer)
-                        return false;
-                }
+            if (order == 0)
+                return layer.LayerData is DefaultLayerData;
+            else
+                return !CompositionLayerManager.Instance.OccupiedLayers.TryGetValue(order, out occupiedLayer) || occupiedLayer == layer;
 
-                return order == 0;
-            }
-
-            return !CompositionLayerManager.Instance.OccupiedLayers.TryGetValue(order, out occupiedLayer) || occupiedLayer == layer;
         }
 
         /// <summary>
@@ -374,7 +371,7 @@ namespace Unity.XR.CompositionLayers.Services
 
         internal static Camera GetStereoMainCamera()
         {
-            var mainCamera = Camera.main;
+            var mainCamera = CompositionLayerManager.mainCameraCache;
             if (ValidateStereoCamera(mainCamera))
             {
                 return mainCamera;
@@ -397,7 +394,7 @@ namespace Unity.XR.CompositionLayers.Services
 
         static bool ValidateStereoCamera(Camera camera)
         {
-            return camera != null && camera.isActiveAndEnabled && camera.stereoTargetEye == StereoTargetEyeMask.Both && camera.targetTexture == null;
+            return camera != null && camera.isActiveAndEnabled && camera.stereoTargetEye != StereoTargetEyeMask.None && camera.targetTexture == null;
         }
     }
 }

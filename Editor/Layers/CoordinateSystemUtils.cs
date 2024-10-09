@@ -87,7 +87,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             {
                 foreach (var provider in activePlatformProviders)
                 {
-                    if (!provider.SupportedCoordinateSystems.Contains(selectedCoordinateSystem))
+                    if (!provider.SupportedCoordinateSystems.Contains(selectedCoordinateSystem) && !provider.IsInternal())
                     {
                         unsupportedPlatformNames.Add(UIHelper.GetDisplayName(provider));
                     }

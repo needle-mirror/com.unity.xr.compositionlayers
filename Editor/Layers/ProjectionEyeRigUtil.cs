@@ -3,6 +3,7 @@ using UnityEditor;
 using System.IO;
 using Unity.XR.CompositionLayers;
 using Unity.XR.CompositionLayers.Extensions;
+using Unity.XR.CompositionLayers.Services;
 
 /// <summary>
 /// Supports workflow for creating projection eye rig.
@@ -85,12 +86,13 @@ public class ProjectionEyeRigUtil : EditorWindow
             child.gameObject.layer = layerIndex;
         }
         // if found main camera, then eliminate layer from cullingMask
+        var mainCamera = CompositionLayerManager.mainCameraCache;
         float cameraDepth = 0;
-        if (Camera.main != null)
+        if (mainCamera != null)
         {
-            Camera.main.cullingMask &= ~(1 << layerIndex);
+            mainCamera.cullingMask &= ~(1 << layerIndex);
             Debug.LogFormat("Remove {0} from Main Camera cullingmask.", newLayerName);
-            cameraDepth = Camera.main.depth - 1;
+            cameraDepth = mainCamera.depth - 1;
         }
 
         CompositionLayer Layer = projectionObj.GetComponent<CompositionLayer>();
@@ -146,7 +148,6 @@ public class ProjectionEyeRigUtil : EditorWindow
         newLayerProperty.stringValue = layerName;
 
         tagManager.ApplyModifiedProperties();
-        Debug.Log("Layer created successfully: " + layerName);
         return index;
     }
 }

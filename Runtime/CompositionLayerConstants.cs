@@ -19,6 +19,6 @@ namespace Unity.XR.CompositionLayers
         /// <summary>
         /// Name of the in default scene composition layer GameObject. <see cref="CompositionLayerManager.DefaultSceneCompositionLayer"/>
         /// </summary>
-        internal const string DefaultSceneLayerName = "~Default Scene Compositon Layer";
+        internal const string DefaultSceneLayerName = "Default Scene Layer";
     }
 }

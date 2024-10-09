@@ -11,7 +11,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
     /// <seealso cref="UIHandle"/>
     [CustomEditor(typeof(UIHandle)), CanEditMultipleObjects]
     public class UIHandleEditor : UnityEditor.Editor
-    {   
+    {
         private UIHandle handle;
 
         void OnEnable()
@@ -34,10 +34,10 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
         /// </summary>
         /// <param name="view"></param>
         private void DuringSceneUI(SceneView view)
-        {        
-            if(!handle.CompositionLayerTransform || !handle.Canvas) return;
+        {
+            if (!handle.CompositionLayerTransform) return;
 
-            switch(Tools.current)
+            switch (Tools.current)
             {
                 case Tool.Move:
                     Tools.hidden = true;
@@ -66,10 +66,10 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
 
             Vector3 handlePosition = handle.GetHandlePosition();
             Vector3 newWorldPosition = Handles.PositionHandle(handlePosition, handle.CompositionLayerTransform.rotation);
-            
+
             if (EditorGUI.EndChangeCheck())
             {
-                handle.SetRectPosition(newWorldPosition);
+                handle.SetPosition(newWorldPosition);
                 Undo.RegisterFullObjectHierarchyUndo(handle, "UI Handle Position");
             }
         }
@@ -84,7 +84,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
             Vector3 handlePosition = handle.GetHandlePosition();
             Quaternion handleRotation = handle.GetHandleRotation();
             Quaternion newWorldRotation = Handles.RotationHandle(handleRotation, handlePosition);
-            
+
             if (EditorGUI.EndChangeCheck())
             {
                 handle.transform.rotation = newWorldRotation;
@@ -102,7 +102,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
             Vector3 handlePosition = handle.GetHandlePosition();
             Vector3 handleScale = handle.GetHandleScale();
             Vector3 newWorldScale = Handles.ScaleHandle(handleScale, handlePosition, handle.CompositionLayerTransform.rotation);
-            
+
             if (EditorGUI.EndChangeCheck())
             {
                 handle.transform.localScale = newWorldScale;

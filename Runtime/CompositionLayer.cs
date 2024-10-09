@@ -38,7 +38,7 @@ namespace Unity.XR.CompositionLayers
         [Tooltip(@"The layer ordering of this layer in relation to the main eye layer.
             Order < 0 will render under the eye layer in ascending order.
             Order >= 0 will render over the eye layer in ascending order.")]
-        int m_Order;
+        int m_Order = 1;
 
         [SerializeReference]
         [Tooltip("The data associated with the layer type this layer is set to.")]
@@ -48,17 +48,22 @@ namespace Unity.XR.CompositionLayers
         /// Current PlatformLayerData cache. This property isn't serialized immediately.
         /// </summary>
         [NonSerialized]
-        PlatformLayerData m_PlatformLayerData;
+        internal PlatformLayerData m_PlatformLayerData;
         /// <summary>
         /// Serialized keys for PlatformLayerData.
         /// </summary>
-        [SerializeField]
+        [SerializeReference]
         internal string[] m_PlatformLayerDataKeys;
         /// <summary>
-        /// Serialized values for PlatformLayerData.
+        /// Serialized texts for PlatformLayerData.
         /// </summary>
-        [SerializeField]
+        [SerializeReference]
         internal string[] m_PlatformLayerDataTexts;
+        /// <summary>
+        /// Serialized binaries for PlatformLayerData.
+        /// </summary>
+        [SerializeReference]
+        internal int[] m_PlatformLayerDataBinary;
 
 #pragma warning disable 0414
         // Using a NonSerialized field to make sure the value is default after domain reload.
@@ -91,21 +96,6 @@ namespace Unity.XR.CompositionLayers
             }
             set
             {
-                // Skip checks if the object is not active
-                // Assume this is an initial value that will get checked on Awake
-                if (!isActiveAndEnabled)
-                {
-                    if (CompositionLayerManager.ManagerActive
-                        && CompositionLayerManager.Instance.OccupiedLayers.TryGetValue(m_Order, out var occupied)
-                        && occupied == this)
-                    {
-                        CompositionLayerManager.Instance.OccupiedLayers.Remove(m_Order);
-                    }
-
-                    m_Order = value;
-                    return;
-                }
-
                 this.TryChangeLayerOrder(m_Order, value);
             }
         }
@@ -172,8 +162,9 @@ namespace Unity.XR.CompositionLayers
             // Apply the CompositionOutline component when the object is created
             // to handle drawing outlines for quad and cylinder layers
 #if UNITY_EDITOR
-            if(m_LayerOutline == null) m_LayerOutline = Undo.AddComponent(gameObject, typeof(CompositionOutline));
+            if (m_LayerOutline == null) m_LayerOutline = Undo.AddComponent(gameObject, typeof(CompositionOutline));
 #endif
+
             // Setting up the instance of CompositionLayerManager can send message with creating a new game object
             // this is not allowed to be called from Awake
             if (!Application.isPlaying)
@@ -181,24 +172,20 @@ namespace Unity.XR.CompositionLayers
 
             // Deserialize platform layer data at least once.
             GetActivePlatformLayerData();
-
-            InitializeLayerOrder();
-
-            if (LayerData != null)
-                LayerData.ReportStateChange = ReportStateChange;
-
-            CompositionLayerManager.Instance?.CompositionLayerCreated(this);
         }
 
         /// <inheritdoc cref="MonoBehaviour"/>
         void OnEnable()
         {
-            if (!Application.isPlaying)
+            if (LayerData != null)
             {
-                InitializeLayerOrder();
-                CompositionLayerManager.Instance?.CompositionLayerCreated(this);
+                LayerData.ReportStateChange = ReportStateChange;
+                if (!LayerData.Validate(this))
+                    return;
             }
 
+            InitializeLayerOrder();
+            CompositionLayerManager.Instance?.CompositionLayerCreated(this);
             CompositionLayerManager.Instance?.CompositionLayerEnabled(this);
         }
 
@@ -233,9 +220,6 @@ namespace Unity.XR.CompositionLayers
 
             if (!this.CanChangeOrderTo(Order))
             {
-                if (CompositionLayerManager.Instance.DefaultSceneCompositionLayer == this)
-                    Order = 0;
-
                 var preferOverlay = LayerData == null || CompositionLayerUtils.GetLayerDescriptor(LayerData.GetType()).PreferOverlay;
 
                 // Only use `preferOverlay` when layer is first created or order is 0
@@ -350,7 +334,9 @@ namespace Unity.XR.CompositionLayers
         {
 #if UNITY_EDITOR
             if (LayerData != null)
+            {
                 LayerData.ReportStateChange = ReportStateChange;
+            }
 #endif
         }
 
@@ -368,6 +354,7 @@ namespace Unity.XR.CompositionLayers
                 return;
 
             var canvasChild = transform.GetComponentInChildren<Canvas>();
+            var manuallyAddedComponent = gameObject.GetComponent(k_UIMirrorComponentType);
 
             // Make sure the child changed was the canvas
             if (m_UICanvas != canvasChild)
@@ -381,12 +368,18 @@ namespace Unity.XR.CompositionLayers
                     m_UIMirrorComponent = null;
                     m_UICanvas = null;
                 }
-                // If there is a canvas, add UI references
-                else
+                // If there is a canvas and m_UIMirrorComponent is null, add UI references
+                else if (manuallyAddedComponent == null)
                 {
                     Undo.RecordObject(this, "Cache canvas child.");
                     m_UICanvas = canvasChild;
                     m_UIMirrorComponent = Undo.AddComponent(gameObject, k_UIMirrorComponentType);
+                }
+                // if the mirror component was added manually, we need to cache that component reference inside m_UIMirrorComponent.
+                else
+                {
+                    m_UICanvas = canvasChild;
+                    m_UIMirrorComponent = manuallyAddedComponent;
                 }
             }
 #endif
@@ -410,57 +403,239 @@ namespace Unity.XR.CompositionLayers
         }
 
 #if UNITY_EDITOR
-        void SerializePlatformLayerData(PlatformLayerData platformLayerData)
+        static void ArrayRemoveAt<T>(ref T[] values, int index)
+            where T : class
+        {
+            if (values == null)
+                return;
+
+            var length = values.Length;
+            if (length == 0)
+            {
+                values = null;
+                return;
+            }
+
+            if (index < length)
+                values[index] = null;
+
+            CompactArray(ref values);
+        }
+
+        internal static void CompactArray<T>(ref T[] values)
+            where T : class
+        {
+            if (values == null)
+                return;
+
+            int length = values.Length, newLength = 0;
+            for (int i = length - 1; i >= 0; --i)
+            {
+                if (values[i] != null)
+                {
+                    newLength = i + 1;
+                    break;
+                }
+            }
+
+            ShrinkArray(ref values, newLength);
+        }
+
+        static void ExpandArray<T>(ref T[] values, int newLength)
+        {
+            if (values != null && values.Length >= newLength)
+                return;
+
+            Array.Resize(ref values, newLength);
+        }
+
+        static void ShrinkArray<T>(ref T[] values, int newLength)
+        {
+            if (values == null || values.Length <= newLength)
+                return;
+
+            if (newLength <= 0)
+                values = null;
+            else
+                Array.Resize(ref values, newLength);
+        }
+
+        internal static int[][] ToBinaryDataList(int[] binary)
+        {
+            var binaryDataList = new List<int[]>();
+            if (binary != null)
+            {
+                for (int binaryPos = 0; binaryPos < binary.Length;)
+                {
+                    var binaryDataLength = binary[binaryPos];
+                    var nextBinaryPos = binaryPos + 1 + binaryDataLength;
+                    if (binaryDataLength < 0 || nextBinaryPos > binary.Length)
+                    {
+                        return binaryDataList.ToArray(); // Failsafe.(Deserialize error.)
+                    }
+
+                    var binaryData = new int[binaryDataLength];
+                    if (binaryDataLength > 0)
+                        Array.Copy(binary, binaryPos + 1, binaryData, 0, binaryDataLength);
+                    binaryDataList.Add(binaryData);
+
+                    binaryPos = nextBinaryPos;
+                }
+            }
+
+            return binaryDataList.ToArray();
+        }
+
+        internal static int[] FromBinaryDataList(int[][] binaryDataList)
+        {
+            var binaryData = new List<int>();
+            if (binaryDataList != null)
+            {
+                for (int i = 0; i < binaryDataList.Length; ++i)
+                {
+                    if (binaryDataList[i] != null)
+                    {
+                        binaryData.Add(binaryDataList[i].Length);
+                        binaryData.AddRange(binaryDataList[i]);
+                    }
+                    else
+                    {
+                        binaryData.Add(0);
+                    }
+                }
+            }
+
+            return binaryData.ToArray();
+        }
+
+        internal void SerializePlatformLayerData(PlatformLayerData platformLayerData)
         {
             if (platformLayerData == null)
                 return;
 
-            var keys = m_PlatformLayerDataKeys;
-            var texts = m_PlatformLayerDataTexts;
-
             var fullName = platformLayerData.GetType().FullName;
-            int length = keys != null && texts != null ? Math.Min(keys.Length, texts.Length) : 0;
-            for (int i = 0; i < length; ++i)
+            int keyLength = m_PlatformLayerDataKeys != null ? m_PlatformLayerDataKeys.Length : 0;
+            var binaries = ToBinaryDataList(m_PlatformLayerDataBinary);
+
+            // Overwrite element.
+            for (int i = 0; i < keyLength; ++i)
             {
-                if (keys[i] == fullName)
+                if (m_PlatformLayerDataKeys[i] == fullName)
                 {
-                    texts[i] = platformLayerData.Serialize();
+                    if (platformLayerData.IsSupportedSerializeBinary())
+                    {
+                        ExpandArray(ref binaries, i + 1);
+                        binaries[i] = platformLayerData.SerializeBinary();
+                        m_PlatformLayerDataBinary = FromBinaryDataList(binaries);
+                        ArrayRemoveAt(ref m_PlatformLayerDataTexts, i);
+                    }
+                    else
+                    {
+                        ArrayRemoveAt(ref binaries, i);
+                        m_PlatformLayerDataBinary = FromBinaryDataList(binaries);
+                        ExpandArray(ref m_PlatformLayerDataTexts, i + 1);
+                        m_PlatformLayerDataTexts[i] = platformLayerData.Serialize();
+                    }
                     return;
                 }
             }
 
-            Array.Resize(ref m_PlatformLayerDataKeys, length + 1);
-            Array.Resize(ref m_PlatformLayerDataTexts, length + 1);
+            // Add new element.
+            Array.Resize(ref m_PlatformLayerDataKeys, keyLength + 1);
+            m_PlatformLayerDataKeys[keyLength] = fullName;
 
-            m_PlatformLayerDataKeys[length] = fullName;
-            m_PlatformLayerDataTexts[length] = platformLayerData.Serialize();
+            if (platformLayerData.IsSupportedSerializeBinary())
+            {
+                Array.Resize(ref binaries, keyLength + 1);
+                binaries[keyLength] = platformLayerData.SerializeBinary();
+                ShrinkArray(ref m_PlatformLayerDataTexts, keyLength + 1);
+            }
+            else
+            {
+                ShrinkArray(ref binaries, keyLength + 1);
+                Array.Resize(ref m_PlatformLayerDataTexts, keyLength + 1);
+                m_PlatformLayerDataTexts[keyLength] = platformLayerData.Serialize();
+            }
+            m_PlatformLayerDataBinary = FromBinaryDataList(binaries);
         }
 #endif
-
-        PlatformLayerData DeserializePlatformLayerData(Type platformLayerDataType)
+        internal PlatformLayerData DeserializePlatformLayerData(Type platformLayerDataType)
         {
             var keys = m_PlatformLayerDataKeys;
             var texts = m_PlatformLayerDataTexts;
-            if (platformLayerDataType == null || keys == null || texts == null)
+            var binary = m_PlatformLayerDataBinary;
+            if (platformLayerDataType == null || keys == null || (texts == null && binary == null))
                 return null;
 
             var platformLayerData = Activator.CreateInstance(platformLayerDataType) as PlatformLayerData;
             if (platformLayerData == null)
                 return null;
 
-            var fullName = platformLayerDataType.FullName;
-            int length = Math.Min(keys.Length, texts.Length);
-            for (int i = 0; i < length; ++i)
+            DeserializePlatformLayerData(ref platformLayerData);
+            return platformLayerData;
+        }
+
+        internal void DeserializePlatformLayerData(ref PlatformLayerData platformLayerData)
+        {
+            var keys = m_PlatformLayerDataKeys;
+            var texts = m_PlatformLayerDataTexts;
+            var binary = m_PlatformLayerDataBinary;
+            if (platformLayerData == null || keys == null || (texts == null && binary == null))
+                return;
+
+            var fullName = platformLayerData.GetType().FullName;
+            int keyLength = keys.Length;
+
+            if (binary != null && platformLayerData.IsSupportedSerializeBinary())
             {
-                if (keys[i] == fullName)
+                int binaryPos = 0, binaryLength = binary.Length;
+                for (int i = 0; i < keyLength & binaryPos < binaryLength; ++i)
                 {
-                    platformLayerData.Deserialize(texts[i]);
-                    return platformLayerData;
+                    var binaryDataLength = binary[binaryPos];
+                    var nextBinaryPos = binaryPos + 1 + binaryDataLength;
+                    if (binaryDataLength < 0 || nextBinaryPos > binaryLength)
+                        break; // Deserialize error.
+
+                    if (keys[i] == fullName)
+                    {
+                        if (binaryDataLength > 0)
+                        {
+                            var binaryData = new int[binaryDataLength];
+                            Array.Copy(binary, binaryPos + 1, binaryData, 0, binaryDataLength);
+                            platformLayerData.DeserializeBinary(binaryData);
+                        }
+                        else // Failsafe.
+                        {
+                            platformLayerData.DeserializeBinary(null);
+                        }
+
+                        return;
+                    }
+
+                    binaryPos = nextBinaryPos;
                 }
             }
 
-            platformLayerData.Deserialize(null);
-            return platformLayerData;
+            if (texts != null)
+            {
+                for (int i = 0; i < keyLength; ++i)
+                {
+                    if (keys[i] == fullName)
+                    {
+                        if (i < texts.Length && texts[i] != null)
+                            platformLayerData.Deserialize(texts[i]);
+                        else
+                            platformLayerData.Deserialize(null);
+
+                        return;
+                    }
+                }
+            }
+
+            if (platformLayerData.IsSupportedSerializeBinary())
+                platformLayerData.DeserializeBinary(null);
+            else
+                platformLayerData.Deserialize(null);
         }
     }
 }

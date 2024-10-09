@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using Unity.XR.CompositionLayers;
 using Unity.XR.CompositionLayers.Layers;
+using Unity.XR.CompositionLayers.Provider;
+using Unity.XR.CompositionLayers.Services;
 
 namespace Unity.XR.CompositionLayers
 {
@@ -75,17 +77,19 @@ namespace Unity.XR.CompositionLayers
             var bottomRightVertex = outlineMesh.vertices[outlineMesh.vertices.Length - 1];
             var bottomLeftVertex = outlineMesh.vertices[0];
 
+            var transformMatrix = GetTransformMatrix();
+
             // Loop through each vertex and connect it to the next one
             for (int i = 0; i < outlineMesh.vertices.Length - 1; i++)
             {
-                var currentVertex = transform.TransformPoint(outlineMesh.vertices[i]);
-                var nextVertex = transform.TransformPoint(outlineMesh.vertices[i + 1]);
+                var currentVertex = transformMatrix.MultiplyPoint(outlineMesh.vertices[i]);
+                var nextVertex = transformMatrix.MultiplyPoint(outlineMesh.vertices[i + 1]);
 
                 Gizmos.DrawLine(currentVertex, nextVertex);
             }
 
             // Connect the bottom right vertex to the bottom left to finish the outline
-            Gizmos.DrawLine(transform.TransformPoint(bottomRightVertex), transform.TransformPoint(bottomLeftVertex));
+            Gizmos.DrawLine(transformMatrix.MultiplyPoint(bottomRightVertex), transformMatrix.MultiplyPoint(bottomLeftVertex));
         }
 
         /// <summary>
@@ -105,16 +109,18 @@ namespace Unity.XR.CompositionLayers
             // Generate a cylinder mesh so we can draw lines between the verticies
             GenerateCylinderMesh(ref outlineMesh, data.Radius, data.GetHeight(), data.CentralAngle, inverseScale, outlineScale);
 
-            var bottomRightVertex = transform.TransformPoint(outlineMesh.vertices[outlineMesh.vertices.Length - 1]);
-            var topRightVertex = transform.TransformPoint(outlineMesh.vertices[outlineMesh.vertices.Length - 2]);
-            var topLeftVertex = transform.TransformPoint(outlineMesh.vertices[0]);
-            var bottomLeftVertex = transform.TransformPoint(outlineMesh.vertices[1]);
+            var transformMatrix = GetTransformMatrix();
+
+            var bottomRightVertex = transformMatrix.MultiplyPoint(outlineMesh.vertices[outlineMesh.vertices.Length - 1]);
+            var topRightVertex = transformMatrix.MultiplyPoint(outlineMesh.vertices[outlineMesh.vertices.Length - 2]);
+            var topLeftVertex = transformMatrix.MultiplyPoint(outlineMesh.vertices[0]);
+            var bottomLeftVertex = transformMatrix.MultiplyPoint(outlineMesh.vertices[1]);
 
             // Loop through each vertex and connect it to the next one
             for (int i = 0; i < outlineMesh.vertices.Length - 2; i++)
             {
-                var currentVertex = transform.TransformPoint(outlineMesh.vertices[i]);
-                var nextVertex = transform.TransformPoint(outlineMesh.vertices[i + 2]);
+                var currentVertex = transformMatrix.MultiplyPoint(outlineMesh.vertices[i]);
+                var nextVertex = transformMatrix.MultiplyPoint(outlineMesh.vertices[i + 2]);
 
                 Gizmos.DrawLine(currentVertex, nextVertex);
             }
@@ -203,9 +209,6 @@ namespace Unity.XR.CompositionLayers
             mesh.vertices = vertices.ToArray();
             mesh.uv = uvs.ToArray();
             mesh.triangles = indices.ToArray();
-            mesh.RecalculateBounds();
-            mesh.RecalculateNormals();
-            mesh.UploadMeshData(false);
         }
 
         /// <summary>
@@ -237,8 +240,27 @@ namespace Unity.XR.CompositionLayers
                 mesh.normals = new Vector3[] { Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward };
                 mesh.uv = new Vector2[] { new(1f, 0f), new(1f, 1f), new(0f, 1f), new(0f, 0f) };
             }
-
-            mesh.UploadMeshData(false);
         }
+
+        /// <summary>
+        /// Get transform matrix for scene preview.
+        /// </summary>
+        private Matrix4x4 GetTransformMatrix()
+        {
+            var provider = PlatformManager.ActivePlatformProvider;
+            if (provider != null && provider.GetSelectedCoordinateSystem(m_CompositionLayer) != PlatformProvider.DefaultCoordinateSystem)
+            {
+                CustomTransformCameraData cameraData = new CustomTransformCameraData();
+                cameraData.MainCamera = Services.CompositionLayerUtils.GetStereoMainCamera();
+                cameraData.IsSceneView = true;
+                CustomTransformData transformData = provider.GetCustomTransformData(m_CompositionLayer, cameraData);
+                return transformData.Matrix;
+            }
+            else
+            {
+                return transform.localToWorldMatrix;
+            }
+        }
+
     }
 }

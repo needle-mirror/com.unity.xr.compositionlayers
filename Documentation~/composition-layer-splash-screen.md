@@ -15,34 +15,39 @@ To use the Splash Screen provided by Composition Layers, you must disable the de
 ![](images/splash-scene.png)
 
 ## Splash Screen Settings
-To access the Composition Layer Splash Screen settings, navigate to `AssetsCompositionLayers/UserSettings/Resources/CompositionLayersRuntimeSettings.asset`.
+To access the Composition Layer Splash Screen settings, navigate to `Assets/CompositionLayers/UserSettings/Resources/CompositionLayersRuntimeSettings.asset`.
 
 **Composition Layer Splash Settings**
-|Setting:|Default Value:|Description:|
-|:---|:---|:---|
-|Enable Splash Screen|False|If enabled, the splash screen is displayed when the application starts.|
+
+| Setting:| Default Value:| Description:|
+|:---|:---| 
+|**Enable Splash Screen**|`False`|If enabled, the splash screen is displayed when the application starts.|
 
 **Style Settings**
+
 |Setting:|Default Value:|Description:|
 |:---|:---|:---|
-|Splash Screen Texture|Editor/Textures/Logo_MadeWithUnity.png|The texture to display as the splash screen.|
-|Background Color|#231F20|The color to display behind the splash screen texture.|
+|**Splash Screen Texture**|`Editor/Textures/Logo_MadeWithUnity.png`|The texture to display as the splash screen.|
+|**Background Color**|`#231F20`|The color to display behind the splash screen texture.|
 
 **Duration Settings**
+
 |Setting:|Default Value:|Description:|
 |:---|:---|:---|
-|Splash Duration|3.0|The duration in seconds to display the splash screen (not including fade in and fade out time).|
-|Fade In Duration|2.0|The duration in seconds to fade in the splash screen.|
-|Fade Out Duration|1.0|The duration in seconds to fade out the splash screen.|
+|**Splash Duration**|`3.0`|The duration in seconds to display the splash screen (not including fade in and fade out time).|
+|**Fade In Duration**|`2.0`|The duration in seconds to fade in the splash screen.|
+|**Fade Out Duration**|`1.0`|The duration in seconds to fade out the splash screen.|
 
 **Follow Settings**
+
 |Setting:|Default Value:|Description:|
 |:---|:---|:---|
-|Follow Speed|2.0|The lerp speed at which the splash screen follows the camera.|
-|Follow Distance|2.0|The distance from the camera at which the splash screen is displayed.|
-|Lock To Horizon|True|If enabled, the splash screen is locked to the horizon.|
+|**Follow Speed**|`2.0`|The lerp speed at which the splash screen follows the camera.|
+|**Follow Distance**|`2.0`|The distance from the camera at which the splash screen is displayed.|
+|**Lock To Horizon**|`True`|If enabled, the splash screen is locked to the horizon.|
 
 **Layer Settings**
+
 |Setting:|Default Value:|Description:|
 |:---|:---|:---|
-|Layer Type|Quad|The type of Composition Layer to use for the splash screen. You can use a [Quad](overview.md) or a [Cylinder](overview.md) layer.|
+|**Layer Type**|`Quad`|The type of Composition Layer to use for the splash screen. You can use a [Quad](overview.md) or a [Cylinder](overview.md) layer.|

@@ -13,6 +13,22 @@ When updating the Changelog, please ensure we follow the standards for ordering 
 ```
 Under ## headers, ### \<type\> headers are listed in this order: Added, Changed, Deprecated, Removed, Fixed, Security
 ```
+## [1.0.0] - 2024-10-09
+
+### Added
+* Added Default Layer Support allows for the creation of a default layer and rearragment of the default layer order.
+* Added Composition Layer Sample Scene to demonstrate the use of Composition Layers in a scene.
+* Added Composition Layer Android Sample Surface Scene to demonstrate the use of Andriods External Surface in a scene.
+* Added supporing HDR Tonemapping extension. It allows to set HDR parameters for each layer.
+* Added supporting MirrorViewRenderer. It provides to draw mirror view rendering with layers on XR.
+* Added supporting automatically renderer feature settings on URP and HDRP.
+
+### Fixed
+* Fixed Interactable UI Scalings are now consistent between editor and build.
+* Fixed Projection Eye Rig Emulation for URP and Unity6.
+
+### Changed
+* Removed EmulationLayerUniversalScriptableRendererFeature.(Manual configuration is no longer required.)
 
 ## [0.6.0] - 2024-06-26
 

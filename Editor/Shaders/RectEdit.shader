@@ -130,6 +130,8 @@ Shader "Unlit/XRCompositionLayers/Editor/Rects"
 #endif
 
                 fixed4 col = tex2D(_MainTex, sourceUv);
+                col.rgb = LinearToGammaSpace(col.rgb);
+
                 float2 texpt = _MainTex_TexelSize.xy;
                 float2 texres = _MainTex_TexelSize.zw;
                 float4 newCol = fixed4(1,1,1,.1);
@@ -156,6 +158,7 @@ Shader "Unlit/XRCompositionLayers/Editor/Rects"
                     sourceUv = sourceUv * float2(1.0, -1.0) + float2(0.0, 1.0);
 #endif
                     newCol = col = tex2D(_MainTex, sourceUv);
+                    newCol.rgb = LinearToGammaSpace(col.rgb);
                 }
 
                 float2 texpt = _MainTex_TexelSize.xy;

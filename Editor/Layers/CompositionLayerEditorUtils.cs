@@ -38,10 +38,10 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             foreach (var descriptor in CompositionLayerUtils.GetAllLayerDescriptors())
             {
                 // Hides these layers from the list of options in the Layer Type dropdown
-                if (descriptor.Name.Equals("Projection Layer Eye Rig") || descriptor.Name.Equals("Default"))
+                if (descriptor.DataType == typeof(ProjectionLayerRigData) || descriptor.DataType == typeof(DefaultLayerData))
                     continue;
 
-                if (descriptor.Name.Equals("Quad") || descriptor.Name.Equals("Cylinder"))
+                if (descriptor.DataType == typeof(QuadLayerData) || descriptor.DataType == typeof(CylinderLayerData))
                     UILayerNames.Add(descriptor.TypeFullName);
 
                 LayerNames.Add(descriptor.TypeFullName);
@@ -223,11 +223,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 }
                 else
                 {
-#if UNITY_2023_1_OR_NEWER
-                    return $"<color=grey>! {layerName}</color>";
-#else
                     return $"! {layerName}";
-#endif
                 }
             }
             else
@@ -257,14 +253,14 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
         internal static void SetOrderInEditor(CompositionLayer layer, int oldOrder, int newOrder)
         {
-            if (layer.TryChangeLayerOrder(oldOrder, newOrder, true))
+            if (layer.TryChangeLayerOrder(oldOrder, newOrder))
                 return;
 
-            if (layer.TryChangeLayerOrder(oldOrder, oldOrder, true))
+            if (layer.TryChangeLayerOrder(oldOrder, oldOrder))
                 return;
 
             var orderValue = CompositionLayerManager.GetNextUnusedLayer(newOrder);
-            layer.TryChangeLayerOrder(oldOrder, orderValue, true);
+            layer.TryChangeLayerOrder(oldOrder, orderValue);
         }
 
         static void SetOrderValueInEditor(this CompositionLayer layer, int order)

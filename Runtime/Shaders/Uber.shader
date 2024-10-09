@@ -9,6 +9,14 @@ Shader "Unlit/XRCompositionLayers/Uber"
         [HideInInspector][ToggleUI] _ZWrite("__zw", Float) = 1.0
         [HideInInspector][Enum(UnityEngine.Rendering.CullMode)] _Cull("__cull", Float) = 2.0 // UnityEngine.Rendering.CullMode.Back
 
+        _SourceNitsForPaperWhite("SourceNitsForPaperWhite", Float) = 160.0
+        _SourceColorGamut("SourceColorGamut", Integer) = 0
+        _SourceMaxDisplayNits("SourceMaxDisplayNits", Float) = 160.0
+        _NitsForPaperWhite("NitsForPaperWhite", Float) = 160.0
+        _ColorGamut("ColorGamut", Integer) = 0
+        _MaxDisplayNits("MaxDisplayNits", Float) = 160.0
+        _TransformMatrixType("TransformMatrixType", Integer) = 0
+
         // Blending state (based on universal)
         _Surface("__surface", Float) = 1.0 // UnityEditor.Rendering.Universal.ShaderGraph.SurfaceType.Transparent
         _Blend("__mode", Float) = 1.0 // UnityEditor.Rendering.Universal.ShaderGraph.AlphaMode.Premultiply
@@ -55,6 +63,7 @@ Shader "Unlit/XRCompositionLayers/Uber"
             #pragma multi_compile_local_fragment _ COLOR_SCALE_BIAS_ON
             #pragma multi_compile_local_fragment _ALPHATEST_ON
             #pragma multi_compile_local_vertex DEPTH_FARTHEST DEPTH_NEAREST
+            #pragma multi_compile_vertex _ COMPOSITION_LAYERS_OVERRIDE_SHADER_VARIABLES_GLOBAL
 
             #define COMPOSITION_LAYERS_HDRENDER 1
             #include "Packages/com.unity.xr.compositionlayers/Runtime/Shaders/ForwardPass.hlsl"

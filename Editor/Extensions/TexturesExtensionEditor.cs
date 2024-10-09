@@ -138,7 +138,8 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
                 EditorGUILayout.PrefixLabel(" "); // Used to align Rect with Custom Rects with other properties
 
                 Rect textureRect = EditorGUILayout.GetControlRect(GUILayout.Height(64), GUILayout.Width(64));
-                var newTexture = EditorGUI.ObjectField(textureRect, m_LeftTextureProperty.objectReferenceValue, typeof(Texture), true);
+                var type = layerDataType == typeof(CubeProjectionLayerData) ? typeof(Cubemap) : typeof(Texture2D);
+                var newTexture = EditorGUI.ObjectField(textureRect, m_LeftTextureProperty.objectReferenceValue, type, true);
 
                 if (newTexture != m_LeftTextureProperty.objectReferenceValue)
                 {
@@ -157,14 +158,15 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
                 EditorGUILayout.PrefixLabel(" ");
                 GUILayout.Space(2);
 
+                var type = layerDataType == typeof(CubeProjectionLayerData) ? typeof(Cubemap) : typeof(Texture2D);
                 Rect leftTextureRect = EditorGUILayout.GetControlRect(GUILayout.Height(64), GUILayout.Width(64));
-                var newLeftTexture = EditorGUI.ObjectField(leftTextureRect, m_LeftTextureProperty.objectReferenceValue, typeof(Texture), true);
+                var newLeftTexture = EditorGUI.ObjectField(leftTextureRect, m_LeftTextureProperty.objectReferenceValue, type, true);
                 if (newLeftTexture != m_LeftTextureProperty.objectReferenceValue) m_LeftTextureProperty.objectReferenceValue = newLeftTexture;
 
                 GUILayout.FlexibleSpace();
 
                 Rect rightTextureRect = EditorGUILayout.GetControlRect(GUILayout.Height(64), GUILayout.Width(64));
-                var newRightTexture = EditorGUI.ObjectField(rightTextureRect, m_RightTextureProperty.objectReferenceValue, typeof(Texture), true);
+                var newRightTexture = EditorGUI.ObjectField(rightTextureRect, m_RightTextureProperty.objectReferenceValue, type, true);
                 if (newRightTexture != m_RightTextureProperty.objectReferenceValue) m_RightTextureProperty.objectReferenceValue = newRightTexture;
 
                 GUILayout.FlexibleSpace();

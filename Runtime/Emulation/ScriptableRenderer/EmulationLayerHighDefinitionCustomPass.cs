@@ -1,7 +1,7 @@
 #if UNITY_RENDER_PIPELINES_HDRENDER
-using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
@@ -9,12 +9,12 @@ namespace Unity.XR.CompositionLayers.Emulation
     {
         internal static void Execute(CustomPassContext ctx, List<EmulatedLayerData> emulationLayers)
         {
+            var commandArgs = new EmulatedLayerData.CommandArgs(ctx.hdCamera.camera);
+            ctx.cmd.DisableShaderKeyword("COMPOSITION_LAYERS_OVERRIDE_SHADER_VARIABLES_GLOBAL");
             foreach (var layerData in emulationLayers)
             {
-                EmulatedCameraData cameraData;
-                if (EmulationLayerHighDefinitionCustomPassManager.Contains(ctx.hdCamera.camera, out cameraData) && layerData.IsSupported(ctx.hdCamera.camera))
+                if (layerData.IsSupported(ctx.hdCamera.camera))
                 {
-                    var commandArgs = new EmulatedLayerData.CommandArgs(cameraData);
                     layerData.AddToCommandBuffer(ctx.cmd, commandArgs);
                 }
             }
@@ -23,67 +23,118 @@ namespace Unity.XR.CompositionLayers.Emulation
 
     public class EmulationLayerHighDefinitionUnderlayCustomPass : CustomPass
     {
-        internal static List<EmulatedLayerData> m_EmulationLayers = new List<EmulatedLayerData>();
-
         protected override void Execute(CustomPassContext ctx)
         {
-            EmulationLayerHighDefinitionCustomPassImpl.Execute(ctx, m_EmulationLayers);
+            EmulationLayerHighDefinitionCustomPassImpl.Execute(ctx, EmulationLayerScriptableRendererManager.GetEmulatedLayerDataList(false));
         }
     }
 
     public class EmulationLayerHighDefinitionOverlayCustomPass : CustomPass
     {
-        internal static List<EmulatedLayerData> m_EmulationLayers = new List<EmulatedLayerData>();
-
         protected override void Execute(CustomPassContext ctx)
         {
-            EmulationLayerHighDefinitionCustomPassImpl.Execute(ctx, m_EmulationLayers);
+            EmulationLayerHighDefinitionCustomPassImpl.Execute(ctx, EmulationLayerScriptableRendererManager.GetEmulatedLayerDataList(true));
         }
     }
 
-    internal static class EmulationLayerHighDefinitionCustomPassManager
+    [ExecuteInEditMode]
+    internal class EmulationLayerHighDefinitionVolumeManager : MonoBehaviour
     {
-        static HashSet<EmulatedCameraData> m_ActiveCameras; // Copyed from EmulatedLayerProvider.m_ActiveCameras
+        static EmulationLayerHighDefinitionVolumeManager _instance = null;
 
-        internal static void Bind(HashSet<EmulatedCameraData> activeCameras)
+        static void InternalDestroy(Object obj)
         {
-            m_ActiveCameras = activeCameras;
+            if (Application.isPlaying)
+                Destroy(obj);
+            else
+                DestroyImmediate(obj);
         }
 
-        internal static bool Contains(Camera camera, out EmulatedCameraData cameraData)
+        static EmulationLayerHighDefinitionVolumeManager instance
         {
-            if (m_ActiveCameras != null)
+            get
             {
-                foreach (var activeCamera in m_ActiveCameras)
+                if (_instance == null)
                 {
-                    if (activeCamera.Camera == camera)
+                    var instances = Resources.FindObjectsOfTypeAll<EmulationLayerHighDefinitionVolumeManager>();
+                    if (instances != null && instances.Length > 0)
                     {
-                        cameraData = activeCamera;
-                        return true;
+                        _instance = instances[0];
+                        for (int i = 1; i < instances.Length; ++i)
+                        {
+                            InternalDestroy(instances[i]);
+                        }
+                    }
+                    else
+                    {
+                        var gameObject = new GameObject(typeof(EmulationLayerHighDefinitionVolumeManager).ToString());
+                        gameObject.hideFlags = HideFlags.HideAndDontSave;
+                        if (Application.isPlaying)
+                            GameObject.DontDestroyOnLoad(gameObject);
+
+                        _instance = gameObject.AddComponent<EmulationLayerHighDefinitionVolumeManager>();
+                    }
+                }
+
+                return _instance;
+            }
+        }
+
+        public static void ActivateCustomPassVolumes()
+        {
+            bool foundOverlay = false, foundUnderlay = false;
+            var volumes = instance.GetComponents<CustomPassVolume>();
+            if (volumes != null)
+            {
+                foreach (var volume in volumes)
+                {
+                    var customPasses = volume.customPasses;
+                    foreach (var customPass in customPasses)
+                    {
+                        if (customPass is EmulationLayerHighDefinitionUnderlayCustomPass)
+                        {
+                            foundUnderlay = true;
+                        }
+                        else if (customPass is EmulationLayerHighDefinitionOverlayCustomPass)
+                        {
+                            foundOverlay = true;
+                        }
                     }
                 }
             }
 
-            cameraData = new EmulatedCameraData();
-            return false;
+            if (!foundUnderlay)
+            {
+                var volume = instance.gameObject.AddComponent<CustomPassVolume>();
+                volume.isGlobal = true;
+                volume.injectionPoint = CustomPassInjectionPoint.BeforeRendering;
+                volume.customPasses.Add(new EmulationLayerHighDefinitionUnderlayCustomPass());
+            }
+            if (!foundOverlay)
+            {
+                var volume = instance.gameObject.AddComponent<CustomPassVolume>();
+                volume.isGlobal = true;
+                volume.injectionPoint = CustomPassInjectionPoint.AfterPostProcess;
+                volume.customPasses.Add(new EmulationLayerHighDefinitionOverlayCustomPass());
+            }
         }
 
-        internal static void Add(EmulatedLayerData layerData, int order)
+        public static void DeactivateCustomPassVolumes()
         {
-            if (order >= 0)
+            if (_instance)
             {
-                EmulationLayerHighDefinitionOverlayCustomPass.m_EmulationLayers.Add(layerData);
-            }
-            else
-            {
-                EmulationLayerHighDefinitionUnderlayCustomPass.m_EmulationLayers.Add(layerData);
-            }
-        }
+                var volumes = _instance.GetComponents<CustomPassVolume>();
+                if (volumes != null)
+                {
+                    foreach (var volume in volumes)
+                    {
+                        InternalDestroy(volume);
+                    }
+                }
 
-        internal static void Clear()
-        {
-            EmulationLayerHighDefinitionUnderlayCustomPass.m_EmulationLayers.Clear();
-            EmulationLayerHighDefinitionOverlayCustomPass.m_EmulationLayers.Clear();
+                InternalDestroy(_instance.gameObject);
+                _instance = null;
+            }
         }
     }
 }

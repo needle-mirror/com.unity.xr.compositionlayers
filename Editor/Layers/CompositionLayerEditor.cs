@@ -110,10 +110,21 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
             if (layerData != null)
             {
-                if (layerData.GetType().Name == "ProjectionLayerRigData")
-                    m_LayerDataTypeName.SetEnabled(false);
-                else
-                    m_LayerDataTypeName.SetEnabled(true);
+                switch (layerData)
+                {
+                    case DefaultLayerData:
+                        orderElement.SetEnabled(false);
+                        m_LayerDataTypeName.SetEnabled(false);
+                        break;
+
+                    case ProjectionLayerRigData:
+                        m_LayerDataTypeName.SetEnabled(false);
+                        break;
+
+                    default:
+                        m_LayerDataTypeName.SetEnabled(true);
+                        break;
+                }
             }
 
             m_LayerDataTypeName.RegisterValueChangedCallback(OnLayerTypeChange);
@@ -308,6 +319,8 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             if (m_HelpBoxElement == null || m_InstructionElement == null)
                 return;
 
+            var mainCamera = CompositionLayerManager.mainCameraCache;
+
             // Check that layer data is set to valid type
             var layerData = m_LayerDataProperty.managedReferenceValue as LayerData;
             if (layerData == null)
@@ -321,7 +334,16 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 			
             var fullName = layerData != null ? layerData.GetType().FullName : string.Empty;
             var index = string.IsNullOrEmpty(fullName) ? -1 : CompositionLayerEditorUtils.LayerNames.IndexOf(fullName);
-            if (index < 0 && layerData.GetType().Name != "ProjectionLayerRigData")
+            var layerDataType = layerData.GetType();
+
+            if (layerDataType == typeof(DefaultLayerData))
+            {
+                // Show the help Box
+                m_HelpBoxElement.style.display = DisplayStyle.Flex;
+                m_HelpBoxElement.text = "Scene objects are rendered on this layer by default";
+                m_HelpBoxElement.messageType = HelpBoxMessageType.Info;
+            }
+            else if (index < 0 && layerDataType != typeof(ProjectionLayerRigData))
             {
                 // Show the help Box
                 m_HelpBoxElement.style.display = DisplayStyle.Flex;
@@ -337,9 +359,9 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
             }
             // Check if camera background will block underlay layers
-            else if (m_OrderProperty.intValue < 0 && Camera.main.clearFlags == CameraClearFlags.Skybox)
+            else if (m_OrderProperty.intValue < 0 && mainCamera.clearFlags == CameraClearFlags.Skybox)
             {
-                var camera = Camera.main;
+                var camera = mainCamera;
                 if (camera == null)
                     camera = FindFirstObjectByType<Camera>();
 

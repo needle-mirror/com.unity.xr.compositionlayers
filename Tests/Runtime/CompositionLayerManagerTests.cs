@@ -161,8 +161,6 @@ namespace Unity.XR.CompositionLayers.Tests
         [UnityTest]
         public IEnumerator CompositionLayerManagerSortsLayersCorrectly()
         {
-            yield return new WaitForUpdateCall(this);
-
             LogAssert.ignoreFailingMessages = true;
             var layerOne = CreateLayerGameObject(false);
             layerOne.Order = 0;
@@ -180,19 +178,15 @@ namespace Unity.XR.CompositionLayers.Tests
             var layerNegTwo = CreateLayerGameObject(false);
             layerNegTwo.Order = -1;
 
-            yield return new WaitForUpdateCall(this);
-
             Assert.IsFalse(hasCreatedLayers);
             Assert.IsFalse(hasModifiedLayers);
             Assert.IsFalse(hasRemovedLayers);
-            
-            // This starts the manager if it was not running
-            CompositionLayerManager.Instance.EnsureSceneCompositionManager();
-            yield return new WaitForUpdateCall(this);
 
             // Checks that it is after default layer and does not collide with default layer order
             layerOne.gameObject.SetActive(true);
+
             yield return new WaitForUpdateCall(this);
+
             Assert.AreEqual(CompositionLayerManager.Instance.OccupiedLayers.Count, lastActiveLayers.Count);
             Assert.AreEqual(lastActiveLayers[1].Layer, layerOne);
             Assert.AreEqual(layerOne.Order, 1);

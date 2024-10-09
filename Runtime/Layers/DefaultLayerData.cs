@@ -1,6 +1,6 @@
 using System;
-using UnityEngine;
-using Unity.XR.CompositionLayers.Provider;
+using Unity.XR.CompositionLayers.Services;
+using Unity.XR.CoreUtils;
 
 namespace Unity.XR.CompositionLayers.Layers
 {
@@ -14,7 +14,7 @@ namespace Unity.XR.CompositionLayers.Layers
     /// </summary>
     [CompositionLayerData(
         Provider = "Unity",
-        Name = "Default",
+        Name = "Default Scene",
         IconPath = CompositionLayerConstants.IconPath,
         InspectorIcon = "",
         ListViewIcon = "",
@@ -22,8 +22,23 @@ namespace Unity.XR.CompositionLayers.Layers
         SuggestedExtenstionTypes = new Type[] { }
      )]
     [CompositionLayersHelpURL(typeof(DefaultLayerData))]
-    internal class DefaultLayerData : LayerData { 
+    public class DefaultLayerData : LayerData {
         [UnityEngine.Scripting.Preserve]
-        public DefaultLayerData() { }
-	}
+
+        public DefaultLayerData()
+        {
+        }
+
+        protected internal override bool Validate(CompositionLayer layer)
+        {
+            var layerManager = CompositionLayerManager.Instance;
+            if (layerManager == null)
+                return false;
+
+            layerManager.DefaultSceneCompositionLayer = layer;
+            var isDefaultSceneLayer = layerManager.DefaultSceneCompositionLayer == layer;
+            layer.gameObject.SetActive(isDefaultSceneLayer);
+            return isDefaultSceneLayer;
+        }
+    }
 }

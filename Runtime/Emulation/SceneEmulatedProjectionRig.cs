@@ -5,6 +5,14 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.XR.CompositionLayers.Emulation.Implementations;
 using System.Linq;
+using Unity.XR.CompositionLayers.Layers;
+
+#if UNITY_EDITOR
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
+using UnityEngine.SceneManagement;
+using UnityEditor.SceneManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
@@ -14,8 +22,10 @@ namespace Unity.XR.CompositionLayers.Emulation
     /// This class used to emulate a Projection Rig CompositionLayer inside of all scene view windows.
     /// </summary>
     [ExecuteInEditMode]
-    internal class SceneEmulatedProjectionRig : MonoBehaviour
+    internal class SceneEmulatedProjectionRig : MonoBehaviour, IPreprocessBuildWithReport
     {
+        public int callbackOrder => 0;
+
         public CommandBuffer CommandBufffer => m_sceneViewProjector?.CommandBuffer;
         static Dictionary<Camera, Dictionary<int, SceneEmulatedProjectionRig>> cameraToRigs = new Dictionary<Camera, Dictionary<int, SceneEmulatedProjectionRig>>();
         Camera m_SceneViewCamera;
@@ -46,7 +56,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                 var currentRigCamera = currentRig.m_sceneViewProjector.SourceCamera;
 
                 int mask = 1 << compositionLayer.gameObject.layer;
-                if (currentRigCamera.cullingMask != mask)
+                if (currentRigCamera != null && currentRigCamera.cullingMask != mask)
                 {
                     currentRigCamera.cullingMask = mask;
                 }
@@ -55,7 +65,6 @@ namespace Unity.XR.CompositionLayers.Emulation
             }
 
             var name = sceneViewCamera.name + "_" + compositionLayerId;
-
             var gameObject = new GameObject(name);
             gameObject.hideFlags = HideFlags.DontSave | HideFlags.HideInHierarchy;
             var rig = gameObject.AddComponent<SceneEmulatedProjectionRig>();
@@ -72,6 +81,12 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         public void ClearAndAddCommand() => m_sceneViewProjector?.ClearAndAddCommand();
 
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+        public void ClearAndAddCommand(RasterCommandBuffer rcb) => m_sceneViewProjector?.ClearAndAddCommand(rcb);
+        public void ClearAndAddCommand(CommandBuffer cb) => m_sceneViewProjector?.ClearAndAddCommand(cb);
+
+#endif
+
         public static void DestroyAllEmulatedRigsForLayerId(int layerInstanceId)
         {
             for (int i = 0; i < cameraToRigs.Keys.Count; ++i)
@@ -87,6 +102,10 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         void Update()
         {
+            // If the player is being built, don't update the SceneViewProjector.
+            if (BuildPipeline.isBuildingPlayer)
+                return;
+
             // LayerData should be disposed when it's Composition Layer goes out of scope.
             // However, currently it does not call Dispose() during an undo action, so this object must track the CompositionLayer reference.
             if (m_CompositionLayer == null || m_SceneViewCamera == null)
@@ -101,7 +120,9 @@ namespace Unity.XR.CompositionLayers.Emulation
         Camera CreateRigCamera(GameObject gameObject, string layerToRender)
         {
             var rigCamera = gameObject.AddComponent<Camera>();
+#if !UNITY_RENDER_PIPELINES_UNIVERSAL
             rigCamera.stereoTargetEye = StereoTargetEyeMask.None;
+#endif
             rigCamera.cullingMask = 1 << LayerMask.NameToLayer(layerToRender);
             rigCamera.clearFlags = CameraClearFlags.SolidColor;
             rigCamera.backgroundColor = new Color(0, 0, 0, 0);
@@ -119,6 +140,14 @@ namespace Unity.XR.CompositionLayers.Emulation
 
             if (cameraToRigs.Count == 0)
                 cameraToRigs.Remove(camera);
+        }
+
+        /// <summary>
+        /// Subscribe to the scene closing event to cleanup when a scene is closed.
+        /// </summary>
+        void OnEnable()
+        {
+            EditorSceneManager.sceneClosing += OnSceneClosing;
         }
 
         /// <summary>
@@ -143,10 +172,32 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// </summary>
         void OnDisable()
         {
+            EditorSceneManager.sceneClosing -= OnSceneClosing;
+
             if (m_sceneViewProjector != null)
             {
                 m_sceneViewProjector.Dispose();
             }
+        }
+
+        private void OnSceneClosing(Scene scene, bool removingScene)
+        {
+            DiposeAllSceneViewProjectors();
+        }
+
+        public void OnPreprocessBuild(BuildReport report)
+        {
+            DiposeAllSceneViewProjectors();
+        }
+
+        /// <summary>
+        /// Disposes of all SceneViewProjectors
+        /// </summary>
+        private void DiposeAllSceneViewProjectors()
+        {
+            foreach (var cameraToRig in cameraToRigs)
+                foreach (var rig in cameraToRig.Value)
+                    rig.Value.m_sceneViewProjector.Dispose();
         }
 
         /// <summary>
@@ -239,6 +290,19 @@ namespace Unity.XR.CompositionLayers.Emulation
                 m_commandBuffer.DrawMesh(m_sourceProjectionMesh, Matrix4x4.identity, m_sourceRenderMaterial);
             }
 
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+            public void ClearAndAddCommand(RasterCommandBuffer rcb)
+            {
+                rcb?.DrawMesh(m_sourceProjectionMesh, Matrix4x4.identity, m_sourceRenderMaterial);
+            }
+
+            public void ClearAndAddCommand(CommandBuffer cb)
+            {
+                cb?.Clear();
+                cb?.DrawMesh(m_sourceProjectionMesh, Matrix4x4.identity, m_sourceRenderMaterial);
+            }
+#endif
+
             public void Dispose()
             {
                 if (m_disposed)
@@ -248,7 +312,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                 {
                     m_sourceCamera.targetTexture = null;
                     if (m_sourceCamera.gameObject.activeInHierarchy)
-                        GameObject.DestroyImmediate(m_sourceCamera);
+                        CompositionLayerHelper.DestroyCamera(m_sourceCamera);
                 }
 
                 if (m_sourceProjectionMesh != null)
@@ -295,7 +359,6 @@ namespace Unity.XR.CompositionLayers.Emulation
                 m_sourceRenderMaterial.EnableKeyword(ProjectionRigEmulationLayerData.k_ShaderLayerTypeKeyword);
                 m_sourceRenderMaterial.EnableKeyword(EmulatedLayerData.k_SourceTextureMaterialKeyword);
             }
-
 
             void CreateCommandBuffer()
             {

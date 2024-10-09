@@ -3,22 +3,22 @@ using UnityEngine.Rendering.Universal;
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
+    [System.Obsolete("EmulationLayerUniversalScriptableRendererFeature is not supported now. Please delete this feature manually.", false)]
     public class EmulationLayerUniversalScriptableRendererFeature : ScriptableRendererFeature
     {
-        EmulationLayerUniversalScriptableRendererPass m_UnderlayLayerPass;
-        EmulationLayerUniversalScriptableRendererPass m_OverlayLayerPass;
-
+        static bool s_logged;
+        
         public override void Create()
         {
-            // Pass instances should be created for each PassEvent.(EnqueuePass will keep instances for each pass.)
-            m_UnderlayLayerPass = new EmulationLayerUniversalScriptableRendererPass(false);
-            m_OverlayLayerPass = new EmulationLayerUniversalScriptableRendererPass(true);
+            if(!s_logged)
+            {
+                s_logged = true;
+                UnityEngine.Debug.LogWarning("EmulationLayerUniversalScriptableRendererFeature is not supported now. Please delete this feature manually.");
+            }
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            renderer.EnqueuePass(m_UnderlayLayerPass);
-            renderer.EnqueuePass(m_OverlayLayerPass);
         }
     }
 }

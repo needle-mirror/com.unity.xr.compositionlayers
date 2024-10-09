@@ -8,7 +8,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
     /// Handles position, rotation, and scale calculations to draw Gizmos
     /// </summary>
     /// /// <seealso cref="UIHandleEditor"/>
-    [ExecuteInEditMode, RequireComponent(typeof(RectTransform))]
+    [ExecuteInEditMode]
     public class UIHandle : MonoBehaviour
     {
         /// <summary>
@@ -16,12 +16,13 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// </summary>
         public Transform CompositionLayerTransform { get => m_CompositionLayerTransform; }
         private Transform m_CompositionLayerTransform;
-        
+
         /// <summary>
         /// Reference to the Canvas this element is attached to
         /// </summary>
         public Canvas Canvas { get => m_Canvas; }
         private Canvas m_Canvas;
+        private RectTransform m_CanvasRectTransform;
 
         /// <summary>
         /// Reference to this element's RectTransform
@@ -33,7 +34,10 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         void OnEnable()
         {
             m_CompositionLayerTransform = GetComponentInParent<CompositionLayer>()?.transform;
+            if (m_CompositionLayerTransform == null)
+                m_CompositionLayerTransform = GetComponent<CompositionLayer>()?.transform;
             m_Canvas = GetComponentInParent<Canvas>();
+            m_CanvasRectTransform = m_Canvas?.GetComponent<RectTransform>();
             m_RectTransform = GetComponent<RectTransform>();
         }
 
@@ -43,34 +47,21 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <returns>The position of the RectTransform in the layer's local space</returns>
         public Vector3 GetHandlePosition()
         {
-            if(!m_CompositionLayerTransform || !m_Canvas) return Vector3.zero;
+            if (!RectTransform && CompositionLayerTransform)
+                return m_CompositionLayerTransform.position;
 
-            Vector3 m_CanvasScale = GetComponentInParent<LayerUIScale>().GetUIScale();
-            // Vector3 m_CanvasScale = Vector3.one;
-
-            Vector3 localPosition = RectTransform.localPosition;
-            Vector3 scaledLocalPosition = Vector3.Scale(localPosition, m_CanvasScale);
-            Vector3 scaledLocalPositionToCompositionSpace = m_CompositionLayerTransform.TransformPoint(scaledLocalPosition);
-
-            return scaledLocalPositionToCompositionSpace;
+            float centerScale = 1.0f / GetMaxCanvasSize();
+            Vector3 offsetRelativeToCanvas = m_RectTransform.position - m_CanvasRectTransform.position;
+            Vector3 position = m_CompositionLayerTransform.position + offsetRelativeToCanvas * centerScale;
+            return position;
         }
 
-        /// <summary>
-        /// Calculates the rotation of the RectTransform in the layer's local space
-        /// </summary>
-        /// <returns>The RectTransform's rotation</returns>
-        public Quaternion GetHandleRotation()
+        public void SetPosition(Vector3 worldPosition)
         {
-            return RectTransform.rotation;
-        }
-
-        /// <summary>
-        /// Calculates the scale of the RectTransform in the layer's local space
-        /// </summary>
-        /// <returns>The RectTransform's scale</returns>
-        public Vector3 GetHandleScale()
-        {
-            return RectTransform.localScale;
+            if (!RectTransform && CompositionLayerTransform)
+                m_CompositionLayerTransform.position = worldPosition;
+            else if (RectTransform)
+                SetRectPosition(worldPosition);
         }
 
         /// <summary>
@@ -80,16 +71,37 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// Typically called with a return value from Handles.PositionHandle, Handles.RotationHandle, or Handles.ScaleHandle
         /// </remarks>
         /// <param name="worldSpace">The location in World Space</param>
-        public void SetRectPosition(Vector3 worldSpace)
+        public void SetRectPosition(Vector3 worldPosition)
         {
-            if(!m_CompositionLayerTransform || !m_Canvas) return;
-
-            Vector3 inverseCanvasScale = GetComponentInParent<LayerUIScale>().GetInverseUIScale();
-
-            Vector3 worldPositionToCompositionSpace = m_CompositionLayerTransform.InverseTransformPoint(worldSpace);
-            Vector3 scaledCompositionSpace = Vector3.Scale(worldPositionToCompositionSpace, inverseCanvasScale);
-
-            RectTransform.localPosition = new Vector3(scaledCompositionSpace.x, scaledCompositionSpace.y, 0);
+            float centerScale = 1.0f / GetMaxCanvasSize();
+            Vector3 offsetRelativeToCompositionLayer = (worldPosition - m_CompositionLayerTransform.position) / centerScale;
+            Vector3 localPosition = m_CanvasRectTransform.position + offsetRelativeToCompositionLayer;
+            m_RectTransform.position = localPosition;
         }
+
+        /// <summary>
+        /// Calculates the rotation of the RectTransform in the layer's local space
+        /// </summary>
+        /// <returns>The RectTransform's rotation</returns>
+        public Quaternion GetHandleRotation()
+        {
+            return RectTransform ? RectTransform.rotation : transform.rotation;
+        }
+
+        /// <summary>
+        /// Calculates the scale of the RectTransform in the layer's local space
+        /// </summary>
+        /// <returns>The RectTransform's scale</returns>
+        public Vector3 GetHandleScale()
+        {
+            return RectTransform ? RectTransform.localScale : transform.localScale;
+        }
+
+        /// <summary>
+        /// Gets the maximum size of the canvas on the X or Y axis
+        /// </summary>
+        /// <param name="canvas"></param>
+        /// <returns>Returns the maximum size on the X or Y axis of the canvas</returns>
+        private float GetMaxCanvasSize() => Mathf.Max(m_CanvasRectTransform.sizeDelta.x, m_CanvasRectTransform.sizeDelta.y);
     }
 }

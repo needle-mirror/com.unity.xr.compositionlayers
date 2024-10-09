@@ -17,7 +17,7 @@ namespace Unity.XR.CompositionLayers
         [Tooltip("Enable or disable emulation of composition layers in standalone builds when no XR provider is active or no headset connected.")]
         bool m_EmulationInStandalone = false;
 
-        internal bool EmulationInStandalone => m_EmulationInStandalone;
+        public bool EmulationInStandalone => m_EmulationInStandalone;
 
         [Header("Composition Layer Splash Settings")]
         [SerializeField]

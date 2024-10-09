@@ -85,14 +85,12 @@ namespace Unity.XR.CompositionLayers.Layers
             return oldValue;
         }
 
-        /// <inheritdoc cref="ScriptableObject"/>
-        protected virtual void OnValidate()
-        {
-#if UNITY_EDITOR
-            if (Application.isPlaying)
-                ReportStateChange?.Invoke();
-#endif //UNITY_EDITOR
-        }
+        /// <summary>
+        /// Allows a layer data class to validate values from it's associated composition layer.
+        /// </summary>
+        /// <param name="layer">Compositon layer to validate against this layer data.</param>
+        /// <returns>True if validation passes, false if validation fails.</returns>
+        protected internal virtual bool Validate(CompositionLayer layer) => true;
 
         /// <summary>
         /// Used to copy values from another layer data instance
