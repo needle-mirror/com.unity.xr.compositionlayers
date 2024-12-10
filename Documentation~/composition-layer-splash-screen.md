@@ -20,7 +20,7 @@ To access the Composition Layer Splash Screen settings, navigate to `Assets/Comp
 **Composition Layer Splash Settings**
 
 | Setting:| Default Value:| Description:|
-|:---|:---| 
+|:---|:---|
 |**Enable Splash Screen**|`False`|If enabled, the splash screen is displayed when the application starts.|
 
 **Style Settings**

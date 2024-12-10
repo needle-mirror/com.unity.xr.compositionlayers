@@ -4,6 +4,9 @@ using UnityEngine.SceneManagement;
 
 namespace Unity.XR.CompositionLayers.Editor
 {
+    /// <summary>
+    /// Custom editor for <see cref="CompositionLayersRuntimeSettings"/>.
+    /// </summary>
     [CustomEditor(typeof(CompositionLayersRuntimeSettings))]
     public class CompositionLayersRuntimeSettingsEditor : UnityEditor.Editor
     {
@@ -44,9 +47,12 @@ namespace Unity.XR.CompositionLayers.Editor
             k_ApplyTransformScale
         };
 
-        private SceneAsset m_SplashScene;
-        private string m_SplashScenePath;
+        SceneAsset m_SplashScene;
+        string m_SplashScenePath;
 
+        /// <summary>
+        /// Draws the custom inspector GUI for the <see cref="CompositionLayersRuntimeSettings"/>.
+        /// </summary>
         public override void OnInspectorGUI()
         {
             var settings = target as CompositionLayersRuntimeSettings;
@@ -117,9 +123,9 @@ namespace Unity.XR.CompositionLayers.Editor
                         {
                             if(IsIgnoredLayerDataSetting(layerDataIterator.name))
                                 continue;
-                                
+
                             EditorGUILayout.PropertyField(layerDataIterator, true);
-                        } 
+                        }
                         while(layerDataIterator.NextVisible(false));
 
                         if (EditorGUI.EndChangeCheck())
@@ -133,7 +139,7 @@ namespace Unity.XR.CompositionLayers.Editor
                         if (EditorGUI.EndChangeCheck())
                             serializedObject.ApplyModifiedProperties();
                     }
-                } 
+                }
                 while (prop.NextVisible(false));
             }
         }
@@ -156,7 +162,7 @@ namespace Unity.XR.CompositionLayers.Editor
             if(splashIndex == -1)
                 return false;
 
-            for(int i = splashIndex + 1; i < scenes.Count; i++)   
+            for(int i = splashIndex + 1; i < scenes.Count; i++)
                 if(scenes[i].enabled)
                     return true;
 

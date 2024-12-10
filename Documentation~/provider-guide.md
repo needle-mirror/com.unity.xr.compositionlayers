@@ -20,10 +20,10 @@ There are five main pieces to the Composition Layers API:
 * [CompositionLayer]: the base class for composition layer implementations. Extend this class to define your own layer types. You should also handle the standard, Unity-defined layer types when appropriate. API: [CompositionLayer].
 * [LayerData]: every composition layer type must have a corresponding layer data type. You can define additional data fields needed by your layer type in this implementation. API: [LayerData].
 * [CompositionLayerExtension]: an abstract class you can use to define data that can be used by different layer types. API: [CompositionLayerManager].
- 
+
 ## Composition Layer Manager
 
-The CompositionLayerManager manages all the currently known layers and communicates that information to your Layer Provider instance. 
+The CompositionLayerManager manages all the currently known layers and communicates that information to your Layer Provider instance.
 
 The manager maintains an internal list of composition  layers. As game events occur that affect layers, such as layers being created, destroyed, enabled, and disabled, the manager communicates these changes to the provider implementation during the Update portion of the Unity frame. Every Unity frame, the manager calls your provider implementation's [UpdateLayers] method, passing the following lists as parameter:
 
@@ -34,14 +34,14 @@ The manager maintains an internal list of composition  layers. As game events oc
 
 The manager calls the [UpdateLayers] method during the [standard Unity Update event].
 
-The manager also calls the provider's [LateUpdate] method during the [standard Unity LateUpdate event]. The manager does not pass any information using this method, but you can use your provider's `LateUpdate` method implementation to handle any tasks that need to be performed at the end of the “game logic” section of the Unity frame. See [Order of execution for event functions] for more information about the Unity frame.
+The manager also calls the provider's [LateUpdate] method during the [standard Unity LateUpdate event]. The manager does not pass any information using this method, but you can use your provider's `LateUpdate` method implementation to handle any tasks that need to be performed at the end of the "game logic" section of the Unity frame. See [Order of execution for event functions] for more information about the Unity frame.
 
 Each composition layer instance is responsible for informing the manager instance when it is created, enabled, disabled, or destroyed. The base [CompositionLayer] implementation handles this communication using the standard GameObject life cycle events. (If you override these event functions in your own CompositionLayer subclass, be sure to call the base class methods.)
 The following sequence diagram outlines how the messages are sent from Unity to the manager and layer components and, finally, to the provider:
- 
-![](images/Sequence.svg) 
+
+![](images/Sequence.svg)
 <br />*Event message sequence*
- 
+
 ## Layer Provider
 
 The [ILayerProvider] interface defines the API between the Composition Layer package and any provider that wishes to implement composition layer rendering for their package. On every frame the [CompositionLayerManager] updates the current [ILayerProvider] instance with the current added, removed, modified, and active layers by calling the [ILayerProvider.UpdateLayers] method implementation.
@@ -62,7 +62,7 @@ The following class diagram illustrates the connections between the main classes
 
 Use standard Unity [GameObject] methods to access other components related to a layer in a scene.
 
-For example, from a [CompositionLayer] object passed to your provider by the manager, you can use [GameObject.GetComponents] to get all CompositionLayerExtension components of a specific type. You can get information, such as the GameObject [Transform] from the [gameObject.transform] property a [CompositionLayer] object inherits from the [Component] class. 
+For example, from a [CompositionLayer] object passed to your provider by the manager, you can use [GameObject.GetComponents] to get all CompositionLayerExtension components of a specific type. You can get information, such as the GameObject [Transform] from the [gameObject.transform] property a [CompositionLayer] object inherits from the [Component] class.
 
 A [CompositionLayer] also has a [LayerData] property that defines the type of layer it is and which might have additional data fields. (For example, the [CylinderLayerData] class provides data describing the cylinder's geometry.)
 
@@ -85,7 +85,7 @@ Normally the Composition Layer Manager provides the Default Scene Composition La
 
 ## Creating new types of layers
 
-Before creating a new type of layer, consider whether one of the existing types can be used instead. You might only need to add a new layer extension so that application developers can use it to supply the data you need. 
+Before creating a new type of layer, consider whether one of the existing types can be used instead. You might only need to add a new layer extension so that application developers can use it to supply the data you need.
 
 To create a new type of layer, you must:
 
@@ -141,7 +141,7 @@ The [CompositionLayerDataAttribute] defines the following information, which the
 </tr>
 <tr>
 <td><b>listViewIcon</b></td>
-<td>An image asset in your package to display in lists in the Editor (such as the [Layer Order window].</td> 
+<td>An image asset in your package to display in lists in the Editor (such as the [Layer Order window].</td>
 <td>LayerQuad</td>
 </tr>
 <tr>

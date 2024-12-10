@@ -48,7 +48,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <param name="canvas">Canvas to create layer for</param>
         public void CreateAndSetCanvasLayer(Canvas canvas)
         {
-            canvasLayerTag = CanvasLayerTagPrefix + canvas.GetInstanceID().ToString();            
+            canvasLayerTag = CanvasLayerTagPrefix + canvas.GetInstanceID().ToString();
             if (!tagManager.TryAddLayer(canvasLayerTag))
             {
                 Debug.LogError("Unable to add new canvas layer, try removing some unused layers in Project Settings to make space.");

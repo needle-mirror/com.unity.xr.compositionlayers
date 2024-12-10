@@ -1,12 +1,12 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.XR.CompositionLayers.Rendering
+namespace Unity.XR.CompositionLayers.Rendering.Editor
 {
-    [InitializeOnLoad]
     /// <summary>
     /// Automates the Loading of Graphics Settings
     /// </summary>
+    [InitializeOnLoad]
     public static class GraphicsSettingsLoader
     {
         // Check for Standalone Builds and Add Uber Shader if detected.
@@ -21,7 +21,7 @@ namespace Unity.XR.CompositionLayers.Rendering
             }
         }
 
-        private static void AddShadersToGraphicsSettings()
+        static void AddShadersToGraphicsSettings()
         {
             if (GraphicsSettingsHelpers.AddAlwaysIncludedShaders(GraphicsSettingsHelpers.ShaderType.Uber))
             {

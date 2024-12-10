@@ -22,7 +22,7 @@ The basic, Unity-defined Composition Layer extensions include:
 
 
 > [!NOTE]
-> * XR Composition Layers are not the same as [Unity Layers]. The two features serve different purposes. 
+> * XR Composition Layers are not the same as [Unity Layers]. The two features serve different purposes.
 > * You can use a Unity Layer to determine which GameObjects get rendered to an XR Composition Projection Layer.
 
 

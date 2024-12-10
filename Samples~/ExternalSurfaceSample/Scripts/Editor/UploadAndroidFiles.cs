@@ -23,16 +23,16 @@ public class UploadAndroidFiles : IPostGenerateGradleAndroidProject
     /// <param name="path">The path to the generated Gradle project.</param>
     public void OnPostGenerateGradleAndroidProject(string path)
     {
-        
-        string sourceFolder = Path.Combine(Application.dataPath, "Samples/XR Composition Layers/1.0.0/Sample External Android Surface Project/StreamingAssets");
+
+        string sourceFolder = Path.Combine(Application.dataPath, "Samples/XR Composition Layers/2.0.0/Sample External Android Surface Project/StreamingAssets");
         string destinationFolder = Path.Combine(path, "src/main/assets");
-        
+
         // Create the destination folder if it does not exist
         if (!Directory.Exists(destinationFolder))
         {
             Directory.CreateDirectory(destinationFolder);
         }
-        
+
         CopyFilesRecursively(sourceFolder, destinationFolder);
     }
 
@@ -50,7 +50,7 @@ public class UploadAndroidFiles : IPostGenerateGradleAndroidProject
             string destFile = Path.Combine(targetPath, fileName);
             File.Copy(filePath, destFile, true);
         }
-        
+
         // Recursively copy each subdirectory
         foreach (string subdirectoryPath in Directory.GetDirectories(sourcePath))
         {

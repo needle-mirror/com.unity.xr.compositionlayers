@@ -34,7 +34,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             this.compositionLayerGameObject = compositionLayerGameObject;
             canvasRectTransform = canvas.GetComponent<RectTransform>();
         }
-        
+
         /// <summary>
         /// Calculates location on canvas where the raycast hit
         /// </summary>

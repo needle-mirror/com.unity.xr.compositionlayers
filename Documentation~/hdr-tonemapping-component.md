@@ -14,7 +14,7 @@ Add an **HDR Tonemapping** extension component to a layer to support HDR renderi
 ![](images/Inspector_HDRTonemapping.png)<br />*The HDR tonemapping component Inspector*
 
 | Property:| Function: |
-|:---|:---| 
+|:---|:---|
 | Color Gamut | The color gamut of the source texture. The source texture is treated as encoded with this color gamut.|
 | Nits For Paper White|The base luminance of a white paper surface in nits or candela per square meter (cd/m2) of the source texture.|
 | Max Display Nits|Set the maximum input luminance of the source texture.|
@@ -27,8 +27,8 @@ For correct HDR rendering, you must specify the color gamut used by the source t
 
 #### Sample image generator
 
-The component can generate sample HDR image textures to help you test which HDR formats are supported on a platform. 
-To create a sample HDR texture, choose the desired texture format in the **Sample** section of the component Inspector and click the **Generate** button. 
+The component can generate sample HDR image textures to help you test which HDR formats are supported on a platform.
+To create a sample HDR texture, choose the desired texture format in the **Sample** section of the component Inspector and click the **Generate** button.
 This operation does not overwrite the current source texture. When this is done, the source texture is replaced with a sample texture. This sample texture isn't saved as asset, but is stored in the scene.
 
 ![](images/Inspector_HDRTonemapping_Sample.png)<br />*The sample texture image with Sample image generator.*

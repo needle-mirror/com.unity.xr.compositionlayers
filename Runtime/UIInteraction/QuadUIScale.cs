@@ -41,14 +41,14 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
             // Check if the quad size, scale, or applyTransform has changed
             // If changed, redraw the mesh
-            if (quadSizeX != quad.Size.x || quadSizeY != quad.Size.y || lossyScale != transform.lossyScale 
+            if (quadSizeX != quad.Size.x || quadSizeY != quad.Size.y || lossyScale != transform.lossyScale
                 || applyTransformScale != quad.ApplyTransformScale || CanvasAdjusted())
-            {                
+            {
                 quadSizeX = quad.Size.x;
                 quadSizeY = quad.Size.y;
                 lossyScale = transform.lossyScale;
                 applyTransformScale = quad.ApplyTransformScale;
-                
+
                 RedrawMesh();
             }
         }
@@ -60,10 +60,10 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         private void RedrawMesh()
         {
             Mesh colliderMesh = meshCollider.sharedMesh;
-            
+
             // Calculate HeightScale and WidthScale based on the quad's aspect ratio
             UpdateDestinationRectScale(quad.Size.x / quad.Size.y);
-            
+
             // Set the collider scale to the inverse of the composition layer UI's scale
             // to allow us to change the scale independently
             Vector2 colliderAdjustmentScale = !quad.ApplyTransformScale ? new Vector2(1 / lossyScale.x, 1 / lossyScale.y) : Vector2.one;
@@ -83,8 +83,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <returns>Returns a Vector3 scalar to transform a point on a Canvas to a point on the Layer</returns>
         public override Vector3 GetUIScale()
         {
-            return new Vector3(1f / canvasSizeX * WidthScale * quadSizeX, 
-                                1f / canvasSizeY * HeightScale * quadSizeY, 
+            return new Vector3(1f / canvasSizeX * WidthScale * quadSizeX,
+                                1f / canvasSizeY * HeightScale * quadSizeY,
                                 0);
         }
 

@@ -13,6 +13,16 @@ When updating the Changelog, please ensure we follow the standards for ordering 
 ```
 Under ## headers, ### \<type\> headers are listed in this order: Added, Changed, Deprecated, Removed, Fixed, Security
 ```
+## [2.0.0] - 2024-12-10
+
+### Fixed
+* Fixed Composition Layers not hiding or showing correctly when using Scene Visibility in the hierarchy.
+* Fixed an issue where non-cubemap textures could be assigned to the Cube Projection Layer.
+
+### Changed
+* Moved `ProjectionEyeRigUtil` to the `Unity.XR.CompositionLayers.Layers.Editor` namespace.
+* Moved `CompositionSplash` to the `Unity.XR.CompositionLayers` namespace.
+
 ## [1.0.0] - 2024-10-09
 
 ### Added

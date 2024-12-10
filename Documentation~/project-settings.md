@@ -31,7 +31,7 @@ To enable layer emulation in a standalone **Win, Mac, Linux** build:
 3. Enable the **Emulation in Standalone** option.
 
 > [!TIP]
-> You must also add the **Uber** shader to the [Always Include Shaders list](#always-include-shader-list) to make sure that this shader, which is needed to render emulated layers, is included in your standalone builds.
+> You must also add the **Uber** shader to the [Always Include Shaders list](#always-include-shaders-list) to make sure that this shader, which is needed to render emulated layers, is included in your standalone builds.
 
 <a id="graphics-settings"></a>
 ## Graphics settings
@@ -56,10 +56,10 @@ For emulation of layers in a standalone **Win, Mac, Linux** build, add the `Unli
 7. Type, "Uber" in the search field at the top of the dialog.
 
    ![](images/select-shader.png)
-   
+
 8. Double-click the **Uber** shader in the list to add it to the always included shaders.
 
-![Always Included Shader settings](images/always-include-shaders.png)<br />*The __Always Included Shaders__ list with the Uber shader successfully added* 
+![Always Included Shader settings](images/always-include-shaders.png)<br />*The __Always Included Shaders__ list with the Uber shader successfully added*
 
 > [!TIP]
 > Make sure that the **Emulation in Standalone** setting is enabled under [Runtime settings](#runtime-settings).
@@ -78,9 +78,9 @@ To support layer emulation in projects using the Universal Renderer Pipeline (UR
 3. Click on the URP Tab.
 4. Under the Render Graph section select **Compatibility Mode (Render Graph Disable)** button.
 
-   ![](images/graphics-compatability-mode.png) 
+   ![](images/graphics-compatability-mode.png)
 
-<a id="#emulation-layer-custom-pass"></a>
+<a id="emulation-layer-custom-pass"></a>
 ### Emulation Layer Custom Pass (HDRP)
 
 To support layer emulation in projects using the High Definition Render Pipeline (HDRP), the `EmulationLayerHighDefinitionOverlayCustomPass` and `EmulationLayerHighDefinitionUnderlayCustomPass` are automatically added to the global `CustomPassVolume`.

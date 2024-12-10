@@ -7,7 +7,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
     /// Custom gizmo creator attached to every UI element under a Composition UI Layer
     /// Handles position, rotation, and scale calculations to draw Gizmos
     /// </summary>
-    /// /// <seealso cref="UIHandleEditor"/>
     [ExecuteInEditMode]
     public class UIHandle : MonoBehaviour
     {
@@ -56,6 +55,10 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             return position;
         }
 
+        /// <summary>
+        /// Sets the position of the UI handle.
+        /// </summary>
+        /// <param name="worldPosition">The position in world space.</param>
         public void SetPosition(Vector3 worldPosition)
         {
             if (!RectTransform && CompositionLayerTransform)
@@ -67,10 +70,10 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <summary>
         /// Sets the position of the RectTransform
         /// </summary>
+        /// <param name="worldPosition">The location in World Space</param>
         /// <remarks>
         /// Typically called with a return value from Handles.PositionHandle, Handles.RotationHandle, or Handles.ScaleHandle
         /// </remarks>
-        /// <param name="worldSpace">The location in World Space</param>
         public void SetRectPosition(Vector3 worldPosition)
         {
             float centerScale = 1.0f / GetMaxCanvasSize();

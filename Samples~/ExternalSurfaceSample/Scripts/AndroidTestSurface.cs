@@ -70,7 +70,7 @@ public static class AndroidTestSurface
             jvalue[] args = new jvalue[2];
             args[0] = new jvalue { l = jobject };
             args[1] = new jvalue { l = bitmapPtr };
-            
+
             AndroidJNI.CallStaticVoidMethod(TestSurfaceClass, initTestSurfaceMethodId, args);
         }
     }
@@ -92,16 +92,16 @@ public static class AndroidTestSurface
             using (AndroidJavaClass bitmapFactory = new AndroidJavaClass("android.graphics.BitmapFactory"))
             {
                 AndroidJavaObject bitmap = bitmapFactory.CallStatic<AndroidJavaObject>("decodeByteArray", byteBuffer.Call<sbyte[]>("array"), 0, signedImageBytes.Length);
-                
+
                 if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3)
                 {
                     using (var matrix = new AndroidJavaObject("android.graphics.Matrix"))
                     {
                         matrix.Call<bool>("preScale", 1.0f, -1.0f);
-                        
+
                         using (var bitmapClass = new AndroidJavaClass("android.graphics.Bitmap"))
                         {
-                            AndroidJavaObject flippedBitmap = bitmapClass.CallStatic<AndroidJavaObject>("createBitmap", 
+                            AndroidJavaObject flippedBitmap = bitmapClass.CallStatic<AndroidJavaObject>("createBitmap",
                                 bitmap, 0, 0, bitmap.Call<int>("getWidth"), bitmap.Call<int>("getHeight"), matrix, false);
                             return flippedBitmap;
                         }

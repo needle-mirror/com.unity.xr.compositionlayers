@@ -124,9 +124,7 @@ namespace Unity.XR.CompositionLayers.Extensions
         }
 
         /// <summary>
-        /// The texture instance to be used for the left eye. If <see cref="TargetEye" /> is not
-        /// <see cref="TargetEyeFlagsTargetEyeFlags" /> or <see cref="TargetEyeFlagsTargetEyeFlags" /> then this
-        /// should not be used.
+        /// The texture instance to be used for the left eye.
         /// </summary>
         public Texture LeftTexture
         {
@@ -140,9 +138,7 @@ namespace Unity.XR.CompositionLayers.Extensions
         }
 
         /// <summary>
-        /// The texture instance to be used for the right eye. If <see cref="TargetEye" /> is not
-        /// <see cref="TargetEyeFlagsTargetEyeFlagst" /> or <see cref="TargetEyeFlagsTargetEyeFlags" /> then this
-        /// should not be used.
+        /// The texture instance to be used for the right eye.
         /// </summary>
         public Texture RightTexture
         {
@@ -246,7 +242,7 @@ namespace Unity.XR.CompositionLayers.Extensions
 
         /// <summary>
         /// Crop to the texture's aspect ratio
-        /// 
+        ///
         /// If true, the hosting layer will crop its aspect ratio within the height/width bounds set
         /// in the layer properties.
         /// </summary>

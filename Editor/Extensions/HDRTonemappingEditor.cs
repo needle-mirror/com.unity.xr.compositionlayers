@@ -141,6 +141,9 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             return r.Length > 0 ? r.ToString() : null;
         }
 
+        /// <summary>
+        /// Draws the custom inspector GUI for the <see cref="HDRTonemappingExtension"/>.
+        /// </summary>
         public override void OnInspectorGUI()
         {
             serializedObject.Update();

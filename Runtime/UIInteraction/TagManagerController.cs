@@ -13,7 +13,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
         // TagManager asset (ProjectSettings/TagManager.asset)
         private SerializedObject tagManager;
-        
+
         // Layer property in tagManager
         private SerializedProperty layersProp;
 

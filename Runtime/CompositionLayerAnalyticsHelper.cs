@@ -42,7 +42,7 @@ namespace Unity.XR.CompositionLayers
             get => m_colorScaleAndBiasExtensionsUsage;
         }
         private static int m_colorScaleAndBiasExtensionsUsage = 0;
-        
+
         /// <summary>
         /// Checks if the Splash Screen is enabled in the project
         /// </summary>
@@ -51,7 +51,7 @@ namespace Unity.XR.CompositionLayers
             get => m_isEnabledSplashScreen;
         }
         private static bool m_isEnabledSplashScreen = false;
-        
+
         /// <summary>
         /// Loops through all scenes in the Project Assets folder
         /// Checking each Scene for CompositionLayer components
@@ -93,11 +93,11 @@ namespace Unity.XR.CompositionLayers
                 var layerDataType = layer.LayerData?.GetType();
                 var layerTypeName = layerDataType.FullName;
                 var extensions = layer.Extensions;
-                
+
                 // To prevent countinug DefaultLayers automatically generated in each new scene.
                 if ((layerDataType == typeof(DefaultLayerData)) && layer.hideFlags.HasFlag(HideFlags.HideAndDontSave))
                 { continue; }
-                
+
                 if ((layerDataType == typeof(QuadLayerData) || layerDataType == typeof(CylinderLayerData)))
                 {
                     // Check for Ineractable UI Component

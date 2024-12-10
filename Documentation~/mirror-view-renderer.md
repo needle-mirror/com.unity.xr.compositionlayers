@@ -12,7 +12,7 @@ The `MirrorViewRenderer` supports mirror view rendering for Main Display on XR m
 ![](images/Inspector_MirrorViewRenderer.png)<br />*The Mirror View Renderer Component Inspector*
 
 | Property:| Function: |
-|:---|:---| 
+|:---|:---|
 | Alpha Mode| Set how draw the eye texture. (**Opaque, Alpha and Premultiply**) |
 
 ## Background

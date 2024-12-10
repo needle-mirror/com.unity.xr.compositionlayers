@@ -12,7 +12,7 @@ public class AndroidBuildSettings : IPreprocessBuildWithReport
 {
     /// Specifies the order in which this pre-build process should be executed.
     public int callbackOrder { get { return 0; } }
-    
+
     /// Static constructor called on load to initially set Android build settings.
     static AndroidBuildSettings()
     {

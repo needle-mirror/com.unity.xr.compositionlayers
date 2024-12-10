@@ -61,7 +61,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         private void RedrawMesh()
         {
             Mesh colliderMesh = meshCollider.sharedMesh;
-            
+
             // Calculate HeightScale and WidthScale based on the cylinder's aspect ratio
             UpdateDestinationRectScale(cylinderAspect);
 
@@ -73,8 +73,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             var colliderAdjustmentScale = cylinder.ApplyTransformScale ? lossyScale : Vector3.one;
 
             // Calculate the size of the collider based on the calculated scalars (HeightScale and WidthScale)
-            var colliderAdjustment = new Vector3(1 * colliderAdjustmentScale.z, 
-                                                    HeightScale * colliderAdjustmentScale.y, 
+            var colliderAdjustment = new Vector3(1 * colliderAdjustmentScale.z,
+                                                    HeightScale * colliderAdjustmentScale.y,
                                                     WidthScale * colliderAdjustmentScale.x / colliderAdjustmentScale.z);
 
             // Generate the mesh
@@ -89,8 +89,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <returns>Returns a Vector3 scalar to transform a point on a Canvas to a point on the Layer</returns>
         public override Vector3 GetUIScale()
         {
-            return new Vector3(1f / canvasSizeX * height * (WidthScale * cylinderAspect), 
-                                1f / canvasSizeY * height * HeightScale, 
+            return new Vector3(1f / canvasSizeX * height * (WidthScale * cylinderAspect),
+                                1f / canvasSizeY * height * HeightScale,
                                 0);
         }
 

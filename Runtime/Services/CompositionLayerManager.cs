@@ -300,7 +300,6 @@ namespace Unity.XR.CompositionLayers.Services
             s_StopMarker.End();
         }
 
-        
         internal void EnsureSceneCompositionManager()
         {
             if (s_ComponentInstance != null)
@@ -310,7 +309,7 @@ namespace Unity.XR.CompositionLayers.Services
             //ddd
             var sceneGameObject = new GameObject(CompositionLayerConstants.SceneManagerName);
             sceneGameObject.hideFlags = HideFlags.HideAndDontSave;
-            
+
             sceneGameObject.SetActive(false);
 
             s_ComponentInstance = sceneGameObject.AddComponent<CallbackComponent>();
@@ -407,7 +406,7 @@ namespace Unity.XR.CompositionLayers.Services
                 s_LayerCreatedMarker.End();
                 return;
             }
-        
+
             var li = new LayerInfo() { Layer = layer, Id = layer.GetInstanceID() };
             m_KnownLayers.Add(layer, li);
             m_CreatedLayers.Add(li);
@@ -662,7 +661,7 @@ namespace Unity.XR.CompositionLayers.Services
 
             UpdateProviders(m_CreatedLayers, m_RemovedLayers, m_ModifiedLayers, m_ActiveLayers);
             EnsureFallbackSceneCompositionLayer();
-           
+
             if (IsActiveLayersDestroyed)
             {
                 StopCompositionLayerManager();
@@ -725,7 +724,7 @@ namespace Unity.XR.CompositionLayers.Services
         /// Get the first unoccupied <see cref="CompositionLayer.Order"/> value in the currently open scenes.
         /// </summary>
         /// <param name="overlay">
-        /// If <code>true</code> the first unoccupied order value greater than 0 is returned. If <code>false</code> the first
+        /// If <c>true</c> the first unoccupied order value greater than 0 is returned. If <c>false</c> the first
         /// unoccupied order value less than 0 is returned.
         /// </param>
         /// <returns>Returns the first unoccupied order value order value.</returns>
@@ -764,10 +763,10 @@ namespace Unity.XR.CompositionLayers.Services
         /// </summary>
         /// <param name="order">The order value to get the next unoccupied value for.</param>
         /// <param name="overlay">
-        /// If <code>true</code> the first unoccupied order value greater than <paramref name="order"/> is returned.
-        /// If <code>false</code> the first unoccupied order value less than <paramref name="order"/> is returned.
+        /// If <c>true</c> the first unoccupied order value greater than <paramref name="order"/> is returned.
+        /// If <c>false</c> the first unoccupied order value less than <paramref name="order"/> is returned.
         /// </param>
-        /// /// <returns>
+        /// <returns>
         /// The next unoccupied layer <see cref="CompositionLayer.Order"/> value that is greater than <paramref name="order"/>
         /// if the value is positive or less than if the value is negative.
         /// </returns>
@@ -789,7 +788,7 @@ namespace Unity.XR.CompositionLayers.Services
 
             return order;
         }
-        //ddddddd
+
         bool IsActiveLayersDestroyed
         {
             get

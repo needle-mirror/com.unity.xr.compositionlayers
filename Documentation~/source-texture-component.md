@@ -4,14 +4,14 @@ uid: xr-layers-source-textures
 
 # Source Textures component
 
-Add a Source Textures extension component to specify textures to render to a layer. See [Add or remove a composition layer]. On Android, for Quad and Cylinder layer types, you can also specify an [Android Surface](#android-surface) as the source texture. 
+Add a Source Textures extension component to specify textures to render to a layer. See [Add or remove a composition layer]. On Android, for Quad and Cylinder layer types, you can also specify an [Android Surface](#android-surface) as the source texture.
 
 ![](images/Inspector_SourceTextures.png)<br />*The Source Textures component Inspector*
 
 | Property:| Function: |
-|:---|:---| 
+|:---|:---|
 | Source | Specify the source of the texture - Local Texture or Android Surface. |
-| Target Eye | Specify whether one texture is used for both eyes or an individual texture is used for each eye. Only shown for layer types that support stereo. | 
+| Target Eye | Specify whether one texture is used for both eyes or an individual texture is used for each eye. Only shown for layer types that support stereo. |
 | Texture (Local Texture Only)| Specify a texture to use. Click Select to choose a texture or drag-and-drop a texture onto the control with your mouse. |
 | Resolution (Android Surface Only)| Specify the resolution for the Android Surface with X for width, and Y for height. |
 | Maintain Aspect Ratio (Quad/Cylinder Layer/Android Surface Only)| Crop the layer to fit the aspect ratio of the texture. |

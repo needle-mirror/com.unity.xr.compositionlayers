@@ -22,12 +22,12 @@ namespace Unity.XR.CompositionLayers
         public enum ExtensionTarget
         {
             /// <summary>
-            /// Used for extensions that extend layer instances. 
+            /// Used for extensions that extend layer instances.
             /// </summary>
             Layer,
 
             /// <summary>
-            /// Used for extensions that extend swapchain instances. 
+            /// Used for extensions that extend swapchain instances.
             /// </summary>
             Swapchain,
 
@@ -47,7 +47,7 @@ namespace Unity.XR.CompositionLayers
         /// </summary>
         /// <returns>the pointer to extension's native struct.</returns>
         /// <remarks>
-        /// This method is called by <see cref="OpenXRLayerUtility.GetExtensionsChain(CompositionLayerManager.LayerInfo layer, ExtensionTarget extensionTarget)"/> when
+        /// This method is called by the OpenXRLayerUtility GetExtensionsChain function when
         /// it initializes an object's <c>Next</c> pointer struct chain member. Layer handlers can
         /// use this chain to access native extension properties.
         /// </remarks>

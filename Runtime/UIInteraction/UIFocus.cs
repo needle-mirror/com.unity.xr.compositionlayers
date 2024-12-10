@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Unity.XR.CompositionLayers.UIInteraction
 {
+    /// <summary>
+    /// Provides functionality to determine focus and bounds for UI elements within a composition layer.
+    /// </summary>
     [ExecuteInEditMode]
     public class UIFocus : MonoBehaviour
     {

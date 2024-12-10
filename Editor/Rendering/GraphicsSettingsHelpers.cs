@@ -4,11 +4,24 @@ using UnityEngine.Rendering;
 
 namespace Unity.XR.CompositionLayers.Rendering.Editor
 {
+    /// <summary>
+    /// Helper methods for working with the graphics settings.
+    /// </summary>
     public static class GraphicsSettingsHelpers
     {
+        /// <summary>
+        /// Enumerates the types of shaders used in the graphics settings.
+        /// </summary>
         public enum ShaderType
         {
+            /// <summary>
+            /// The Blit HDR shader type.
+            /// </summary>
             BlitCopyHDR,
+
+            /// <summary>
+            /// The Uber shader type.
+            /// </summary>
             Uber,
         }
 
@@ -18,33 +31,41 @@ namespace Unity.XR.CompositionLayers.Rendering.Editor
             "Unlit/XRCompositionLayers/Uber",
         };
 
-        public static void AddAlwaysIncludedShaders(ShaderType shaderType)
+        /// <summary>
+        /// Adds a shader to the list of always included shaders in the graphics settings.
+        /// </summary>
+        /// <param name="shaderType">The type of shader to add.</param>
+        /// <returns><see langword="true"/> if the shader was added; <see langword="false"/> if the shader was not found or already included.</returns>
+        /// <remarks>
+        /// This method ensures that the specified shader is always included in the build by adding it to the graphics settings.
+        /// </remarks>
+        public static bool AddAlwaysIncludedShaders(ShaderType shaderType)
         {
-            AddAlwaysIncludedShader(s_ShaderNames[(int)shaderType]);
+            return AddAlwaysIncludedShader(s_ShaderNames[(int)shaderType]);
         }
 
         static GraphicsSettings s_GraphicsSettings;
 
-        static void AddAlwaysIncludedShader(string shaderName)
+        static bool AddAlwaysIncludedShader(string shaderName)
         {
             var shader = Shader.Find(shaderName);
             if (shader == null)
             {
                 Debug.LogError($"Shader not found: {shaderName}");
-                return;
+                return false;
             }
 
             if (s_GraphicsSettings == null)
             {
                 s_GraphicsSettings = AssetDatabase.LoadAssetAtPath<GraphicsSettings>("ProjectSettings/GraphicsSettings.asset");
                 if (s_GraphicsSettings == null)
-                    return;
+                    return false;
             }
 
             var graphicsSettingsSerializedObject = new SerializedObject(s_GraphicsSettings);
             var alwaysIncludedShadersSerializedProperty = graphicsSettingsSerializedObject.FindProperty("m_AlwaysIncludedShaders");
             if (alwaysIncludedShadersSerializedProperty == null)
-                return;
+                return false;
 
             int arraySize = alwaysIncludedShadersSerializedProperty.arraySize;
 
@@ -52,7 +73,7 @@ namespace Unity.XR.CompositionLayers.Rendering.Editor
             {
                 if (alwaysIncludedShadersSerializedProperty.GetArrayElementAtIndex(arrayIndex)?.objectReferenceValue == shader)
                 {
-                    return;
+                    return false;
                 }
             }
 
@@ -60,6 +81,7 @@ namespace Unity.XR.CompositionLayers.Rendering.Editor
             alwaysIncludedShadersSerializedProperty.GetArrayElementAtIndex(arraySize).objectReferenceValue = shader;
             graphicsSettingsSerializedObject.ApplyModifiedProperties();
             AssetDatabase.SaveAssets();
+            return true;
         }
     }
 }

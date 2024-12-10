@@ -5,7 +5,7 @@ using Unity.XR.CompositionLayers.Services;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
 
-#if UNITY_EDITOR 
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -83,7 +83,7 @@ namespace Unity.XR.CompositionLayers
             return s_Initialized;
 #endif //ENABLE_TEST_SUPPORT || !ENABLE_CLOUD_SERVICES_ANALYTICS || !UNITY_ANALYTICS
         }
-        
+
         public static void SendUsageMetricsEvent()
         {
 #if UNITY_EDITOR && UNITY_ANALYTICS && ENABLE_CLOUD_SERVICES_ANALYTICS
@@ -97,7 +97,7 @@ namespace Unity.XR.CompositionLayers
         }
         private static UsageMetricsEvent GatherUsageMetrics() {
             CompositionLayerAnalyticsHelper.ProcessCompositionLayersAnalyticsData();
-           
+
             return new UsageMetricsEvent
             {
                 layerTypesUsage = CompositionLayerAnalyticsHelper.LayerTypesUsage
@@ -120,7 +120,7 @@ namespace Unity.XR.CompositionLayers
         }
 #endif //UNITY_EDITOR && ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
     }
-    
+
 #if UNITY_EDITOR && ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
     public class CompositionLayerAnalyticsBuildProcessor : IPostprocessBuildWithReport
 

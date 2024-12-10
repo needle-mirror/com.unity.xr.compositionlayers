@@ -331,7 +331,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 m_InstructionElement.style.display = DisplayStyle.None;
                 return;
             }
-			
+
             var fullName = layerData != null ? layerData.GetType().FullName : string.Empty;
             var index = string.IsNullOrEmpty(fullName) ? -1 : CompositionLayerEditorUtils.LayerNames.IndexOf(fullName);
             var layerDataType = layerData.GetType();

@@ -78,7 +78,11 @@ namespace Unity.XR.CompositionLayers.Layers
             SuggestedExtensions = suggestedExtensions;
         }
 
-        /// <see cref="IEquatable{T}"/>
+        /// <summary>
+        /// Determines whether the specified <see cref="LayerDataDescriptor"/> is equal to the current <see cref="LayerDataDescriptor"/>.
+        /// </summary>
+        /// <param name="other">The <see cref="LayerDataDescriptor"/> to compare with the current <see cref="LayerDataDescriptor"/>.</param>
+        /// <returns><see langword="true"/> if the specified <see cref="LayerDataDescriptor"/> is equal to the current <see cref="LayerDataDescriptor"/>. Otherwise, <see langword="false"/>.</returns>
         public bool Equals(LayerDataDescriptor other)
         {
             return Provider == other.Provider && Name == other.Name && TypeFullName == other.TypeFullName
@@ -88,13 +92,20 @@ namespace Unity.XR.CompositionLayers.Layers
                 && Equals(SuggestedExtensions, other.SuggestedExtensions);
         }
 
-        /// <see cref="IEquatable{T}"/>
+        /// <summary>
+        /// Determines whether this instance <paramref name="obj"/> is equal to the current <see cref="LayerDataDescriptor"/>.
+        /// </summary>
+        /// <param name="obj">The object for comparison.</param>
+        /// <returns><see langword="true"/> if the specified object is equal to the current <see cref="LayerDataDescriptor"/>. Otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object obj)
         {
             return obj is LayerDataDescriptor other && Equals(other);
         }
 
-        /// <see cref="IEquatable{T}"/>
+        /// <summary>
+        /// Returns the hash code for the current <see cref="LayerDataDescriptor"/>.
+        /// </summary>
+        /// <returns>A hash code for the current <see cref="LayerDataDescriptor"/>.</returns>
         public override int GetHashCode()
         {
             var hashCode = new HashCode();
@@ -112,13 +123,23 @@ namespace Unity.XR.CompositionLayers.Layers
             return hashCode.ToHashCode();
         }
 
-        /// <see cref="IEquatable{T}"/>
+        /// <summary>
+        /// Determines whether two specified <see cref="LayerDataDescriptor"/> instances are equal.
+        /// </summary>
+        /// <param name="left">The first <see cref="LayerDataDescriptor"/> to compare.</param>
+        /// <param name="right">The second <see cref="LayerDataDescriptor"/> to compare.</param>
+        /// <returns><see langword="true"/> if the two <see cref="LayerDataDescriptor"/> instances are equal. Otherwise, <see langword="false"/>.</returns>
         public static bool operator ==(LayerDataDescriptor left, LayerDataDescriptor right)
         {
             return left.Equals(right);
         }
 
-        /// <see cref="IEquatable{T}"/>
+        /// <summary>
+        /// Determines whether two specified <see cref="LayerDataDescriptor"/> instances are not equal.
+        /// </summary>
+        /// <param name="left">The first <see cref="LayerDataDescriptor"/> to compare.</param>
+        /// <param name="right">The second <see cref="LayerDataDescriptor"/> to compare.</param>
+        /// <returns><see langword="true"/> if the two <see cref="LayerDataDescriptor"/> instances are not equal. Otherwise, <see langword="false"/>.</returns>
         public static bool operator !=(LayerDataDescriptor left, LayerDataDescriptor right)
         {
             return !left.Equals(right);

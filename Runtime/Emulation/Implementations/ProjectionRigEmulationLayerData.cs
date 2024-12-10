@@ -134,7 +134,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 depthStencilFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.D32_SFloat
             };
             m_emulationRightEyeTexture.Create();
-            
+
             if (layer != null)
             {
                 var textExt = layer.GetComponent<TexturesExtension>();

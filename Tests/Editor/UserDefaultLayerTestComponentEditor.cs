@@ -1,5 +1,5 @@
-//********This was used for setting and unsetting a layer to be the default scene layer. 
-//********But with our updated implementation, this is not allowed and eye layer will always be the default layer 
+//********This was used for setting and unsetting a layer to be the default scene layer.
+//********But with our updated implementation, this is not allowed and eye layer will always be the default layer
 //********To be discussed, comment it out for now
 
 // using UnityEngine;

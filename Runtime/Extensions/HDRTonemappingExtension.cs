@@ -33,8 +33,15 @@ namespace Unity.XR.CompositionLayers.Extensions
         [Tooltip("The value used to describe max display nits for the source texture.")]
         int m_MaxDisplayNits = 160;
 
+        /// <summary>
+        /// Gets the target of the extension, which is a layer.
+        /// </summary>
         public override ExtensionTarget Target { get { return ExtensionTarget.Layer; } }
 
+        /// <summary>
+        /// Retrieves a pointer to the native structure.
+        /// </summary>
+        /// <returns>A null pointer as this extension does not use a native structure.</returns>
         public override unsafe void* GetNativeStructPtr() { return null; }
 
         /// <summary>

@@ -4,7 +4,7 @@ namespace Unity.XR.CompositionLayers.Layers
 {
     /// <summary>
     /// Subclass of <see cref="LayerData" /> that defines a cube layer in a scene.
-    /// A cube always centered at the user's head position with only its inside faces visible. 
+    /// A cube always centered at the user's head position with only its inside faces visible.
     /// Useful for skyboxes and rendering 360 panoramic images.
     /// </summary>
     [CompositionLayerData(

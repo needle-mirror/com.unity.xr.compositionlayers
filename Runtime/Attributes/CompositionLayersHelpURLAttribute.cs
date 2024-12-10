@@ -27,7 +27,7 @@ namespace Unity.XR.CompositionLayers
         {
             var assembly = typeof(CompositionLayer).Assembly;
             var packageInfo = PackageInfo.FindForAssembly(assembly);
-            
+
 #if UNITY_EDITOR
             if (packageInfo == null)
             {

@@ -323,7 +323,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                 commandBufferLayer.RemoveCommandBuffer(m_ActiveCameras);
             }
         }
-        
+
         void AddEmulationToActiveCamera()
         {
             var mainCamera = CompositionLayerManager.mainCameraCache;
@@ -333,7 +333,7 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         void UpdateActiveCamerasAndSortedLayers()
         {
-#if UNITY_EDITOR || UNITY_STANDALONE 
+#if UNITY_EDITOR || UNITY_STANDALONE
             if (!CompositionLayerManager.ManagerActive)
                 return;
 
@@ -357,7 +357,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                         m_ActiveCameras.Add(sceneView.camera);
                 }
             }
-#elif UNITY_STANDALONE 
+#elif UNITY_STANDALONE
             if (EmulatedCompositionLayerUtils.EmulationInStandalone)
             {
                 AddEmulationToActiveCamera();

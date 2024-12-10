@@ -14,13 +14,13 @@ In the Editor, you can enable or disable the parent GameObject in the Inspector 
 
 An inactive GameObject remains in the scene and can be activated [at runtime](#at-runtime).
 
-Refer to [Deactivate GameObjects](xref:DeactivatingGameObjects) in the Unity Manual for general information about managing GameObject state. 
+Refer to [Deactivate GameObjects](xref:DeactivatingGameObjects) in the Unity Manual for general information about managing GameObject state.
 
 Alternately, you can enable or disable the **CompositionLayer** MonoBehaviour on its own by toggling the checkbox next to **CompositionLayer** in the inspector. This leaves the parent GameObject, any child GameObjects, and other components active.
 
 ## At runtime
 
-At runtime, use the GameObject [SetActive](xref:UnityEngine.GameObject.SetActive(System.Boolean)) method to control whether a layer is enabled or disabled. 
+At runtime, use the GameObject [SetActive](xref:UnityEngine.GameObject.SetActive(System.Boolean)) method to control whether a layer is enabled or disabled.
 
 In the following code, `layer` is a reference to a [CompositionLayer](xref:Unity.XR.CompositionLayers.CompositionLayer) component:
 

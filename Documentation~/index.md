@@ -8,7 +8,7 @@ Composition Layers allow application developers to define areas in a scene or vi
 
 ![](images/composition-layer-stack.png)
 
-The Composition Layers package defines a few common layer types and provides extension mechanisms that allow plug-in authors to add new layer types or add custom extensions to support their specific needs or features. 
+The Composition Layers package defines a few common layer types and provides extension mechanisms that allow plug-in authors to add new layer types or add custom extensions to support their specific needs or features.
 
 ## Installation
 

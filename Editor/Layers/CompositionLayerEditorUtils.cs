@@ -58,7 +58,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         /// <see cref="LayerData"/> type.
         /// </summary>
         /// <param name="dataType">The <see cref="LayerData"/> type used to create the GameObject.</param>
-        /// <param name="rotateFacing">If <code>true</code> the new GameObject's positive z-axis will face the camera.</param>
+        /// <param name="rotateFacing">If <c>true</c> the new GameObject's positive z-axis will face the camera.</param>
         public static void CreateLayerGameObjectMenuItem(Type dataType, bool rotateFacing = false)
         {
             var lastSceneView = SceneView.lastActiveSceneView;

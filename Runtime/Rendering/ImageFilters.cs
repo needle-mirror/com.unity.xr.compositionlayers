@@ -6,32 +6,83 @@ using System;
 
 namespace Unity.XR.CompositionLayers.Rendering
 {
+    /// <summary>
+    /// Provides image filtering and blitting functionalities for composition layers in XR applications.
+    /// </summary>
     public static class ImageFilters
     {
+        /// <summary>
+        /// Defines the alpha blending modes.
+        /// </summary>
         public enum AlphaMode
         {
+            /// <summary>
+            /// Opaque alpha mode.
+            /// </summary>
             Opaque,
+
+            /// <summary>
+            /// Alpha blending mode.
+            /// </summary>
             Alpha,
+
+            /// <summary>
+            /// Premultiplied alpha blending mode.
+            /// </summary>
             Premultiply,
         };
 
+        /// <summary>
+        /// Enumerates the supported render pipelines.
+        /// </summary>
         public enum RenderPipeline
         {
+            /// <summary>
+            /// Built-in render pipeline.
+            /// </summary>
             Builtin,
+
+            /// <summary>
+            /// Universal Render Pipeline.
+            /// </summary>
             Universal,
+            /// <summary>
+            /// High Definition Render Pipeline.
+            /// </summary>
             HighDefinition,
         }
 
+        /// <summary>
+        /// Represents HDR parameters for image processing.
+        /// </summary>
         public struct HDRParams
         {
             const float defaultNitsForPaperWhite = 160.0f;
             const float defaultMaxDisplayNits = 160.0f;
 
+            /// <summary>
+            /// Indicates whether HDR encoding is enabled.
+            /// </summary>
             public bool hdrEncoded;
+
+            /// <summary>
+            /// The color gamut used.
+            /// </summary>
             public ColorGamut colorGamut;
+
+            /// <summary>
+            /// The nits value for paper white.
+            /// </summary>
             public float nitsForPaperWhite;
+
+            /// <summary>
+            /// The maximum display nits.
+            /// </summary>
             public float maxDisplayNits;
 
+            /// <summary>
+            /// Gets an inactive HDR parameters instance with default values.
+            /// </summary>
             public static HDRParams inactiveHdrParams
             {
                 get
@@ -64,38 +115,84 @@ namespace Unity.XR.CompositionLayers.Rendering
                 }
             }
 
+            /// <summary>
+            /// Implicitly converts an <see cref="HDROutputSettings"/> to <see cref="HDRParams"/>.
+            /// </summary>
+            /// <param name="hdrSettings">The HDR output settings to convert.</param>
+            /// <returns> New HDR parameters for image processing.</returns>
             public static implicit operator HDRParams(HDROutputSettings hdrSettings)
             {
                 return new HDRParams(hdrSettings);
             }
 
+            /// <summary>
+            /// Returns a string representation of the HDR parameters.
+            /// </summary>
+            /// <returns>A string describing the HDR parameters.</returns>
             public override string ToString()
             {
                 return $"hdrEncoded {hdrEncoded} colorGamut {colorGamut} nitsForPaperWhite {nitsForPaperWhite} maxDisplayNits {maxDisplayNits}";
             }
         }
 
+        /// <summary>
+        /// Parameters for blitting textures.
+        /// </summary>
         public struct BlitParams
         {
+            /// <summary>
+            /// The source texture to blit.
+            /// </summary>
             public Texture sourceTexture;
+
+            /// <summary>
+            /// The array slice of the source texture.
+            /// </summary>
             public int sourceTextureArraySlice;
 
+            /// <summary>
+            /// The source rectangle.
+            /// </summary>
             public Rect sourceRect;
+
+            /// <summary>
+            /// The destination rectangle.
+            /// </summary>
             public Rect destRect;
 
+            /// <summary>
+            /// The HDR parameters for the source texture.
+            /// </summary>
             public HDRParams sourceHdrParams;
 
+            /// <summary>
+            /// The alpha blending mode.
+            /// </summary>
             public AlphaMode alphaMode;
 
+            /// <summary>
+            /// The foveated rendering information.
+            /// </summary>
             public IntPtr foveatedRenderingInfo;
 
+            /// <summary>
+            /// The render pipeline used.
+            /// </summary>
             public RenderPipeline renderPipeline;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="BlitParams"/> struct with the specified source texture.
+            /// </summary>
+            /// <param name="sourceTexture">The source texture to blit.</param>
             public BlitParams(Texture sourceTexture)
                 : this(sourceTexture, 0)
-            {
-            }
+            { }
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="BlitParams"/> struct with the specified source texture and array slice.
+            /// </summary>
+            /// <param name="sourceTexture">The source texture to blit.</param>
+            /// <param name="sourceTextureArraySlice">The array slice of the source texture.</param>
             public BlitParams(Texture sourceTexture, int sourceTextureArraySlice)
             {
                 this.sourceTexture = sourceTexture;
@@ -113,19 +210,40 @@ namespace Unity.XR.CompositionLayers.Rendering
                 renderPipeline = RenderPipeline.Builtin;
             }
 
+            /// <summary>
+            /// Returns a string representation of the blit parameters.
+            /// </summary>
+            /// <returns>A string describing the blit parameters.</returns>
             public override string ToString()
             {
                 return $"sourceTexture {sourceTexture} sourceTextureArraySlice {sourceTextureArraySlice} sourceRect {sourceRect} destRect {destRect} sourceHdrParams {sourceHdrParams} alphaMode {alphaMode} foveatedRenderingInfo {foveatedRenderingInfo}";
             }
         }
 
+        /// <summary>
+        /// Parameters for the blit target.
+        /// </summary>
         public struct TargetParams
         {
+            /// <summary>
+            /// The render target texture.
+            /// </summary>
             public RenderTexture renderTarget;
+
+            /// <summary>
+            /// The target display index.
+            /// </summary>
             public int targetDisplay;
 
+            /// <summary>
+            /// The HDR parameters for the target.
+            /// </summary>
             public HDRParams hdrParams;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="TargetParams"/> struct with the specified render target.
+            /// </summary>
+            /// <param name="renderTarget">The render target texture.</param>
             public TargetParams(RenderTexture renderTarget)
             {
                 this.renderTarget = renderTarget;
@@ -134,6 +252,10 @@ namespace Unity.XR.CompositionLayers.Rendering
                 hdrParams = HDRParams.inactiveHdrParams;
             }
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="TargetParams"/> struct with the specified target display.
+            /// </summary>
+            /// <param name="targetDisplay">The target display index.</param>
             public TargetParams(int targetDisplay)
             {
                 this.renderTarget = null;
@@ -150,19 +272,49 @@ namespace Unity.XR.CompositionLayers.Rendering
                 }
             }
 
+            /// <summary>
+            /// Returns a string representation of the target parameters.
+            /// </summary>
+            /// <returns>A string describing the target parameters.</returns>
             public override string ToString()
             {
                 return $"renderTarget {renderTarget} targetDisplay {targetDisplay} hdrParams {hdrParams}";
             }
         }
 
+        /// <summary>
+        /// Parameters for mirror view rendering.
+        /// </summary>
         public struct MirrorViewParams
         {
+            /// <summary>
+            /// The XR display subsystem.
+            /// </summary>
             public XRDisplaySubsystem displaySubsystem;
+
+            /// <summary>
+            /// The main camera.
+            /// </summary>
             public Camera mainCamera;
+
+            /// <summary>
+            /// The mirror view camera.
+            /// </summary>
             public Camera mirrorViewCamera;
+
+            /// <summary>
+            /// The blit mode.
+            /// </summary>
             public int blitMode;
+
+            /// <summary>
+            /// The alpha blending mode.
+            /// </summary>
             public AlphaMode alphaMode;
+
+            /// <summary>
+            /// The render pipeline used.
+            /// </summary>
             public RenderPipeline renderPipeline;
         }
 
@@ -190,6 +342,9 @@ namespace Unity.XR.CompositionLayers.Rendering
         static readonly int k_AlphaSrcBlend = Shader.PropertyToID("_AlphaSrcBlend");
         static readonly int k_AlphaDstBlend = Shader.PropertyToID("_AlphaDstBlend");
 
+        /// <summary>
+        /// Begins a batch of image operations.
+        /// </summary>
         public static void BeginBatch()
         {
             if (s_BatchingDepth == 0)
@@ -203,6 +358,9 @@ namespace Unity.XR.CompositionLayers.Rendering
             ++s_BatchingDepth;
         }
 
+        /// <summary>
+        /// Ends a batch of image operations and executes the command buffer.
+        /// </summary>
         public static void EndBatch()
         {
             if (s_BatchingDepth > 0)
@@ -217,6 +375,11 @@ namespace Unity.XR.CompositionLayers.Rendering
             }
         }
 
+        /// <summary>
+        /// Blits the specified source texture to the target using the given parameters.
+        /// </summary>
+        /// <param name="blitParam">Parameters for the blit operation.</param>
+        /// <param name="targetParams">Parameters for the blit target.</param>
         public static void Blit(in BlitParams blitParam, in TargetParams targetParams)
         {
             BeginBatch();
@@ -224,17 +387,34 @@ namespace Unity.XR.CompositionLayers.Rendering
             EndBatch();
         }
 
+        /// <summary>
+        /// Blits the specified source texture to the target display using the given parameters.
+        /// </summary>
+        /// <param name="cmd">The command buffer to use.</param>
+        /// <param name="blitParam">Parameters for the blit operation.</param>
+        /// <param name="targetDisplay">The target display index.</param>
         public static void Blit(CommandBuffer cmd, in BlitParams blitParam, int targetDisplay)
         {
             var targetParams = new TargetParams(targetDisplay);
             BlitInternal(cmd, blitParam, targetParams);
         }
 
+        /// <summary>
+        /// Blits the specified source texture to the target using the given parameters.
+        /// </summary>
+        /// <param name="cmd">The command buffer to use.</param>
+        /// <param name="blitParam">Parameters for the blit operation.</param>
+        /// <param name="targetParams">Parameters for the blit target.</param>
         public static void Blit(CommandBuffer cmd, in BlitParams blitParam, in TargetParams targetParams)
         {
             BlitInternal(cmd, blitParam, targetParams);
         }
 
+        /// <summary>
+        /// Blits the mirror view using the specified parameters.
+        /// </summary>
+        /// <param name="cmd">The command buffer to use.</param>
+        /// <param name="mirrorViewParams">Parameters for the mirror view blit operation.</param>
         static void BlitInternal(CommandBuffer cmd, in BlitParams blitParam, in TargetParams targetParams)
         {
             if (blitParam.sourceTexture == null)
@@ -377,6 +557,11 @@ namespace Unity.XR.CompositionLayers.Rendering
             return s_Material;
         }
 
+        /// <summary>
+        /// Blits the mirror view using the specified parameters.
+        /// </summary>
+        /// <param name="cmd">The command buffer to use.</param>
+        /// <param name="mirrorViewParams">Parameters for the mirror view blit operation.</param>
         public static void BlitMirrorView(CommandBuffer cmd, in MirrorViewParams mirrorViewParams)
         {
             if (cmd == null || mirrorViewParams.displaySubsystem == null || mirrorViewParams.mainCamera == null || mirrorViewParams.mirrorViewCamera == null || mirrorViewParams.blitMode == XRMirrorViewBlitMode.None)

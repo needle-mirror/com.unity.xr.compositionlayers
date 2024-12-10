@@ -14,10 +14,25 @@ namespace Unity.XR.CompositionLayers.Provider
         /// </summary>
         public struct HDRParams
         {
+            /// <summary>
+            /// The color gamut used for HDR.
+            /// </summary>
             public ColorGamut ColorGamut;
+
+            /// <summary>
+            /// The nits value representing paper white in HDR.
+            /// </summary>
             public float NitsForPaperWhite;
+
+            /// <summary>
+            /// The maximum display nits for HDR.
+            /// </summary>
             public float MaxDisplayNits;
 
+            /// <summary>
+            /// Gets the default HDR parameters.
+            /// </summary>
+            /// <returns>The default <see cref="HDRParams"/> instance.</returns>
             public static HDRParams GetDefault()
             {
                 return new HDRParams() { ColorGamut = ColorGamut.sRGB };
@@ -76,6 +91,7 @@ namespace Unity.XR.CompositionLayers.Provider
         /// <remarks>
         /// This information is referenced from HDRTonemapping. This class can give hints to set proper settings.
         /// </remarks>
+        /// <returns> New HDR parameters with default settings. </returns>
         public virtual HDRParams GetPreferredHDRParams()
         {
             return HDRParams.GetDefault();
@@ -130,8 +146,7 @@ namespace Unity.XR.CompositionLayers.Provider
         /// </summary>
         public DefaultPlatformProvider()
             : this(null)
-        {
-        }
+        { }
 
         /// <summary>
         /// Constuctor with the type of ILayerProvider.

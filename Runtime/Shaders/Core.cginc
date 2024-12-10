@@ -143,7 +143,7 @@ inline float4 EquirectCoords(float3 pose)
     return float4(0.5 + phi / COMPOSITION_LAYERS_TWO_PI, theta / COMPOSITION_LAYERS_PI, 0.0, mip);
 }
 
-//Remapped Equirect Shader Code 
+//Remapped Equirect Shader Code
 //The corners of the swapchain subimage are remapped so the equirectangular subimage fills entire partial sphere.
 inline float4 RemappedEquirectCoords(float3 pose, float centralHorizontalAngle, float upperVerticalAngle, float lowerVerticalAngle)
 {
@@ -152,13 +152,13 @@ inline float4 RemappedEquirectCoords(float3 pose, float centralHorizontalAngle, 
     float2 uv = float2(atan2(p.x, p.z), acos(-p.y));
 
     centralHorizontalAngle *= COMPOSITION_LAYERS_FOUR_PI;
-	uv.x = (uv.x + (centralHorizontalAngle * 0.5)) / centralHorizontalAngle;
+    uv.x = (uv.x + (centralHorizontalAngle * 0.5)) / centralHorizontalAngle;
 
-	lowerVerticalAngle += 0.25;
+    lowerVerticalAngle += 0.25;
     upperVerticalAngle += 0.25;
-	uv.y /= COMPOSITION_LAYERS_PI;
+    uv.y /= COMPOSITION_LAYERS_PI;
     uv.y = (uv.y + (lowerVerticalAngle - 0.5)) / (upperVerticalAngle + lowerVerticalAngle);
-    
+
     return float4(uv.x, uv.y, 0.0, 0.0);
 }
 

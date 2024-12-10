@@ -138,10 +138,15 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
                 EditorGUILayout.PrefixLabel(" "); // Used to align Rect with Custom Rects with other properties
 
                 Rect textureRect = EditorGUILayout.GetControlRect(GUILayout.Height(64), GUILayout.Width(64));
-                var type = layerDataType == typeof(CubeProjectionLayerData) ? typeof(Cubemap) : typeof(Texture2D);
+                var type = layerDataType == typeof(CubeProjectionLayerData) ? typeof(Cubemap) : typeof(Texture);
                 var newTexture = EditorGUI.ObjectField(textureRect, m_LeftTextureProperty.objectReferenceValue, type, true);
-
-                if (newTexture != m_LeftTextureProperty.objectReferenceValue)
+                if (!IsValidTexture(newTexture as Texture))
+                {
+                    m_LeftTextureProperty.objectReferenceValue = null;
+                    m_RightTextureProperty.objectReferenceValue = null;
+                    serializedObject.ApplyModifiedProperties();
+                }
+                else if (newTexture != m_LeftTextureProperty.objectReferenceValue)
                 {
                     m_LeftTextureProperty.objectReferenceValue = newTexture;
                     m_RightTextureProperty.objectReferenceValue = m_LeftTextureProperty.objectReferenceValue;
@@ -158,16 +163,26 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
                 EditorGUILayout.PrefixLabel(" ");
                 GUILayout.Space(2);
 
-                var type = layerDataType == typeof(CubeProjectionLayerData) ? typeof(Cubemap) : typeof(Texture2D);
+                var type = layerDataType == typeof(CubeProjectionLayerData) ? typeof(Cubemap) : typeof(Texture);
                 Rect leftTextureRect = EditorGUILayout.GetControlRect(GUILayout.Height(64), GUILayout.Width(64));
                 var newLeftTexture = EditorGUI.ObjectField(leftTextureRect, m_LeftTextureProperty.objectReferenceValue, type, true);
-                if (newLeftTexture != m_LeftTextureProperty.objectReferenceValue) m_LeftTextureProperty.objectReferenceValue = newLeftTexture;
+                if (!IsValidTexture(newLeftTexture as Texture))
+                {
+                    m_LeftTextureProperty.objectReferenceValue = null;
+                    serializedObject.ApplyModifiedProperties();
+                }
+                else if (newLeftTexture != m_LeftTextureProperty.objectReferenceValue) m_LeftTextureProperty.objectReferenceValue = newLeftTexture;
 
                 GUILayout.FlexibleSpace();
 
                 Rect rightTextureRect = EditorGUILayout.GetControlRect(GUILayout.Height(64), GUILayout.Width(64));
                 var newRightTexture = EditorGUI.ObjectField(rightTextureRect, m_RightTextureProperty.objectReferenceValue, type, true);
-                if (newRightTexture != m_RightTextureProperty.objectReferenceValue) m_RightTextureProperty.objectReferenceValue = newRightTexture;
+                if (!IsValidTexture(newRightTexture as Texture))
+                {
+                    m_RightTextureProperty.objectReferenceValue = null;
+                    serializedObject.ApplyModifiedProperties();
+                }
+                else if (newRightTexture != m_RightTextureProperty.objectReferenceValue) m_RightTextureProperty.objectReferenceValue = newRightTexture;
 
                 GUILayout.FlexibleSpace();
                 EditorGUILayout.EndHorizontal();
@@ -185,7 +200,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
                     GUILayout.FlexibleSpace();
                 }
                 EditorGUILayout.EndHorizontal();
-                
+
                 EditorGUILayout.EndVertical();
             }
 
@@ -220,6 +235,26 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             var layerDataName = CompositionLayerUtils.GetLayerDescriptor(layerDataType).Name;
 
             EditorGUILayout.HelpBox($"{layerDataName} type may not support the use of Custom Rects.", MessageType.Info);
+        }
+
+        private bool IsValidTexture(Texture texture)
+        {
+            if(texture == null)
+            {
+                return true;
+            }
+            if (m_CompositionLayer.LayerData.GetType() != typeof(CubeProjectionLayerData) && texture is Cubemap)
+            {
+                Debug.LogError("Cubemap textures are not supported for this layer type.");
+                return false;
+            }
+            else if (m_CompositionLayer.LayerData.GetType() == typeof(CubeProjectionLayerData) && !(texture is Cubemap))
+            {
+                Debug.LogError("Cube Projection Layer requires a Cubemap texture.");
+                return false;
+            }
+
+            return true;
         }
     }
 }

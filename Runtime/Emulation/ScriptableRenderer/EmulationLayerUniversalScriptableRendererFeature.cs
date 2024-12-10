@@ -7,7 +7,7 @@ namespace Unity.XR.CompositionLayers.Emulation
     public class EmulationLayerUniversalScriptableRendererFeature : ScriptableRendererFeature
     {
         static bool s_logged;
-        
+
         public override void Create()
         {
             if(!s_logged)

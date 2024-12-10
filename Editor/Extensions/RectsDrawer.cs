@@ -228,7 +228,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             m_EyeRectData[1].visible = m_EyeRectData[1].tex && (m_InEditorEmulationProperty.intValue == 1);
 
             GUILayout.Space(-4);
-            
+
             RenderTextureEditor(0, m_EyeRectData[0]);
             GUILayout.FlexibleSpace();
 

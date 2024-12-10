@@ -143,7 +143,7 @@ namespace Unity.XR.CompositionLayers
         /// <param name="adjustment">Adjustments to be applied to Radius, Height, and Central Angle respectively</param>
         private void GenerateCylinderMesh(ref Mesh mesh, float radius, float height, float centralAngle, Vector3 scale, Vector3 adjustment)
         {
-            /// Adjustment is used because scaling a cylinder layer does not stretch the game object, 
+            /// Adjustment is used because scaling a cylinder layer does not stretch the game object,
             /// but instead should adjust the radius, height, and central angle.
             radius *= adjustment.x;
             height *= adjustment.y;

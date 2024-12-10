@@ -1,7 +1,7 @@
 {
   "name": "com.unity.xr.compositionlayers",
   "displayName": "XR Composition Layers",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "unity": "2022.3",
   "unityRelease": "11f1",
   "description": "Support for Provider based XR SDK Composition Layers.",
@@ -28,15 +28,15 @@
     }
   ],
   "_upm": {
-    "changelog": "### Added\n* Added Default Layer Support allows for the creation of a default layer and rearragment of the default layer order.\n* Added Composition Layer Sample Scene to demonstrate the use of Composition Layers in a scene.\n* Added Composition Layer Android Sample Surface Scene to demonstrate the use of Andriods External Surface in a scene.\n* Added supporing HDR Tonemapping extension. It allows to set HDR parameters for each layer.\n* Added supporting MirrorViewRenderer. It provides to draw mirror view rendering with layers on XR.\n* Added supporting automatically renderer feature settings on URP and HDRP.\n\n### Fixed\n* Fixed Interactable UI Scalings are now consistent between editor and build.\n* Fixed Projection Eye Rig Emulation for URP and Unity6.\n\n### Changed\n* Removed EmulationLayerUniversalScriptableRendererFeature.(Manual configuration is no longer required.)"
+    "changelog": "### Fixed\n* Fixed Composition Layers not hiding or showing correctly when using Scene Visibility in the hierarchy.\n* Fixed an issue where non-cubemap textures could be assigned to the Cube Projection Layer.\n\n### Changed\n* Moved `ProjectionEyeRigUtil` to the `Unity.XR.CompositionLayers.Layers.Editor` namespace.\n* Moved `CompositionSplash` to the `Unity.XR.CompositionLayers` namespace."
   },
   "upmCi": {
-    "footprint": "0dee02f5e77bb6f5f2a25a4f1691a837cae2024f"
+    "footprint": "c81c1beec7ce9127d95bb97fbc6ed33f2f2cdc1e"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.xr.compositionlayers@1.0/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.xr.compositionlayers@2.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/xr.sdk.compositionlayers.git",
     "type": "git",
-    "revision": "db9c1215d84a6c1f5ee2ed6e41d8b9e2c6d902fa"
+    "revision": "a204cebf3d5061adad420787dd217a2b5b829926"
   }
 }

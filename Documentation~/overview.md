@@ -35,12 +35,12 @@ The basic, Unity-defined Composition Layer types include:
 * __Cube layer__: a cube always centered at the user's head position with only its inside faces visible. You can assign cube map textures. Useful for skyboxes and rendering 360 panoramic images.
 * __Cylinder layer__: a curved, rectangular, "in-scene" display area. You can assign a texture to be rendered to this area, which could be a render texture to provide a dynamic display. Only the inside face of the cylinder is visible.
 * __Equirect layer__: a sphere, "in-scene" display area. You have the flexibility to adjust and modify the shape of the sphere, and can assign a texture to be rendered to this area, which could be a render texture to provide a dynamic display. Only the inside face of the sphere is visible.
-* __Projection layer__: a layer represents planar projected images rendered from the eye point of each eye using a standard perspective projection. This layer requires two textures coming from the position of each eye. 
+* __Projection layer__: a layer represents planar projected images rendered from the eye point of each eye using a standard perspective projection. This layer requires two textures coming from the position of each eye.
 * __Quad layer__: a flat, rectangular, "in-scene" display area. You can assign a texture to be rendered to this area, which could be a render texture to provide a dynamic display. Only the front face of the quad is visible.
 
 The Unity scene is rendered to Projection layer. This __Default Scene Layer__ is created automatically and its layer order of __0__ cannot be changed.
 
-Other XR packages and provider plug-ins can define additional layer types. 
+Other XR packages and provider plug-ins can define additional layer types.
 
 ## The default scene layer
 
@@ -50,7 +50,7 @@ Any layers with positive order are composited on top of the scene layer, and thu
 
 ## Layer extension components
 
-Layer extensions are components that you use to assign data to a composition layer. For example, the **Source Texture** component is the extension you use to define the texture to display in a composition layer. 
+Layer extensions are components that you use to assign data to a composition layer. For example, the **Source Texture** component is the extension you use to define the texture to display in a composition layer.
 
 The Unity-defined layer extensions include:
 
@@ -58,7 +58,7 @@ The Unity-defined layer extensions include:
 * [Source Textures extension](xref:xr-layers-source-textures): defines the texture assets to display in a composition layer.
 
 
-Other XR packages and provider plug-ins can define additional layer extension components. 
+Other XR packages and provider plug-ins can define additional layer extension components.
 
 ## Compositor layer emulation
 

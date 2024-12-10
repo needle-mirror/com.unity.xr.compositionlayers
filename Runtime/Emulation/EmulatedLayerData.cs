@@ -64,7 +64,7 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// </summary>
         /// <param name="camera"><see cref="Camera"/> instance to check if the rendering of the
         /// <see cref="EmulatedLayerData"/></param> is supported on.
-        /// <returns><code>true</code> if emulation the <see cref="LayerData"/> type is supported in your configuration.</returns>
+        /// <returns><c>true</c> if emulation the <see cref="LayerData"/> type is supported in your configuration.</returns>
         public abstract bool IsSupported(Camera camera);
 
         //------------------------------------------------------------------------------------------------------------------------------------------------
@@ -253,7 +253,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                                 break;
                             }
 #endif
-                            if ((texturesExtension.RightTexture != null) && (texturesExtension.InEditorEmulation == 1) && 
+                            if ((texturesExtension.RightTexture != null) && (texturesExtension.InEditorEmulation == 1) &&
                                 (CompositionLayer.LayerData.GetType() == typeof(ProjectionLayerData)))
                             {
                                 eyeIndex = 1;
@@ -268,11 +268,11 @@ namespace Unity.XR.CompositionLayers.Emulation
                             hasTexture = texture != null;
                             if (texture != null)
                             {
-                                if (GetShaderLayerTypeKeyword() == "COMPOSITION_LAYERTYPE_CUBEMAP")
+                                if (GetShaderLayerTypeKeyword() == "COMPOSITION_LAYERTYPE_CUBEMAP" && texture is Cubemap)
                                 {
                                     EmulationMaterial.SetTexture(k_Cubemap, texture);
                                 }
-                                else
+                                else if (texture is not Cubemap)
                                 {
                                     EmulationMaterial.SetTexture(k_MainTex, texture);
                                 }
@@ -508,6 +508,11 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         public void AddToCommandBuffer(RenderContext renderContext, CommandArgs commandArgs)
         {
+#if UNITY_EDITOR
+            // Skip rendering if the layer is hidden in the scene view.
+            if (SceneVisibilityManager.instance.IsHidden(CompositionLayer.gameObject) && commandArgs.IsSceneView)
+                return;
+#endif
             PrepareCommands();
             AddCommands(renderContext, commandArgs);
         }

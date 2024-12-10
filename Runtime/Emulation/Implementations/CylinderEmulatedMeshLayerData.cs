@@ -54,7 +54,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             m_ValuesChanged |= UpdateValue(ref m_Size, Mathf.Max(m_Radius, m_Height * 0.5f));
         }
 
-        bool UpdateValue(ref float currentValue, float newValue) 
+        bool UpdateValue(ref float currentValue, float newValue)
         {
             if (currentValue == newValue)
                 return false;

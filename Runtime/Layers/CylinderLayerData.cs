@@ -43,7 +43,7 @@ namespace Unity.XR.CompositionLayers.Layers
         [Min(0.001f)]
         [SerializeField]
         [Tooltip("The ratio of the visible cylinder section width / height. " +
-            "The height of the cylinder is given by: (cylinder radius × cylinder angle) / aspectRatio.")]
+            "The height of the cylinder is given by: (cylinder radius x cylinder angle) / aspectRatio.")]
         float m_AspectRatio = 1f;
 
         [SerializeField]
@@ -142,7 +142,7 @@ namespace Unity.XR.CompositionLayers.Layers
         {
             if(Radius <= 0 || CentralAngle <= 0)
                 return AspectRatio;
-            
+
             return Mathf.Max(Radius * CentralAngle / Mathf.Max(height, 0f), 0.001f);
         }
 

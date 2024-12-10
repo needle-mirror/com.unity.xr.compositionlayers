@@ -19,7 +19,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 namespace Unity.XR.CompositionLayers.UIInteraction
 {
     /// <summary>
-    /// Handles Canvas and Composition Layer Syncing (Size, Scale, etc) 
+    /// Handles Canvas and Composition Layer Syncing (Size, Scale, etc)
     /// and transforming raycasts from the Composition Layer to the attached Canvas
     /// </summary>
     [ExecuteAlways]
@@ -163,7 +163,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         {
             canvas = GetComponentInChildren<Canvas>();
 
-            if (canvas == null) 
+            if (canvas == null)
                 CreateAndSetCanvas();
 
             canvasRectTransform = canvas.GetComponent<RectTransform>();
@@ -192,7 +192,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         }
 
         /// <summary>
-        /// Updates the texture extension with the new render textures 
+        /// Updates the texture extension with the new render textures
         /// if there was a change in the canvas rect or scale
         /// </summary>
         private void SyncTexturesExtensionWithCameraTarget()
@@ -420,7 +420,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
         private void OnHoverEnter(HoverEnterEventArgs args)
         {
-            if (args.interactorObject is not IXRRayProvider interactor) 
+            if (args.interactorObject is not IXRRayProvider interactor)
                 return;
 
             if (!proxyInteractorFactory.TryCreateOrFind(interactor, canvas.transform.position, out var proxyInteractor))
@@ -439,13 +439,13 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                     // Remove the layer from the real interactor mask
                     (interactor as XRRayInteractor).raycastMask &= ~(1 << layerBit);
 
-                    // Set the proxy interactor mask layer to this layer 
+                    // Set the proxy interactor mask layer to this layer
                     (proxyInteractor as XRRayInteractor).raycastMask = (1 << layerBit);
                     break;
             }
 
 
-            // Alow the canvas to receive raycasts 
+            // Alow the canvas to receive raycasts
             if (canvasGroup)
                 canvasGroup.blocksRaycasts = true;
 

@@ -4,7 +4,7 @@ uid: xr-layers-add-layer
 
 # Add a composition layer
 
-Add a composition layer to a scene by adding a GameObject with a CompositionLayer component. You can add layers in the Editor or at runtime. 
+Add a composition layer to a scene by adding a GameObject with a CompositionLayer component. You can add layers in the Editor or at runtime.
 
 ## Add a layer in the Editor
 
@@ -39,7 +39,7 @@ public static class LayerHelper
     {
         // Add a CompositionLayer component to the GameObject
         CompositionLayer layer = parentGO.AddComponent<CompositionLayer>();
-            
+
         // Set up the layer
         if (layer != null) // layer was successfully created
         {
@@ -70,22 +70,22 @@ using Unity.XR.CompositionLayers;
 
 public static class LayerHelper2
 {
-    public static void RemoveLayerFromGameObject(GameObject parent) 
+    public static void RemoveLayerFromGameObject(GameObject parent)
     {
         CompositionLayer layer = parent.GetComponent<CompositionLayer>();
-        if(layer != null) 
+        if(layer != null)
         {
             // First destroy any extensions...
             Component[] extensions = parent.GetComponents<CompositionLayerExtension>();
-            foreach(Component extension in extensions) 
+            foreach(Component extension in extensions)
             {
                 GameObject.Destroy(extension);
             }
-            
+
             // Then destroy the layer
             GameObject.Destroy(layer);
-        } 
-        else 
+        }
+        else
         {
             Debug.LogWarning("Tried to remove a layer from a GameObject that has none.");
         }

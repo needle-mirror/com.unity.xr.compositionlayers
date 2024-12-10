@@ -1,5 +1,5 @@
 {
-    "name": "Unity.XR.CompositionLayers.EditorTests",
+    "name": "Unity.XR.CompositionLayers.Editor.Tests",
     "rootNamespace": "UnityEditor.XR.CompositionLayers.Tests",
     "references": [
         "Unity.XR.CompositionLayers.Editor",

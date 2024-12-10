@@ -5,6 +5,10 @@ using UnityEngine;
 
 namespace Unity.XR.CompositionLayers.UIInteraction.Editor
 {
+    /// <summary>
+    /// Custom editor for the <see cref="UIFocus"/> component.
+    /// Overrides the SceneView's default behavior to focus on the composition layer when the user presses the 'F' key.
+    /// </summary>
     [CustomEditor(typeof(UIFocus))]
     public class UIFocusEditor : UnityEditor.Editor
     {

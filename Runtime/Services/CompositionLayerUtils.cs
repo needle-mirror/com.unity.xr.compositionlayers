@@ -71,12 +71,12 @@ namespace Unity.XR.CompositionLayers.Services
         }
 
         /// <summary>
-        /// Gets the <see cref="LayerDataDescriptor"/> that matches the <code>string</code> <paramref name="typeFullName"/>.
+        /// Gets the `LayerDataDescriptor` that matches <paramref name="typeFullName"/>.
         /// </summary>
         /// <param name="typeFullName"> Id of the corresponding <see cref="LayerDataDescriptor"/>.</param>
         /// <returns>
-        /// The <see cref="LayerDataDescriptor"/> that corresponds to the <code>string</code>
-        /// <paramref name="typeFullName"/> provided. If the <code>string</code> is empty or the
+        /// The <see cref="LayerDataDescriptor"/> that corresponds to the <c>string</c>
+        /// <paramref name="typeFullName"/> provided. If the <c>string</c> is empty or the
         /// <see cref="LayerDataDescriptor"/> is not found <see cref="LayerDataDescriptor.Empty"/> is returned.
         /// </returns>
         public static LayerDataDescriptor GetLayerDescriptor(string typeFullName)
@@ -91,12 +91,12 @@ namespace Unity.XR.CompositionLayers.Services
         }
 
         /// <summary>
-        /// Gets the <see cref="LayerDataDescriptor"/> that matches the <code>Type</code> <paramref name="type"/>.
+        /// Gets the <see cref="LayerDataDescriptor"/> that matches the <c>Type</c> <paramref name="type"/>.
         /// </summary>
-        /// <param name="type">The <code>Type</code> of the corresponding <see cref="LayerDataDescriptor"/>.</param>
+        /// <param name="type">The <c>Type</c> of the corresponding <see cref="LayerDataDescriptor"/>.</param>
         /// <returns>
-        /// The <see cref="LayerDataDescriptor"/> that corresponds to the <code>Type</code> <paramref name="type"/>
-        /// provided. If the <code>Type</code> is not a subclass of <see cref="LayerData"/> or the
+        /// The <see cref="LayerDataDescriptor"/> that corresponds to the <c>Type</c> <paramref name="type"/>
+        /// provided. If the <c>Type</c> is not a subclass of <see cref="LayerData"/> or the
         /// <see cref="LayerDataDescriptor"/> is not found <see cref="LayerDataDescriptor.Empty"/> is returned.
         /// </returns>
         public static LayerDataDescriptor GetLayerDescriptor(Type type)
@@ -124,7 +124,7 @@ namespace Unity.XR.CompositionLayers.Services
         /// <param name="typeFullName">The type's full name that corresponds to a <see cref="LayerDataDescriptor"/>
         /// that holds the <see cref="LayerData"/> type information.</param>
         /// <returns>
-        /// If the <code>string</code> <paramref name="typeFullName"/> matches a <see cref="LayerDataDescriptor"/> an
+        /// If the <c>string</c> <paramref name="typeFullName"/> matches a <see cref="LayerDataDescriptor"/> an
         /// instance of the <see cref="LayerData"/> type stored in the <see cref="LayerDataDescriptor"/> is returned.
         /// If no matching <see cref="LayerDataDescriptor"/> is found <c>null</c> is returned.
         /// </returns>
@@ -152,9 +152,9 @@ namespace Unity.XR.CompositionLayers.Services
         /// Uses <see cref="type"/> to find the <see cref="LayerData"/> type in the corresponding
         /// <see cref="LayerDataDescriptor"/>. Then creates and returns an instance of the <see cref="LayerData"/>.
         /// </summary>
-        /// <param name="type"></param>
+        /// <param name="type">The type of the Layer Data</param>
         /// <returns>
-        /// If the <code>string</code> <see cref="type"/> matches a <see cref="LayerDataDescriptor"/> an
+        /// If the <c>string</c> matches a <see cref="LayerDataDescriptor"/> an
         /// instance of the <see cref="LayerData"/> type stored in the <see cref="LayerDataDescriptor"/> is returned.
         /// If no matching <see cref="LayerDataDescriptor"/> is found <c>null</c> is returned.
         /// </returns>
@@ -171,9 +171,8 @@ namespace Unity.XR.CompositionLayers.Services
         /// <param name="oldOrder">The old <see cref="CompositionLayer"/> order value this is usually the current
         /// <see cref="CompositionLayer.Order"/>.</param>
         /// <param name="newOrder">The new <see cref="CompositionLayer"/> order value to set.</param>
-        /// <param name="inEditor"></param>
         /// <returns>
-        /// Returns <code>true</code> if the <paramref name="layer"/> is set to the <paramref name="newOrder"/> or is already set to
+        /// Returns <c>true</c> if the <paramref name="layer"/> is set to the <paramref name="newOrder"/> or is already set to
         /// <paramref name="newOrder"/>.
         /// </returns>
         public static bool TryChangeLayerOrder(this CompositionLayer layer, int oldOrder, int newOrder)
@@ -266,11 +265,11 @@ namespace Unity.XR.CompositionLayers.Services
         /// </summary>
         /// <param name="lhl">Left hand <see cref="CompositionLayer"/> to swap the order of.</param>
         /// <param name="rhl">Right hand <see cref="CompositionLayer"/> to swap the order of.</param>
-        /// <returns><code>true</code> if the method was able to swap the <paramref name="lhl"/> and <paramref name="rhl"/>
+        /// <returns><c>true</c> if the method was able to swap the <paramref name="lhl"/> and <paramref name="rhl"/>
         /// <see cref="CompositionLayer"/>.
         ///
-        /// This can fail if the layers are not in a valid scene <see cref="IsLayerSceneValid"/>, one of the layers is
-        /// the <see cref="DefaultSceneCompositionLayer"/>, the layers are not tracked by the
+        /// This can fail if the layers are not in a valid scene, one of the layers is
+        /// the DefaultSceneCompositionLayer, the layers are not tracked by the
         /// <see cref="CompositionLayerManager"/>, or that do not occupy the <see cref="CompositionLayer.Order"/> layer
         /// order with the <see cref="CompositionLayerManager"/>.
         /// </returns>

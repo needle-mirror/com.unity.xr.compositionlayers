@@ -7,7 +7,7 @@ uid: xr-layers-interactive-UI
 Composition Layers can render textures with great fidelity, which makes them ideal for displaying text and UIs. To that end, Unity provides a set of Composition Layer UI prefabs and components that will work with Unity UI Elements such as Canvases, Buttons, etc., with minimal setup.
 
 |Prefab/Component:|Description:|
-|:---|:---| 
+|:---|:---|
 |Quad UI Panel | prefab of a Quad layer with a Canvas that has been setup for interactivity |
 |Cylinder UI Panel | prefab of a Cylinder layer with a Canvas that has been setup for for interactivity |
 |Interactable UI Mirror | a Component that will configure a Quad or Cylinder layer with a Canvas that has been setup for interactivity|
@@ -17,13 +17,13 @@ Composition Layers can render textures with great fidelity, which makes them ide
 > [!NOTE]
 >  Composition Layer UI components are dependent on XR Interaction Toolkit. You will be prompt to install XRI into your project when you create a Composition Layer UI component if XRI is not already present.
 
-## Create Composition Layer UI’s
+## Create Composition Layer UI
 
 The quickest way to create a new UI with Composition Layers is via the Create Menu. Go to **GameObject > XR > Composition Layers**, and then select either the **Quad UI Panel** or the **Cylinder UI Panel**.
 
 ![](images/UI-menu.png)<br />
 
-When you’ve made your selection, Unity will create the corresponding shape layer and populate them with a Canvas and an Image for the background of the panel.
+When you have made your selection, Unity will create the corresponding shape layer and populate them with a Canvas and an Image for the background of the panel.
 
 From there you can simply add additional UI Elements to the Canvas such as Text and Buttons, and you can interact with the interactive elements without any additional setup.
 
@@ -38,7 +38,7 @@ When the Interactable UI Mirror is added to a Quad and Cylinder layer, Unity aut
 
 If you want to make your existing UIs render at higher fidelity you can easily convert them into Composition Layer UI elements.
 
-1) First, take note of the dimension of your world space UI Canvas. 
+1) First, take note of the dimension of your world space UI Canvas.
 2) Then create either a Quad or a Cylinder Composition Layer of similar size to that of your Canvas.
 3) Then drag your Canvas into the Composition Layer making them a child of the Composition Layer.
 
@@ -53,7 +53,7 @@ Composition Layer UI components currently will only work with Quad or Cylinder l
 
 Behind the scene there is a hidden camera that captures the texture of the Canvas and projected onto the Composition Layer. Unity will automatically create a User Layer for that Canvas to cull it from the Main Camera so only the projected texture of the Canvas can be seen.
 
-The Canvas texture will always be projected to fit on the Composition Layer without being cropped or distorted, with its aspect ratio preserved. The Composition Layer shape determines the size of the Canvas in World Space, and the Width and Height properties of the Canvas determines the resolution of the projected texture. 
+The Canvas texture will always be projected to fit on the Composition Layer without being cropped or distorted, with its aspect ratio preserved. The Composition Layer shape determines the size of the Canvas in World Space, and the Width and Height properties of the Canvas determines the resolution of the projected texture.
 
 To make the Composition Layer interactable, there is a collider inside the Composition Layer that mirror the size of the Canvas. Whenever users interact with the Composition Layer, those events are reprojected onto the Canvas allowing them to interact with the UI Elements.
 

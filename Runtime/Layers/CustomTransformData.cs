@@ -54,7 +54,7 @@ namespace Unity.XR.CompositionLayers.Layers
         /// <summary>
         /// Create a default instance.
         /// </summary>
-        /// <returns>Return a default instance. Matrix is set to identity.</returns>
+        /// <value>Return a default instance. Matrix is set to identity.</value>
         public static CustomTransformData Default
         {
             get => new CustomTransformData(Matrix4x4.identity, CustomTransformMatrixType.Model);

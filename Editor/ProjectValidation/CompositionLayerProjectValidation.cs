@@ -16,7 +16,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
         {
             new CompositionLayerBuildValidationRule
             {
-                Message = "Install OpenXR Plugin Experimental package 1.12.0-exp.1 to enable composition layer runtime support.",
+                Message = "Install OpenXR Plugin Experimental package 1.13.2 to enable composition layer runtime support.",
                 CheckPredicate = () =>
                 {
 #if UNITY_XR_OPENXR_COMPLAYER
@@ -35,7 +35,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 
         private static readonly List<CompositionLayerBuildValidationRule> CachedValidationList = new List<CompositionLayerBuildValidationRule>(BuiltinValidationRules.Length);
 
-        
+
         /// <summary>
         /// Opens Graphics Settings Window
         /// </summary>

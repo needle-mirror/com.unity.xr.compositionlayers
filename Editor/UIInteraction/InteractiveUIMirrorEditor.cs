@@ -12,7 +12,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
     /// </summary>
     [CustomEditor(typeof(InteractableUIMirror))]
     public class InteractiveUIMirrorEditor : UnityEditor.Editor
-    { 
+    {
         private static AddRequest addPackageRequest;
         private static bool isInstalling = false;
 
@@ -76,7 +76,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
                 DrawDefaultInspector();
                 return;
             }
-            
+
             base.OnInspectorGUI();
             EditorGUILayout.HelpBox("Installing the XR Interaction Toolkit is required for this component.", MessageType.Warning);
             if (GUILayout.Button("Install XRI Package"))
