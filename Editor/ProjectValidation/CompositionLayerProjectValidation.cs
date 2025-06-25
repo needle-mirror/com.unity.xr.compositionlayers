@@ -16,7 +16,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
         {
             new CompositionLayerBuildValidationRule
             {
-                Message = "Install OpenXR Plugin Experimental package 1.13.2 to enable composition layer runtime support.",
+                Message = "Install OpenXR Plugin 1.14.3 or later to enable composition layer runtime support.",
                 CheckPredicate = () =>
                 {
 #if UNITY_XR_OPENXR_COMPLAYER
@@ -31,6 +31,12 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
                 Error = false,
                 buildTargetGroup = BuildTargetGroup.Android,
             },
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+            CompositionLayerBuildValidationRuleFactory.CreateHDRRuleForURP(BuildTargetGroup.Android),
+            CompositionLayerBuildValidationRuleFactory.CreateAlphaProcessingRuleForURP(BuildTargetGroup.Android),
+            CompositionLayerBuildValidationRuleFactory.CreateHDRRuleForURP(BuildTargetGroup.Standalone),
+            CompositionLayerBuildValidationRuleFactory.CreateAlphaProcessingRuleForURP(BuildTargetGroup.Standalone),
+#endif
         };
 
         private static readonly List<CompositionLayerBuildValidationRule> CachedValidationList = new List<CompositionLayerBuildValidationRule>(BuiltinValidationRules.Length);
@@ -76,6 +82,40 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
         /// Open the Package Manager window to install OpenXR package
         /// </summary>
         private static void OpenPackageManager() => UnityEditor.PackageManager.UI.Window.Open("com.unity.xr.openxr");
+
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+        internal static void DisableHDROnURPAssets(BuildTargetGroup buildTargetGroup)
+        {
+            foreach (var urpAsset in GetURPAssetsForBuildTarget(buildTargetGroup))
+            {
+                if (urpAsset != null)
+                {
+                    urpAsset.supportsHDR = false;
+                    EditorUtility.SetDirty(urpAsset);
+                    AssetDatabase.SaveAssets();
+                }
+            }
+        }
+
+        internal static void OpenFirstURPAssetWithAlphaOutputOff(BuildTargetGroup buildTargetGroup)
+        {
+            foreach (var urpAsset in GetURPAssetsForBuildTarget(buildTargetGroup))
+            {
+                if (urpAsset != null && !urpAsset.allowPostProcessAlphaOutput)
+                {
+                    Selection.activeObject = urpAsset;
+                    EditorGUIUtility.PingObject(urpAsset);
+                    return;
+                }
+            }
+        }
+
+        internal static HashSet<UniversalRenderPipelineAsset> GetURPAssetsForBuildTarget(BuildTargetGroup buildTargetGroup)
+        {
+            QualitySettings.GetRenderPipelineAssetsForPlatform<UniversalRenderPipelineAsset>(buildTargetGroup.ToString(), out var renderPipelineAssets);
+            return renderPipelineAssets;
+        }
+#endif
     }
 }
 #endif //UNITY_EDITOR

@@ -23,12 +23,18 @@ namespace Unity.XR.CompositionLayers.Rendering.Editor
             /// The Uber shader type.
             /// </summary>
             Uber,
+
+            /// <summary>
+            /// The Uber shader type.
+            /// </summary>
+            ColorScaleBias,
         }
 
         static readonly string[] s_ShaderNames = new string[]
         {
             "Unlit/XRCompositionLayers/BlitCopyHDR",
             "Unlit/XRCompositionLayers/Uber",
+            "Hidden/XRCompositionLayers/ColorScaleBias",
         };
 
         /// <summary>

@@ -10,7 +10,7 @@ Enable and disable a composition layer by activating or deactivating its parent 
 
 In the Editor, you can enable or disable the parent GameObject in the Inspector by toggling the checkbox next to the GameObject name field.
 
-![](images/enable-layer.png)
+![Composition layer enabled in the Inspector.](images/enable-layer.png)
 
 An inactive GameObject remains in the scene and can be activated [at runtime](#at-runtime).
 

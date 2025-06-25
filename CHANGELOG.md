@@ -13,6 +13,14 @@ When updating the Changelog, please ensure we follow the standards for ordering 
 ```
 Under ## headers, ### \<type\> headers are listed in this order: Added, Changed, Deprecated, Removed, Fixed, Security
 ```
+## [2.1.0] - 2025-06-25
+### Added
+* Added Game view and Standalone color scale bias emulation for Default Scene Layer for the Built-in Render Pipeline and Universal Render Pipeline.
+* Added Project Validation rules for Composition Layer Transparency.
+
+### Fixed
+* Fixed `CompositionLayerManager` so that it correctly sets layers to be visible when they are enabled after previously being disabled.
+
 ## [2.0.0] - 2024-12-10
 
 ### Fixed

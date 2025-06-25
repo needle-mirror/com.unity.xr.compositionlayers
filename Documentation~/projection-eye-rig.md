@@ -10,11 +10,11 @@ The **Projection Eye Rig** a special projection layer prefab that allows you to 
 
 You can create a Projection Eye Rig in the same way you would create a composition layer, via the add GameObject dropdown menu.
 
-![](images/Create-EyeRig.png)<br />*The CompositionLayer Dropdown Menu*
+![CompositionLayer Dropdown Menu.](images/Create-EyeRig.png)<br />*The CompositionLayer Dropdown Menu*
 
 At this point you will be prompted to enter a layer name for the eye rig.
 
-![](images/LayerNamePrompt.png)<br />*Projection Eye Rig Name Prompt*
+![Projection Eye Rig Name Prompt.](images/LayerNamePrompt.png)<br />*Projection Eye Rig Name Prompt*
 
 The layer name you enter is used to name the eye rig, and also assigned to an unused Unity Layer. This Unity layer is in the culling layer mask to determine which GameObjects in the scene are rendered to the Projection Eye Rig and which are rendered to the default scene layer.
 
@@ -22,7 +22,7 @@ The layer name you enter is used to name the eye rig, and also assigned to an un
 
 To assign scene GameObjects to render to the Projection Eye Rig, go to the Inspector of the object and assign its **Layer** to the Unity Layer with the same name as the Projection Eye Rig.
 
-![](images/AddToEyeRig.png)<br />*Assign object to eye rig*
+![Assign object to eye rig.](images/AddToEyeRig.png)<br />*Assign object to eye rig*
 
 This action will cull the object from the main camera, and add it to the hidden camera(s) of the Projection Eye Rig, thereby rendering it on a different Projection Layer.
 

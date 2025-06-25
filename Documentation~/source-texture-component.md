@@ -6,7 +6,7 @@ uid: xr-layers-source-textures
 
 Add a Source Textures extension component to specify textures to render to a layer. See [Add or remove a composition layer]. On Android, for Quad and Cylinder layer types, you can also specify an [Android Surface](#android-surface) as the source texture.
 
-![](images/Inspector_SourceTextures.png)<br />*The Source Textures component Inspector*
+![The Source Textures component Inspector.](images/Inspector_SourceTextures.png)<br />*The Source Textures component Inspector*
 
 | Property:| Function: |
 |:---|:---|
@@ -29,13 +29,13 @@ Add a Source Textures extension component to specify textures to render to a lay
 
 You can use a custom source rect to define a rectangle subset of the source texture to use. The upper left of the source texture is coordinate (0,0) and the lower right is coordinate (1,1). Likewise, the full width and height are normalized to (1,1).
 
-![](images/SourceRect.png)<br />*A source rect of approximately (.3, .3, .3, .3)*
+![Demonstrative image of source rect.](images/SourceRect.png)<br />*A source rect of approximately (.3, .3, .3, .3)*
 
 ## Custom destination rects
 
 You can use a custom destination rect to define where to place the texture within a composition layer. The upper left of the layer is coordinate (0,0) and the lower right is coordinate (1,1). Likewise, the full width and height are normalized to (1,1).
 
-![](images/DestinationRect.png)<br />*A destination rect of approximately (.25,.25,.5,.5)*
+![Demonstrative image of source rect.](images/DestinationRect.png)<br />*A destination rect of approximately (.25,.25,.5,.5)*
 
 ## Android Surface
 

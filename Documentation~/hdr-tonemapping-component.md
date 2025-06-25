@@ -11,7 +11,7 @@ Add an **HDR Tonemapping** extension component to a layer to support HDR renderi
 > This component isn't turned off regardless of texture format, so if you do not need it, disable it manually.
 > You do not need to use this component with linear textures. If not set, the texture is treated as linear texture with appropriate **Nits For Paper White**.For example, SDR textures are treated as Rec709 and **Nits For Paper White** as 80 (100 on Metal).
 
-![](images/Inspector_HDRTonemapping.png)<br />*The HDR tonemapping component Inspector*
+![HDR tonemapping component Inspector](images/Inspector_HDRTonemapping.png)<br />*The HDR tonemapping component Inspector*
 
 | Property:| Function: |
 |:---|:---|
@@ -31,14 +31,14 @@ The component can generate sample HDR image textures to help you test which HDR 
 To create a sample HDR texture, choose the desired texture format in the **Sample** section of the component Inspector and click the **Generate** button.
 This operation does not overwrite the current source texture. When this is done, the source texture is replaced with a sample texture. This sample texture isn't saved as asset, but is stored in the scene.
 
-![](images/Inspector_HDRTonemapping_Sample.png)<br />*The sample texture image with Sample image generator.*
+![Sample texture image with Sample image generator.](images/Inspector_HDRTonemapping_Sample.png)<br />*The sample texture image with Sample image generator.*
 
 #### Limitation
 
 Need to install HDR supported XR plugin on XR Plugin Management.
 This component is disabled & hidden in environments where the XR plugin(device) does not support HDR.
 
-![](images/Inspector_HDRTonemapping_NotSupported.png)<br />*The HDR tonemapping component Inspector in environments where HDR is unsupported.*
+![The HDR tonemapping component Inspector in environments where HDR is unsupported.](images/Inspector_HDRTonemapping_NotSupported.png)<br />*The HDR tonemapping component Inspector in environments where HDR is unsupported.*
 
 > [!TIP]
 > There are no supported platforms at this time.

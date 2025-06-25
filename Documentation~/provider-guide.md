@@ -39,7 +39,7 @@ The manager also calls the provider's [LateUpdate] method during the [standard U
 Each composition layer instance is responsible for informing the manager instance when it is created, enabled, disabled, or destroyed. The base [CompositionLayer] implementation handles this communication using the standard GameObject life cycle events. (If you override these event functions in your own CompositionLayer subclass, be sure to call the base class methods.)
 The following sequence diagram outlines how the messages are sent from Unity to the manager and layer components and, finally, to the provider:
 
-![](images/Sequence.svg)
+![Diagram demonstrating the event message sequence.](images/Sequence.svg)
 <br />*Event message sequence*
 
 ## Layer Provider
@@ -57,7 +57,7 @@ The information available from a layer includes:
 
 The following class diagram illustrates the connections between the main classes in the XR Composition Layers API:
 
-![](images/ClassDiagram.svg)
+![Diagram depicting XR Composition Layers API.](images/ClassDiagram.svg)
 <br /> *Composition Layer API class diagram*
 
 Use standard Unity [GameObject] methods to access other components related to a layer in a scene.
@@ -106,56 +106,16 @@ You can add fields or properties for the data your layer implementation needs. U
 
 The [CompositionLayerDataAttribute] defines the following information, which the Composition Layer API uses to create the [ScriptableObject] describing your layer type:
 
-<table>
-<thead>
-<tr>
-<td><b>Attribute value</b></td>
-<td><b>Purpose</b></td>
-<td><b>Example</b></td>
-</tr>
-</thead>
-<tbody>
-<td><b>Provider</b></td>
-<td>Disambiguates layer types created by different providers</td>
-<td>"Unity"</td>
-</tr>
-<tr>
-<td><b>name</b></td>
-<td>A display name for the layer type.</td>
-<td>"Quad"</td>
-</tr>
-<tr>
-<td><b>id</b></td>
-<td>A string identifying this type. Use a reverse-DNS style id to minimize the chance for naming collisions with other providers.</td>
-<td>"com.unity.layer.quad"</td>
-</tr>
-<tr>
-<td><b>iconPath</b></td>
-<td>The path within your package to the layer icons used in the Editor. Specify the path relative to the Unity project folder.</td>
-<td>"Packages/com.unity.xr.compositionlayers/Editor/Icons/"</td>
-</tr>
-<tr>
-<td><b>inspectorIcon</b></td>
-<td>An image asset in your package to display in the Inspector. </td>
-<td>LayerQuadColor</td>
-</tr>
-<tr>
-<td><b>listViewIcon</b></td>
-<td>An image asset in your package to display in lists in the Editor (such as the [Layer Order window].</td>
-<td>LayerQuad</td>
-</tr>
-<tr>
-<td><b>description</b></td>
-<td>A description of the layer's purpose and capabilities.</td>
-<td>"Defines a simple quad layer in a scene. A quad layer is simply a rectangular area of the display that will be rendered with some texture by the current ILayerProvider instance."</td>
-</tr>
-<tr>
-<td><b>suggestedExtensionTypes</b></td>
-<td>An array of the layer extension classes that should be used with this type of Layer. The Unity Editor asks if these extensions should be added when you set the layer type.</td>
-<td>new[] { typeof(TexturesExtension) }</td>
-</tr>
-</tbody>
-</table>
+| **Attribute value**        | **Purpose**                     | **Example**                                     |
+| :------------------------- | :------------------------------ | :---------------------------------------------- |
+| **Provider**              | Disambiguates layer types created by different providers.  | "Unity"               |
+| **name**                  | A display name for the layer type. | "Quad"                |
+| **id**                    | A string identifying this type. Use a reverse-DNS style id to minimize the chance for naming collisions with other providers. | "com.unity.layer.quad" |
+| **iconPath**              | The path within your package to the layer icons used in the Editor. Specify the path relative to the Unity project folder. | "Packages/com.unity.xr.compositionlayers/Editor/Icons/"  |
+| **inspectorIcon**         | An image asset in your package to display in the Inspector.| LayerQuadColor  |
+| **listViewIcon**          | An image asset in your package to display in lists in the Editor (such as the Layer Order window.) | LayerQuad |
+| **description**           | A description of the layer's purpose and capabilities.      | "Defines a simple quad layer in a scene. A quad layer is simply a rectangular area of the display that will be rendered with some texture by the current ILayerProvider instance." |
+| **suggestedExtensionTypes** | An array of the layer extension classes that should be used with this type of Layer. The Unity Editor asks if these extensions should be added when you set the layer type. | new[] { typeof(TexturesExtension) } |
 
 For complete examples, you can refer to the Unity-defined layer types, [ProjectionLayerData], [CylinderLayerData], and [QuadLayerData] classes in the Unity Composition Layer package.
 

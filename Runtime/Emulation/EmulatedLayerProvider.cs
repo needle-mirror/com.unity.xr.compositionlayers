@@ -72,6 +72,7 @@ namespace Unity.XR.CompositionLayers.Emulation
 
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
             EmulationLayerUniversalScriptableRendererPass.RegistScriptableRendererPass();
+            EmulationColorScaleBiasPass.RegistScriptableRendererPass();
 #endif
 #if UNITY_RENDER_PIPELINES_HDRENDER
             EmulationLayerHighDefinitionVolumeManager.ActivateCustomPassVolumes();
@@ -85,6 +86,7 @@ namespace Unity.XR.CompositionLayers.Emulation
 
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
             EmulationLayerUniversalScriptableRendererPass.UnregistScriptableRendererPass();
+            EmulationColorScaleBiasPass.UnregistScriptableRendererPass();
 #endif
 #if UNITY_RENDER_PIPELINES_HDRENDER
             EmulationLayerHighDefinitionVolumeManager.DeactivateCustomPassVolumes();
@@ -268,6 +270,9 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         internal static bool IsSupported(Camera camera)
         {
+            if(s_Instance == null)
+                return false;
+
             return s_Instance.m_ActiveCameras.Contains(camera);
         }
 

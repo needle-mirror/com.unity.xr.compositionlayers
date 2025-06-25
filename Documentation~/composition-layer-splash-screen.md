@@ -5,14 +5,13 @@ uid: xr-layers-splash-scren
 # Composition Layer Splash Screen
 Composition Layers supports replacing the default Unity splash screen with a custom splash screen that is rendered using Composition Layers. Using Composition Layers for the Splash screen has some useful benefits, such as improved clarity and sharpness, and much more control over the splash screen appearance (e.g., using a Cylinder Layer, Locking to the horizon, etc.).
 
-
 To use the Splash Screen provided by Composition Layers, you must disable the default Unity Splash Screen in the Player Settings. This can be done by navigating to `Edit > Project Settings > Player > Splash Image` and unchecking the `Show Unity Splash Screen` and setting `Virtual Reality Splash Image` to `None`.
 
-![](images/disable-splash.png)
+![Disable Unity Splash Screen option in Player Settings.](images/disable-splash.png)
 
 > [!IMPORTANT]
 > When enabling the Composition Layer Splash Screen, a new scene named "CompositionSplash" will automatically be added to the build settings. This scene is used to display the splash screen, and should not be modified directly. If you need to modify the splash screen, you can do so by modifying the settings in the Composition Layer Splash Screen settings. This scene will automatically be removed from the build settings when the Composition Layer Splash Screen is disabled.
-![](images/splash-scene.png)
+![CompositionSplash scene in the Scenes in Build section of Build Settings.](images/splash-scene.png)
 
 ## Splash Screen Settings
 To access the Composition Layer Splash Screen settings, navigate to `Assets/CompositionLayers/UserSettings/Resources/CompositionLayersRuntimeSettings.asset`.

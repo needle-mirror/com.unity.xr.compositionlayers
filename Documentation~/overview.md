@@ -20,7 +20,7 @@ While useful in specific situations, each composition layer you add to a scene h
 
 The compositor in a device draws your layers in the assigned order starting from the most negative order value. In the following diagram, for example, the layers are composited in the order: -1, 0, 1, 2, 3. (The assigned values do not need to be consecutive.)
 
-![Layer drawing order](images/PaintersAlgorithm.png)<br /> *The "[painter's algorithm](https://en.wikipedia.org/wiki/Painter%27s_algorithm)" is used to draw layers*
+![Layer drawing order.](images/PaintersAlgorithm.png)<br /> *The "[painter's algorithm](https://en.wikipedia.org/wiki/Painter%27s_algorithm)" is used to draw layers*
 
 Layers are blended according to their alpha channel. A completely opaque area of a channel obscures the layers drawn before it.
 

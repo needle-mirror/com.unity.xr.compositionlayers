@@ -284,7 +284,11 @@ namespace Unity.XR.CompositionLayers.Services
 
             if (s_DefaultSceneCompositionLayer != null)
             {
-                UnityObjectUtils.Destroy(s_DefaultSceneCompositionLayer.gameObject);
+                if (s_DefaultSceneCompositionLayer.gameObject != null)
+                {
+                    if (s_DefaultSceneCompositionLayer.gameObject.activeSelf)
+                        UnityObjectUtils.Destroy(s_DefaultSceneCompositionLayer.gameObject);
+                }
                 s_DefaultSceneCompositionLayer = null;
             }
 
@@ -339,6 +343,7 @@ namespace Unity.XR.CompositionLayers.Services
             var compLayer = sceneGameObject.AddComponent<CompositionLayer>();
             compLayer.LayerData = layerData;
             compLayer.Order = 0;
+            DefaultSceneCompositionLayer = compLayer;
             sceneGameObject.SetActive(true);
         }
 
@@ -526,7 +531,7 @@ namespace Unity.XR.CompositionLayers.Services
                 OccupiedLayersUpdated?.Invoke();
             }
 
-            if (IsActiveLayersDestroyed)
+            if (IsActiveLayersDestroyed && !AnyLayerExistsInScene())
             {
                 StopCompositionLayerManager();
             }
@@ -662,7 +667,7 @@ namespace Unity.XR.CompositionLayers.Services
             UpdateProviders(m_CreatedLayers, m_RemovedLayers, m_ModifiedLayers, m_ActiveLayers);
             EnsureFallbackSceneCompositionLayer();
 
-            if (IsActiveLayersDestroyed)
+            if (IsActiveLayersDestroyed && !AnyLayerExistsInScene())
             {
                 StopCompositionLayerManager();
             }
@@ -789,6 +794,22 @@ namespace Unity.XR.CompositionLayers.Services
             return order;
         }
 
+        bool AnyLayerExistsInScene()
+        {
+            if (s_Instance == null)
+                return false;
+
+            foreach (var layer in s_Instance.m_KnownLayers.Keys)
+            {
+                if (layer == null || layer.gameObject == null || layer.gameObject.scene == null)
+                    continue;
+
+                if (layer.gameObject.scene.IsValid())
+                    return true;
+            }
+            return false;
+        }
+
         bool IsActiveLayersDestroyed
         {
             get
@@ -805,7 +826,6 @@ namespace Unity.XR.CompositionLayers.Services
                 return false;
             }
         }
-
 
         // This class syncs the transforms of the projection rig composition layers to be at the same total offset of the main camera's parents.
         private class ProjectionRigOffsetSynchronizer

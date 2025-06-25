@@ -15,4 +15,4 @@ The base Composition Layers package defines the following components for placing
 [Composition Layer component]: xref:xr-layers-base-component
 [Color Bias and Scale extension]: xref:xr-layers-color-bias-scale
 [Source Textures extension]: xref:xr-layers-source-textures
-[HDR Tonemapping component]: xr-layers-hdr-tonemapping
+[HDR Tonemapping extension]: xref:xr-layers-hdr-tonemapping

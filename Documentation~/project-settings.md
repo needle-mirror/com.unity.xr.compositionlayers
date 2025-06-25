@@ -45,21 +45,9 @@ If the project uses the High Definition Render Pipeline (HDRP), the [Emulation L
 <a id="always-include-shaders-list"></a>
 ### Always Include Shaders list
 
-For emulation of layers in a standalone **Win, Mac, Linux** build, add the `Unlit/XRCompositionLayers/Runtime/Uber` shader to the list of shaders that are always included in a project build:
+For compostions layer emualtion, when a standalone **Win, Mac, Linux** build is detected, the `Unlit/XRCompositionLayers/Runtime/Uber` and `Hidden/XRCompositionLayers/ColorScaleBias` shaders are automatically added to the always include shaders list.
 
-1. Open the **Project Settings** window (menu: **Edit > Project Settings**).
-2. Select the **Graphics** section.
-3. Expand the **Always Included Shaders** list, if necessary.
-4. Increase the **Size** value by one to add another element to the list.
-5. Click the object picker icon of the new element to open the **Select Shader** dialog.
-6. Click the crossed-out eye icon at the top, right-hand side of the dialog to include shaders in packages in the selection list -- otherwise, the Uber shader is not shown.
-7. Type, "Uber" in the search field at the top of the dialog.
-
-   ![](images/select-shader.png)
-
-8. Double-click the **Uber** shader in the list to add it to the always included shaders.
-
-![Always Included Shader settings](images/always-include-shaders.png)<br />*The __Always Included Shaders__ list with the Uber shader successfully added*
+![Always Included Shader settings.](images/always-include-shaders.png)<br />*The __Always Included Shaders__ list with the Uber and ColorScaleBias shaders added*.
 
 > [!TIP]
 > Make sure that the **Emulation in Standalone** setting is enabled under [Runtime settings](#runtime-settings).
@@ -68,6 +56,8 @@ For emulation of layers in a standalone **Win, Mac, Linux** build, add the `Unli
 ### Emulation Layer Renderer Feature (URP)
 
 To support layer emulation in projects using the Universal Renderer Pipeline (URP), the `EmulationLayerUniversalScriptableRendererFeaturePass`(ScriptableRendererPass) is automatically added with `ScriptableRenderer.EnqueuePass()`.
+To support Color Bias Scale emulation in projects using the Universal Renderer Pipeline (URP), the `EmulationColorBiasScalePass` (ScriptableRendererPass) is automatically added with `ScriptableRenderer.EnqueuePass()` when the `Color Bias and Scale` component is added to the Default Layer.
+
 > [!TIP]
 > No need to `Add Renderer Feature` to the Universal Renderer Data asset. It had to be set manually in the past version.
 
@@ -78,7 +68,7 @@ To support layer emulation in projects using the Universal Renderer Pipeline (UR
 3. Click on the URP Tab.
 4. Under the Render Graph section select **Compatibility Mode (Render Graph Disable)** button.
 
-   ![](images/graphics-compatability-mode.png)
+   ![URP settings in the Project Settings window.](images/graphics-compatability-mode.png)
 
 <a id="emulation-layer-custom-pass"></a>
 ### Emulation Layer Custom Pass (HDRP)

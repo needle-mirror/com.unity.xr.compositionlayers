@@ -8,7 +8,7 @@ Add a Composition Layer component to a GameObject to add a layer to a scene. See
 
 You can set the basic properties of a layer in the inspector for the component. You can also specify additional information for rendering the layer using Composition Layer Extension components.
 
-![](images/Inspector_CompositionLayer.png)<br />*The CompositionLayer component Inspector*
+![Composition Layer component Inspector](images/Inspector_CompositionLayer.png)<br />*The CompositionLayer component Inspector*
 
 | Property:| Function: |
 |:---|:---|

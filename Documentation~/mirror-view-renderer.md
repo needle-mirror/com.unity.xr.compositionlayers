@@ -9,7 +9,7 @@ The `MirrorViewRenderer` supports mirror view rendering for Main Display on XR m
 > [!TIP]
 > This component is not required if mirror view rendering with all comosition layers is already implemented on the XR plugin side.
 
-![](images/Inspector_MirrorViewRenderer.png)<br />*The Mirror View Renderer Component Inspector*
+![The Mirror View Renderer Component Inspector.](images/Inspector_MirrorViewRenderer.png)<br />*The Mirror View Renderer Component Inspector*
 
 | Property:| Function: |
 |:---|:---|

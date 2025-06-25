@@ -12,7 +12,7 @@ Composition Layers can render textures with great fidelity, which makes them ide
 |Cylinder UI Panel | prefab of a Cylinder layer with a Canvas that has been setup for for interactivity |
 |Interactable UI Mirror | a Component that will configure a Quad or Cylinder layer with a Canvas that has been setup for interactivity|
 
-![](images/UI-dialog.png)<br />
+![A UI dialog prompts you to install XR Interaction Toolkit, if not already installed.](images/UI-dialog.png)<br />
 
 > [!NOTE]
 >  Composition Layer UI components are dependent on XR Interaction Toolkit. You will be prompt to install XRI into your project when you create a Composition Layer UI component if XRI is not already present.
@@ -21,7 +21,7 @@ Composition Layers can render textures with great fidelity, which makes them ide
 
 The quickest way to create a new UI with Composition Layers is via the Create Menu. Go to **GameObject > XR > Composition Layers**, and then select either the **Quad UI Panel** or the **Cylinder UI Panel**.
 
-![](images/UI-menu.png)<br />
+![Create a UI via the Create menu.](images/UI-menu.png)<br />
 
 When you have made your selection, Unity will create the corresponding shape layer and populate them with a Canvas and an Image for the background of the panel.
 
@@ -29,7 +29,7 @@ From there you can simply add additional UI Elements to the Canvas such as Text 
 
 Another way to create a Composition Layer UI is by adding the **Interactable UI Mirror** component to an existing **Quad** or **Cylinder** layer.
 
-![](images/UI-inspector.png)<br />
+![Create a UI using the Interactable UI Mirror component.](images/UI-inspector.png)<br />
 
 When the Interactable UI Mirror is added to a Quad and Cylinder layer, Unity automatically sets up a Canvas inside of the Composition Layer similar to the above example.
 
@@ -42,7 +42,7 @@ If you want to make your existing UIs render at higher fidelity you can easily c
 2) Then create either a Quad or a Cylinder Composition Layer of similar size to that of your Canvas.
 3) Then drag your Canvas into the Composition Layer making them a child of the Composition Layer.
 
-![](images/UI-sample.png)<br />
+![UI sample in the Scene view.](images/UI-sample.png)<br />
 
 And with that you will have a fully functioning Composition Layer UI from your old UI Canvas.
 
@@ -67,19 +67,19 @@ By default Composition Layer UI works with the XR Interaction Toolkit. Simply im
 
 To display the XRI Rig in front of Composition Layer UIs, you will want to create a Projection Eye Rig and assign its user layer to the XRI Rig. That way the XRI Rig will render on the Projection Layer belonging to the Projection Eye Rig. Remember to reorder the Projection Eye Rig above the UI layers by giving it a higher order number.
 
-![](images/UI-eye-rig-setup1.png)<br />
+![New Projection Eye Rig in the Inspector.](images/UI-eye-rig-setup1.png)<br />
 
-![](images/UI-eye-rig-setup2.png)<br />
+![Assign the user layer to XRI Rig using the Layer dropdown.](images/UI-eye-rig-setup2.png)<br />
 
 Because the XRI Rig spawns the controller prefabs at runtime, the controller prefabs are not assigned to the Projection Eye Rig by default. You will have to manually assign the correct user layer to the controller prefabs for them to show up correctly with the rest of the XRI Rig.
 
-![](images/UI-controllers-setup.png)<br />
+![Demonstration of correctly and incorrectly assigned controllers.](images/UI-controllers-setup.png)<br />
 
 You can reuse the user layer of the Projection Eye Rig in multiple scenes by giving the Projection Eye Rigs in those scene the same name. That way you will conserve the amount of user layers being used.
 
 > [!WARNING]
 > When you are play testing the scene in the Unity Editor with the Oculus Link Cable, the Ray Interactor of the XRI Rig will display incorrectly beneath all Cylinder layers. This is a known issue that only affects play mode with the Oculus Link Cable. A work-around to this bug is to assign a new UI Unlit Material to the Ray Interactor instead of the default material that it ships with.
 
-![](images/UI-ray-bug.png)<br />
+![Demonstration of controller bug using Oculus Link Cable.](images/UI-ray-bug.png)<br />
 
 

@@ -8,7 +8,7 @@ Composition layers are drawn in order from most negative to most positive. You c
 
 Composition layer drawing order does not depend on the camera or GameObject position. If you place two Composition Layers in a scene, the compositor draws them in the specified order no matter which layer is in front with respect to the current camera position.
 
-Refer to [Set layer transparency](xref:xr-layers-transparency) for information about making layers behind the default scene layer visible.
+Refer to [Set composition layer transparency](xref:xr-layers-transparency) for information about making layers behind the default scene layer visible for Play mode and builds.
 Refer to [Projection Eye Rig](xref:xr-layers-projection-eye-rig) for information about making 3D objects in the scene display in layers in front of the default scene layer.
 
 <a name="sort-order"></a>
@@ -18,11 +18,11 @@ The layer sort order determines the order in which layers are composited to the 
 
 You can set the sort order of an individual layer by editing the component's __Layer Order__ property in the __Inspector__. When you change this value, you must choose a order that isn't already used by another layer in the scene.
 
-![](images/Inspector_CompositionLayer.png)<br />*A cylinder layer with its _Layer Order_ set to 6.*
+![Cylinder layer in the Inspector window.](images/Inspector_CompositionLayer.png)<br />*A cylinder layer with its _Layer Order_ set to 6.*
 
 Click the __Manage__ button to open the __Layer Order__ window, which lets you set the relative order of all of your composition layers. You can also open this window using the Unity Editor menu, __Window > XR > Composition Layers__.
 
-![](images/CompositionLayersWindow.png)<br />*The _Layer Order_ window*
+![Layer order window.](images/CompositionLayersWindow.png)<br />*The _Layer Order_ window*
 
 The Default Scene Layer is an implicit Projection Layer to which the Unity scene is rendered. It always has an order of 0. Layers with a negative order are behind the Default Scene Layer.
 
