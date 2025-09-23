@@ -128,9 +128,6 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             }
 
             m_LayerDataTypeName.RegisterValueChangedCallback(OnLayerTypeChange);
-#if UNITY_2022_1_OR_NEWER
-            m_LayerDataTypeName.TrackPropertyValue(m_LayerDataProperty, OnLayerDataChange);
-#endif
             m_RootElement.Add(m_LayerDataTypeName);
 
             // Warning message for unsupported layer types on specific platforms.

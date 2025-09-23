@@ -13,7 +13,18 @@ When updating the Changelog, please ensure we follow the standards for ordering 
 ```
 Under ## headers, ### \<type\> headers are listed in this order: Added, Changed, Deprecated, Removed, Fixed, Security
 ```
+## [2.1.1] - 2025-09-23
+
+### Added
+* Added Right-eye configuration support to the Stereo Projection Layer.
+
+### Fixed
+* Fixed `CompositionLayer`'s `LayerType` property to not ask the user twice to add an extension when set to anything other than `[Empty]` if the user chooses `No`.
+* Fixed `NullReferenceException` when adding a Source Textures component to an empty GameObject.
+* Fixed shader warnings.
+
 ## [2.1.0] - 2025-06-25
+
 ### Added
 * Added Game view and Standalone color scale bias emulation for Default Scene Layer for the Built-in Render Pipeline and Universal Render Pipeline.
 * Added Project Validation rules for Composition Layer Transparency.

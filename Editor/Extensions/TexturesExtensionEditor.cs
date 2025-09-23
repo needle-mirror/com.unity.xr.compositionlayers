@@ -57,6 +57,13 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             var extension = target as CompositionLayerExtension;
             var go = extension.gameObject;
             m_CompositionLayer = go.GetComponent<CompositionLayer>();
+
+            // Ensure that if the source texture is added without Layer Data, we add a default one.
+            if (m_CompositionLayer.LayerData == null)
+            {
+                m_CompositionLayer.ChangeLayerDataType(typeof(QuadLayerData));
+                m_CompositionLayer.AddSuggestedExtensions();
+            }
         }
 
         public override void OnInspectorGUI()
@@ -108,6 +115,10 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
 
 
             serializedObject.ApplyModifiedProperties();
+
+            if (m_CompositionLayer == null || m_CompositionLayer.LayerData == null)
+                return;
+
             var layerDataType = m_CompositionLayer.LayerData.GetType();
             var layerDataName = CompositionLayerUtils.GetLayerDescriptor(layerDataType).Name;
             if ((layerDataType != typeof(QuadLayerData)) && (layerDataType != typeof(CylinderLayerData)))
@@ -118,6 +129,9 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
 
         void DrawLocalTextureUI()
         {
+            if (m_CompositionLayer == null || m_CompositionLayer.LayerData == null)
+                return;
+
             var layerDataType = m_CompositionLayer.LayerData.GetType();
             var selectedTargetEye = (TexturesExtension.TargetEyeEnum)m_TargetEyeProperty.enumValueIndex;
 

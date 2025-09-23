@@ -6,6 +6,9 @@ uid: xr-layers-projection-eye-rig
 
 The **Projection Eye Rig** a special projection layer prefab that allows you to render scene objects on a different projection layer than the Default Scene Layer.
 
+> [!IMPORTANT]
+> Ensure that **Run Without Focus** is enabled in the Player Settings. Otherwise, when the application loses focus, objects shown in the Projection Eye Rig layer will not update correctly and will appear locked to the user's head. You can find the **Run Without Focus** setting in the **Resolution and Presentation** section of your project's Player settings and Build Profiles. The setting is available for the Android, Android XR, and Meta Quest platforms.
+
 ## Create a Projection Eye Rig
 
 You can create a Projection Eye Rig in the same way you would create a composition layer, via the add GameObject dropdown menu.
