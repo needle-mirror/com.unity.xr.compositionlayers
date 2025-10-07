@@ -18,12 +18,14 @@ The XR Composition Layers package contains interfaces, types, and emulation for 
 
 | Provider plug-in package | Version |
 | :----------------------- | :------ |
-| OpenXR                   | [1.14.3](com.unity3d.kharma:upmpackage/com.unity.xr.openxr@1.14.3)   |
+| OpenXR                   | [1.15.1](com.unity3d.kharma:upmpackage/com.unity.xr.openxr@1.15.1)   |
 
 Please note for older versions of Composition Layers there are different versions of the OpenXR package that are compatible. The following chart highlights the compatibility between past Composition Layers and OpenXR package versions.
 
 |Composition Layers Package Version | OpenXR Package Version |
 | :--- | :--- |
+|`2.2.0` | `1.14.3`+
+|`2.1.0` | `1.14.3`+
 |`2.0.0` | `1.14.0`+
 |`1.0.0` | `1.13.0`
 |`0.6.0` | `1.12.1-exp.1`

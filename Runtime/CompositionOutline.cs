@@ -34,7 +34,9 @@ namespace Unity.XR.CompositionLayers
         {
             if (m_CompositionLayer == null)
             {
-                Debug.LogWarning("A Composition Layer is required to generate an outline.");
+                // note: when the reference to the composition layer is lost, this not an error
+                // condition since it simply means the user removed the component.  when this happens
+                // we just need to make sure to clean ourselves up immediately.
                 DestroyImmediate(this);
                 return;
             }

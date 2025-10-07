@@ -1,19 +1,19 @@
 ---
 uid: xr-layers-changelog
 ---
-
 # Changelog
+
 All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-# Notes
-When updating the Changelog, please ensure we follow the standards for ordering headers as outlined here: [US-0039](https://standards.ds.unity3d.com/Standards/US-0039/). Specifically:
-```
-Under ## headers, ### \<type\> headers are listed in this order: Added, Changed, Deprecated, Removed, Fixed, Security
-```
-## [2.1.1] - 2025-09-23
+## [2.2.0] - 2025-10-07
+
+### Deprecated
+* Deprecated `EmulationLayerUniversalScriptableRendererPass.Execute`. This method depends on URP Compatibility Mode, which has been deprecated since Unity 6.0 and is removed in Unity 6.4.
+
+## [2.1.1] - 2025-09-30
 
 ### Added
 * Added Right-eye configuration support to the Stereo Projection Layer.
@@ -22,6 +22,7 @@ Under ## headers, ### \<type\> headers are listed in this order: Added, Changed,
 * Fixed `CompositionLayer`'s `LayerType` property to not ask the user twice to add an extension when set to anything other than `[Empty]` if the user chooses `No`.
 * Fixed `NullReferenceException` when adding a Source Textures component to an empty GameObject.
 * Fixed shader warnings.
+* Fixed a build warning by updating `SceneEmulatedProjectionRig` to no longer implement `IPreprocessBuildWithReport`.
 
 ## [2.1.0] - 2025-06-25
 

@@ -16,7 +16,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
         {
             new CompositionLayerBuildValidationRule
             {
-                Message = "Install OpenXR Plugin 1.14.3 or later to enable composition layer runtime support.",
+                Message = "Install OpenXR Plugin 1.15.1 or later to enable composition layer runtime support.",
                 CheckPredicate = () =>
                 {
 #if UNITY_XR_OPENXR_COMPLAYER
@@ -99,8 +99,10 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 
         internal static void OpenFirstURPAssetWithAlphaOutputOff(BuildTargetGroup buildTargetGroup)
         {
+#if UNITY_2023_1_OR_NEWER
             foreach (var urpAsset in GetURPAssetsForBuildTarget(buildTargetGroup))
             {
+
                 if (urpAsset != null && !urpAsset.allowPostProcessAlphaOutput)
                 {
                     Selection.activeObject = urpAsset;
@@ -108,6 +110,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
                     return;
                 }
             }
+#endif
         }
 
         internal static HashSet<UniversalRenderPipelineAsset> GetURPAssetsForBuildTarget(BuildTargetGroup buildTargetGroup)

@@ -71,8 +71,8 @@ namespace Unity.XR.CompositionLayers.Emulation
             CompositionLayerManager.Instance.EmulationLayerProvider = s_Instance;
 
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
-            EmulationLayerUniversalScriptableRendererPass.RegistScriptableRendererPass();
-            EmulationColorScaleBiasPass.RegistScriptableRendererPass();
+            EmulationLayerUniversalScriptableRendererPass.RegisterScriptableRendererPass();
+            EmulationColorScaleBiasPass.RegisterScriptableRendererPass();
 #endif
 #if UNITY_RENDER_PIPELINES_HDRENDER
             EmulationLayerHighDefinitionVolumeManager.ActivateCustomPassVolumes();
@@ -85,8 +85,8 @@ namespace Unity.XR.CompositionLayers.Emulation
                 return;
 
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
-            EmulationLayerUniversalScriptableRendererPass.UnregistScriptableRendererPass();
-            EmulationColorScaleBiasPass.UnregistScriptableRendererPass();
+            EmulationLayerUniversalScriptableRendererPass.UnregisterScriptableRendererPass();
+            EmulationColorScaleBiasPass.UnregisterScriptableRendererPass();
 #endif
 #if UNITY_RENDER_PIPELINES_HDRENDER
             EmulationLayerHighDefinitionVolumeManager.DeactivateCustomPassVolumes();

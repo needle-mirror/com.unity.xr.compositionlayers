@@ -1,6 +1,5 @@
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
-using Unity.XR.CompositionLayers.Emulation.Implementations;
-using Unity.XR.CompositionLayers.Layers;
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 #if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
@@ -38,9 +37,11 @@ namespace Unity.XR.CompositionLayers.Emulation
 #endif
         }
 
-#pragma warning disable CS0672
+#if !UNITY_6000_4_OR_NEWER
+        [Obsolete("Execute is deprecated as of XR Composition Layers 2.2, and will be removed in Unity 6.4. At your own risk, you can set URP_COMPATIBILITY_MODE in your project's scripting defines if you require this API.")]
+#pragma warning disable CS0809
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-#pragma warning restore CS0672
+#pragma warning restore CS0809
         {
             var camera = renderingData.cameraData.camera;
             var commandArgs = new EmulatedLayerData.CommandArgs(camera);
@@ -54,6 +55,12 @@ namespace Unity.XR.CompositionLayers.Emulation
                 }
             }
         }
+#else
+        [Obsolete("URP Compatibility Mode is removed in Unity 6.4. You must upgrade your project to Render Graph.", true)]
+#pragma warning disable CS0114
+        public void Execute(ScriptableRenderContext context, ref RenderingData renderingData) { }
+#pragma warning restore CS0114
+#endif
 
 #if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
         // 17.0.0 or newer
@@ -95,7 +102,7 @@ namespace Unity.XR.CompositionLayers.Emulation
         static bool IsSupported(EmulatedLayerData layerData, Camera camera) => EmulatedLayerProvider.IsSupported(camera) && layerData.IsSupported(camera);
 
 
-        internal static void RegistScriptableRendererPass()
+        internal static void RegisterScriptableRendererPass()
         {
             if (!s_InjectPassRegistered)
             {
@@ -104,7 +111,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             }
         }
 
-        internal static void UnregistScriptableRendererPass()
+        internal static void UnregisterScriptableRendererPass()
         {
             if (s_InjectPassRegistered)
             {

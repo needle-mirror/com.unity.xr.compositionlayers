@@ -22,7 +22,7 @@ namespace Unity.XR.CompositionLayers.Emulation
     /// This class used to emulate a Projection Rig CompositionLayer inside of all scene view windows.
     /// </summary>
     [ExecuteInEditMode]
-    internal class SceneEmulatedProjectionRig : MonoBehaviour, IPreprocessBuildWithReport
+    internal class SceneEmulatedProjectionRig : MonoBehaviour
     {
         public int callbackOrder => 0;
 
@@ -181,11 +181,6 @@ namespace Unity.XR.CompositionLayers.Emulation
         }
 
         private void OnSceneClosing(Scene scene, bool removingScene)
-        {
-            DiposeAllSceneViewProjectors();
-        }
-
-        public void OnPreprocessBuild(BuildReport report)
         {
             DiposeAllSceneViewProjectors();
         }

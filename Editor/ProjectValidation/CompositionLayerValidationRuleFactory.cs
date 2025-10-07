@@ -35,11 +35,15 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
                 Message = "Enable Alpha Processing on Universal Render Pipeline Asset under Post Processing to enable composition layer support.",
                 CheckPredicate = () =>
                 {
+#if UNITY_2023_1_OR_NEWER
                     foreach (var urpAsset in CompositionLayerProjectValidation.GetURPAssetsForBuildTarget(buildTargetGroup))
                         if (urpAsset != null && !urpAsset.allowPostProcessAlphaOutput)
                             return false;
 
                     return true;
+#else
+                    return true;
+#endif
                 },
                 FixIt = () => CompositionLayerProjectValidation.OpenFirstURPAssetWithAlphaOutputOff(buildTargetGroup),
                 FixItAutomatic = false,
