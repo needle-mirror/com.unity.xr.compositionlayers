@@ -39,25 +39,4 @@ You can use a custom destination rect to define where to place the texture withi
 
 ## Android Surface
 
-In Unity, when you are working with Android development, you can interact with the Android Surface for rendering graphics or displaying content such as hardware decoded video. You can render Android Surface directly to a quad or cylinder composition layer by choosing Android Surface as the texture Source. You can install OpenXR package to have Android Surface supported out of the box. To obtain the Android Surface object to use for a layer, you must call OpenXR package API `GetLayerAndroidSurfaceObject` in a script.
-
-Example script of getting the layer Surface Object using OpenXR package API - [GetLayerAndroidSurfaceObject(int layerId)](xref:UnityEngine.XR.OpenXR.CompositionLayers.OpenXRLayerUtility.GetLayerAndroidSurfaceObject(System.Int32))
-
-``` csharp
-// Get Android Surface Object
-IntPtr surface = IntPtr.Zero;
-surface = OpenXRLayerUtility.GetLayerAndroidSurfaceObject(layer.GetInstanceID());
-```
-For a completed example, please see the `Sample External Android Surface Project` sample. You can import this sample into a project from the **Package Manager** window:
-
-1. Open the **Package Manager** (menu: **Window &gt; Package Manager**)
-2. Select the **XR Composition Layers** package in the list of packages in your project.
-3. Towards the bottom of the window, select the **Samples** tab.
-4. Click **Import** next to the **Sample External Android Surface Project** item.
-
-For more information about  Android Surfaces, refer to:
-*  [Android Surface](https://developer.android.com/reference/kotlin/android/view/Surface)
-*  [XR_KHR_android_surface_swapchain](https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html#XR_KHR_android_surface_swapchain)
-
-[Source Textures extension]: xref:xr-layers-source-textures
-[Add or remove a composition layer]: xref:xr-layers-add-layer
+When developing for Android, you can use Android Surfaces for efficiently rendering graphics or displaying content such as hardware decoded video. Refer to [Display Android Surface Content](xref:xr-layers-android-surface) for more information.

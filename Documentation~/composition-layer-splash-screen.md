@@ -10,7 +10,7 @@ To use the Splash Screen provided by Composition Layers, you must disable the de
 ![Disable Unity Splash Screen option in Player Settings.](images/disable-splash.png)
 
 > [!IMPORTANT]
-> When enabling the Composition Layer Splash Screen, a new scene named "CompositionSplash" will automatically be added to the build settings. This scene is used to display the splash screen, and should not be modified directly. If you need to modify the splash screen, you can do so by modifying the settings in the Composition Layer Splash Screen settings. This scene will automatically be removed from the build settings when the Composition Layer Splash Screen is disabled.
+> When enabling the Composition Layer Splash Screen, a new scene named "CompositionSplash" will automatically be created at *XR/CompositionLayers* and added to the build settings. This scene is used to display the splash screen. If you need to modify the splash screen, you can do so by modifying the settings in the Composition Layer Splash Screen settings or customizing the CompositionSplash scene. This scene will automatically be removed from the build settings when the Composition Layer Splash Screen is disabled.
 ![CompositionSplash scene in the Scenes in Build section of Build Settings.](images/splash-scene.png)
 
 ## Splash Screen Settings
@@ -19,7 +19,7 @@ To access the Composition Layer Splash Screen settings, navigate to `Assets/Comp
 **Composition Layer Splash Settings**
 
 | Setting:| Default Value:| Description:|
-|:---|:---|
+|:---|:---|:---|
 |**Enable Splash Screen**|`False`|If enabled, the splash screen is displayed when the application starts.|
 
 **Style Settings**
@@ -27,6 +27,7 @@ To access the Composition Layer Splash Screen settings, navigate to `Assets/Comp
 |Setting:|Default Value:|Description:|
 |:---|:---|:---|
 |**Splash Screen Texture**|`Editor/Textures/Logo_MadeWithUnity.png`|The texture to display as the splash screen.|
+|**Background Type**|`Solid Color`|The background style of the splash screen. **Solid color** will use the background color, while **Passthrough** will show the passthrough layer (if available). When set to **Passthrough**, you must properly configure your [HDR Settings](layer-transparency.md#configure-high-dynamic-range-hdr-settings-hdr-transparency).|
 |**Background Color**|`#231F20`|The color to display behind the splash screen texture.|
 
 **Duration Settings**

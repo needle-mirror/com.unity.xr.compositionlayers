@@ -8,6 +8,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2025-12-15
+
+### Added
+* Added Background Type option to the Composition Layer Splash Screen settings to allow using Passthrough as the background.
+
+### Fixed
+* Fixed `DefaultLayerData` so it no longer logs a warning related to the `SerializeReferenceAttribute` when you install this package for the first time.
+* Fixed internal code so that inspecting a `CompositionLayersRuntimeSettings` object soon after package import no longer causes a warning to be logged to the console.
+
 ## [2.2.0] - 2025-10-07
 
 ### Deprecated

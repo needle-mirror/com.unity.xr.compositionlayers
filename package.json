@@ -1,7 +1,7 @@
 {
   "name": "com.unity.xr.compositionlayers",
   "displayName": "XR Composition Layers",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "unity": "2022.3",
   "unityRelease": "11f1",
   "description": "Support for Provider based XR SDK Composition Layers.",
@@ -28,15 +28,15 @@
     }
   ],
   "_upm": {
-    "changelog": "### Deprecated\n* Deprecated `EmulationLayerUniversalScriptableRendererPass.Execute`. This method depends on URP Compatibility Mode, which has been deprecated since Unity 6.0 and is removed in Unity 6.4."
+    "changelog": "### Added\n* Added Background Type option to the Composition Layer Splash Screen settings to allow using Passthrough as the background.\n\n### Fixed\n* Fixed `DefaultLayerData` so it no longer logs a warning related to the `SerializeReferenceAttribute` when you install this package for the first time.\n* Fixed internal code so that inspecting a `CompositionLayersRuntimeSettings` object soon after package import no longer causes a warning to be logged to the console."
   },
   "upmCi": {
-    "footprint": "9c449725e29228830667ad0fa518e47b82255530"
+    "footprint": "7b00af5a2ba861d031767974ab6226fbd9b64cd6"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.xr.compositionlayers@2.2/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.xr.compositionlayers@2.3/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/xr.sdk.compositionlayers.git",
     "type": "git",
-    "revision": "e132c686a20718d608091a807c162454062c298a"
+    "revision": "2845d806027b95a377e0d95a6a68887ce3c93610"
   }
 }

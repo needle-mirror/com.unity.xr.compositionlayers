@@ -1,6 +1,5 @@
 using System;
 using Unity.XR.CompositionLayers.Services;
-using Unity.XR.CoreUtils;
 
 namespace Unity.XR.CompositionLayers.Layers
 {
@@ -10,7 +9,7 @@ namespace Unity.XR.CompositionLayers.Layers
     /// layer that Unity will render to the display of the target XR device.
     ///
     /// The intention of this layer is to provide a default "invisible" layer
-    /// to act as the 0th layer which seperates underlay layers from overlay layers.
+    /// to act as the 0th layer which separates underlay layers from overlay layers.
     /// </summary>
     [CompositionLayerData(
         Provider = "Unity",
@@ -18,9 +17,10 @@ namespace Unity.XR.CompositionLayers.Layers
         IconPath = CompositionLayerConstants.IconPath,
         InspectorIcon = "",
         ListViewIcon = "",
-        Description = "Represents the default base composition layer. This is an implicit layer which seperates the overlay layers from the underlays.",
+        Description = "Represents the default base composition layer. This is an implicit layer which separates the overlay layers from the underlays.",
         SuggestedExtenstionTypes = new Type[] { }
      )]
+    [Serializable]
     [CompositionLayersHelpURL(typeof(DefaultLayerData))]
     public class DefaultLayerData : LayerData
     {
@@ -49,10 +49,7 @@ namespace Unity.XR.CompositionLayers.Layers
             if (layerManager == null && !layer.gameObject.hideFlags.HasFlag(UnityEngine.HideFlags.HideAndDontSave))
                 return true;
             // If the layer exists AFTER the manager, it can only be valid if it is the default scene layer set by the manager.
-            else if (layerManager != null && layerManager?.DefaultSceneCompositionLayer == layer)
-                return true;
-
-            return false;
+            return layerManager != null && layerManager.DefaultSceneCompositionLayer == layer;
         }
     }
 }

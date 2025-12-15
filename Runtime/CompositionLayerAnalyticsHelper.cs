@@ -91,6 +91,9 @@ namespace Unity.XR.CompositionLayers
             foreach (CompositionLayer layer in manager.CompositionLayers)
             {
                 var layerDataType = layer.LayerData?.GetType();
+                if (layerDataType == null)
+                    continue;
+
                 var layerTypeName = layerDataType.FullName;
                 var extensions = layer.Extensions;
 

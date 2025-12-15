@@ -24,7 +24,8 @@ Please note for older versions of Composition Layers there are different version
 
 |Composition Layers Package Version | OpenXR Package Version |
 | :--- | :--- |
-|`2.2.0` | `1.14.3`+
+|`2.3.0` | `1.15.1`+
+|`2.2.0` | `1.15.1`+
 |`2.1.0` | `1.14.3`+
 |`2.0.0` | `1.14.0`+
 |`1.0.0` | `1.13.0`
@@ -48,3 +49,14 @@ To install this package in Unity 2022.3+:
 4. Click **Add**.
 
 After you install the package, refer to [Settings](xref:xr-layers-settings) for additional configuration information.
+
+## Other common XR packages
+
+The following table outlines the recommended versions for other common XR packages when using composition layers <code class="long_version">2.2.0</code>:
+
+| Package | Version |
+|:--------|:--------|
+| Unity OpenXR: Meta | [2.3.0](https://docs.unity3d.com/Packages/com.unity.xr.meta-openxr@2.3/manual/index.html)+ |
+| Unity OpenXR: Android XR | [1.1.0](https://docs.unity3d.com/Packages/com.unity.xr.androidxr-openxr@1.1/manual/index.html)+ |
+| Meta XR Core SDK | [81.0](https://developers.meta.com/horizon/reference/unity/v81/)+ |
+

@@ -13,6 +13,7 @@ The XR Composition Layers package allows you to create application-defined layer
 * Cube maps: a special purpose type of layer is available for rendering cube maps.
 * Secure content: device runtime makers can add support for content such as video that must be displayed, but shouldn't be accessible to the application code itself. This might include DRM-protected video or passthrough video. Note that the Composition Layer package does not include this type of layer. It does provide an extension mechanism so that a device maker can create such layers.
 * Hardware acceleration: device makers can add support layers that can take advantage of hardware capabilities of their device, such as hardware decoding of video.
+* Android Surface integration: You can directly use Android Surface content to efficiently render graphics or display content such as hardware-decoded video. Refer to [Display Android Surface content](xref:xr-layers-android-surface) for more information.
 
 While useful in specific situations, each composition layer you add to a scene has an impact on performance. Unity recommends that you use no more than fifteen composition layers in a scene. You should always assess the performance impact of your composition layer usage on your target hardware.
 
@@ -25,6 +26,11 @@ The compositor in a device draws your layers in the assigned order starting from
 Layers are blended according to their alpha channel. A completely opaque area of a channel obscures the layers drawn before it.
 
 Some types of composition layers have a position, orientation, and size within the scene. The compositor draws these types of layers in the assigned order without regard to their world position. Thus, if you have two quad composition layers in a scene, the quad with the higher order assigned is drawn on top of the other quad even when it is behind the other quad relative to the scene cameras.
+
+Refer to [Change layer order](xref:xr-layers-order) for more information on managing the order of layers in your project.
+
+> [!NOTE]
+> Layer order is the only factor that determines how layers are stacked relative to one another. World-space Z-depth, camera depth, shader queue ordering, and all other standard Unity rendering rules do not influence how composition layers are stacked by the XR compositor.
 
 ## Types of composition layers
 
@@ -48,6 +54,25 @@ The stereo view of the Unity scene, containing all the visible GameObjects, part
 
 Any layers with positive order are composited on top of the scene layer, and thus, on top of all your GameObjects. To show GameObjects in front of a composition layer, you can render them using different cameras and display the rendered texture in a separate Projection-type composition layer that you order in front. The XR Composition Layers package provides the [Projection Eye Rig](xref:xr-layers-projection-eye-rig) to automatically set up a composition layer and cameras for this purpose.
 
+## Best practices example
+
+Consider the following common practices in your composition layers project:
+
+* Rendering the Skybox as an underlay (layer order less than 0) using Cube/Equirect layer types. In order to use underlays in your project, refer to [Set layer transparency](xref:xr-layers-transparency).
+* The Default scene layer is always assigned the order of zero.
+* High priority GameObjects such as XR Hands/Controllers are placed above the UI content layers using the [Projection Eye Rig](xref:xr-layers-projection-eye-rig).
+* Layer orders are condensed around 0 and avoid unnecessarily large ranges or gaps.
+* Keep the total number of layers low to maintain good performance (Unity recommends that you use no more than fifteen composition layers in a scene).
+
+The following table demonstrates a common ordering of layers for an XR application.
+
+| Layer                     | Type               | Order |
+|:--------------------------|:-------------------|:-----:|
+| Skybox                    | Cube/Equirect      |  -1   |
+| Default scene layer       | Projection         |   0   |
+| UI content (e.g. menus)   | Quad/Cylinder      |  1-3  |
+| XR Hands/Controllers      | Projection Eye Rig |   4   |
+
 ## Layer extension components
 
 Layer extensions are components that you use to assign data to a composition layer. For example, the **Source Texture** component is the extension you use to define the texture to display in a composition layer.
@@ -56,7 +81,6 @@ The Unity-defined layer extensions include:
 
 * [Color Bias and Scale extension](xref:xr-layers-color-bias-scale): applies a color treatment, such as a tint, to the texture displayed in the composition layer.
 * [Source Textures extension](xref:xr-layers-source-textures): defines the texture assets to display in a composition layer.
-
 
 Other XR packages and provider plug-ins can define additional layer extension components.
 

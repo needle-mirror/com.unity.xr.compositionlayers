@@ -12,6 +12,14 @@ namespace Unity.XR.CompositionLayers
     public class CompositionLayersRuntimeSettings : ScriptableSettings<CompositionLayersRuntimeSettings>
     {
         /// <summary>
+        /// Returns true if the Splash Screen is enabled and the Background Type is set to Passthrough.
+        /// </summary>
+        public static bool PassthroughSplashScreenEnabled
+        {
+            get => Instance.EnableSplashScreen && Instance.BackgroundType == SplashBackgroundType.Passthrough;
+        }
+
+        /// <summary>
         /// Defines the types of layers that can be used.
         /// </summary>
         public enum Layer
@@ -25,6 +33,22 @@ namespace Unity.XR.CompositionLayers
             /// Cylinder Layer
             /// </summary>
             Cylinder
+        }
+
+        /// <summary>
+        /// Defines the types of backgrounds that can be used.
+        /// </summary>
+        public enum SplashBackgroundType
+        {
+            /// <summary>
+            /// Solid Color Background, uses the background color.
+            /// </summary>
+            SolidColor,
+
+            /// <summary>
+            /// Passthrough Background, uses the passthrough layer.
+            /// </summary>
+            Passthrough
         }
 
         [SerializeField]
@@ -55,6 +79,16 @@ namespace Unity.XR.CompositionLayers
         /// Gets the image to display on the splash screen.
         /// </summary>
         public Texture SplashImage => m_SplashImage;
+
+        [SerializeField]
+        [Tooltip("Background type of the splash screen.")]
+        SplashBackgroundType m_BackgroundType = SplashBackgroundType.SolidColor;
+
+        /// <summary>
+        /// Gets the background type of the splash screen.
+        /// Solid color will use the background color, passthrough will show the passthrough layer.
+        /// </summary>
+        public SplashBackgroundType BackgroundType => m_BackgroundType;
 
         [SerializeField]
         [Tooltip("Background color of the splash screen.")]

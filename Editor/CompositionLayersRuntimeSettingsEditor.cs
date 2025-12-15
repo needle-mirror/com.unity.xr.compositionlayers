@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine.SceneManagement;
 
@@ -10,11 +11,16 @@ namespace Unity.XR.CompositionLayers.Editor
     [CustomEditor(typeof(CompositionLayersRuntimeSettings))]
     public class CompositionLayersRuntimeSettingsEditor : UnityEditor.Editor
     {
-        const string k_CompositionSplashScene = "Packages/com.unity.xr.compositionlayers/Runtime/Scenes/CompositionSplash.unity";
+        const string k_CompositionSplashSceneTemplate = "Packages/com.unity.xr.compositionlayers/Runtime/Scenes/CompositionSplash.unity";
+        const string k_CompositionFolder = "Assets/XR/CompositionLayers/";
+        const string k_CompositionSplashSceneName = "CompositionSplash.unity";
+        readonly string k_CompositionSplashScenePath = Path.Combine(k_CompositionFolder, k_CompositionSplashSceneName);
+
 
         // Splash Settings
         const string k_EnableSplashScreen = "m_EnableSplashScreen";
         const string k_SplashImage = "m_SplashImage";
+        const string k_BackgroundType = "m_BackgroundType";
         const string k_BackgroundColor = "m_BackgroundColor";
         const string k_SplashDuration = "m_SplashDuration";
         const string k_FadeInDuration = "m_FadeInDuration";
@@ -30,6 +36,7 @@ namespace Unity.XR.CompositionLayers.Editor
         readonly List<string> m_SplashSettings = new List<string>
         {
             k_SplashImage,
+            k_BackgroundType,
             k_BackgroundColor,
             k_SplashDuration,
             k_FadeInDuration,
@@ -48,7 +55,7 @@ namespace Unity.XR.CompositionLayers.Editor
         };
 
         SceneAsset m_SplashScene;
-        string m_SplashScenePath;
+        SceneAsset m_SplashSceneTemplate;
 
         /// <summary>
         /// Draws the custom inspector GUI for the <see cref="CompositionLayersRuntimeSettings"/>.
@@ -74,25 +81,31 @@ namespace Unity.XR.CompositionLayers.Editor
                         if(splashEnabled && (PlayerSettings.SplashScreen.show || PlayerSettings.virtualRealitySplashScreen != null))
                             EditorGUILayout.HelpBox("The Splash Screen should be disabled in the Player Settings to use the Composition Layers Splash Screen.", MessageType.Warning);
 
+                        // Show an error if the splash screen is enabled but the splash scene does not exist in the Build Settings
+                        if (splashEnabled && !SplashSceneExistsInBuildSettings())
+                            EditorGUILayout.HelpBox("The Composition Layers Splash Scene is missing from the Build Settings.", MessageType.Error);
+                        // Show a warning if the splash screen is enabled but is not located at the first index in the Build Settings
+                        else if (splashEnabled && !SplashSceneAtFirstIndex())
+                            EditorGUILayout.HelpBox("The Composition Layers Splash Scene should be at the first index in the Build Settings.", MessageType.Error);
                         // Show a warning if the splash screen is enabled and there is no scene assigned after the splash scene
-                        if(splashEnabled && !SceneAfterSplashInBuildSettings())
-                            EditorGUILayout.HelpBox("There is no scene assigned after the splash scene in the Build Settings. The splash screen will display indefinitely.", MessageType.Error);
+                        else if (splashEnabled && !SceneAfterSplashInBuildSettings())
+                            EditorGUILayout.HelpBox("There is no scene assigned after the splash scene in the Build Settings. The splash screen will display indefinitely.", MessageType.Warning);
 
                         if (EditorGUI.EndChangeCheck())
                         {
                             serializedObject.ApplyModifiedProperties();
 
-                            SceneAsset splashScene = GetSplashScene();
-                            if(settings.EnableSplashScreen && !SplashSceneInBuildSettings() && splashScene != null)
-                                AddSceneAtIndex(0, splashScene);
-                            else if(!settings.EnableSplashScreen && SplashSceneInBuildSettings()  && splashScene != null)
-                                RemoveSceneAtIndex(0);
+                            if (settings.EnableSplashScreen && !SplashSceneExistsInBuildSettings())
+                                AddSplashScene();
+                            else if (!settings.EnableSplashScreen && SplashSceneExistsInBuildSettings())
+                                RemoveSceneAtPath(k_CompositionSplashScenePath);
                         }
                     }
                     // Hide the Splash Settings if the splash screen is disabled, or if the LayerData is not relevant to the LayerType
                     else if(IsSplashSetting(prop.name) && !settings.EnableSplashScreen
                             || prop.name == k_QuadLayerData && settings.LayerType == CompositionLayersRuntimeSettings.Layer.Cylinder
-                            || prop.name == k_CylinderLayerData && settings.LayerType == CompositionLayersRuntimeSettings.Layer.Quad)
+                            || prop.name == k_CylinderLayerData && settings.LayerType == CompositionLayersRuntimeSettings.Layer.Quad
+                            || prop.name == k_BackgroundColor && settings.BackgroundType == CompositionLayersRuntimeSettings.SplashBackgroundType.Passthrough)
                     {
                         continue;
                     }
@@ -144,11 +157,34 @@ namespace Unity.XR.CompositionLayers.Editor
             }
         }
 
-        bool SplashSceneInBuildSettings()
+        void AddSplashScene()
+        {
+            if (SplashSceneExistsInBuildSettings())
+                RemoveSceneAtPath(k_CompositionSplashScenePath);
+
+            SceneAsset newSplashScene = GetOrCopySplashTemplateToResources();
+
+            AddSceneAtIndex(0, newSplashScene);
+        }
+
+        bool SplashSceneExistsInBuildSettings()
         {
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
 
-            if(scenes.Count > 0 && scenes[0].path == GetSplashScenePath())
+            foreach (var scene in scenes)
+            {
+                if (scene.path == k_CompositionSplashScenePath)
+                    return true;
+            }
+
+            return false;
+        }
+
+        bool SplashSceneAtFirstIndex()
+        {
+            List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+
+            if(scenes.Count > 0 && scenes[0].path == k_CompositionSplashScenePath)
                 return true;
 
             return false;
@@ -158,7 +194,7 @@ namespace Unity.XR.CompositionLayers.Editor
         {
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
 
-            int splashIndex = scenes.FindIndex(scene => scene.path == GetSplashScenePath());
+            int splashIndex = scenes.FindIndex(scene => scene.path == k_CompositionSplashScenePath);
             if(splashIndex == -1)
                 return false;
 
@@ -176,11 +212,37 @@ namespace Unity.XR.CompositionLayers.Editor
             EditorBuildSettings.scenes = scenes.ToArray();
         }
 
-        void RemoveSceneAtIndex(int index)
+        void RemoveSceneAtPath(string path)
         {
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
-            scenes.RemoveAt(index);
+            scenes.RemoveAll(scene => scene.path == path);
             EditorBuildSettings.scenes = scenes.ToArray();
+        }
+
+        SceneAsset GetOrCopySplashTemplateToResources()
+        {
+            var template = GetSplashSceneTemplate();
+            if (template == null)
+                return null;
+
+            if (m_SplashScene != null)
+                return m_SplashScene;
+
+            if (!AssetDatabase.IsValidFolder(k_CompositionFolder))
+                AssetDatabase.CreateFolder("Assets/XR", "CompositionLayers");
+
+            AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(template), k_CompositionSplashScenePath);
+            AssetDatabase.Refresh();
+            m_SplashScene = (SceneAsset)AssetDatabase.LoadAssetAtPath(k_CompositionSplashScenePath, typeof(SceneAsset));
+            return m_SplashScene;
+        }
+
+        SceneAsset GetSplashSceneTemplate()
+        {
+            if (m_SplashSceneTemplate == null)
+                m_SplashSceneTemplate = (SceneAsset)AssetDatabase.LoadAssetAtPath(k_CompositionSplashSceneTemplate, typeof(SceneAsset));
+
+            return m_SplashSceneTemplate;
         }
 
         bool IsSplashSetting(string name)
@@ -191,22 +253,6 @@ namespace Unity.XR.CompositionLayers.Editor
         bool IsIgnoredLayerDataSetting(string name)
         {
             return m_IgnoredLayerDataSettings.Contains(name);
-        }
-
-        SceneAsset GetSplashScene()
-        {
-            if(m_SplashScene == null)
-                m_SplashScene = (SceneAsset)AssetDatabase.LoadAssetAtPath(k_CompositionSplashScene, typeof(SceneAsset));
-
-            return m_SplashScene;
-        }
-
-        string GetSplashScenePath()
-        {
-            if(m_SplashScenePath == null)
-                m_SplashScenePath = AssetDatabase.GetAssetPath(GetSplashScene());
-
-            return m_SplashScenePath;
         }
     }
 }

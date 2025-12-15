@@ -123,6 +123,16 @@ namespace Unity.XR.CompositionLayers.Services
             }
         }
 
+        /// <summary>
+        /// Gets or sets the type used for passthrough layer.
+        /// </summary>
+        public static Type PassthroughLayerType
+        {
+            get => s_PassthroughLayerType;
+            set => s_PassthroughLayerType = value;
+        }
+
+        static Type s_PassthroughLayerType;
         static Camera _mainCameraCache;
         static ILayerProvider s_LayerProvider;
         static ILayerProvider s_EmulationLayerProvider;

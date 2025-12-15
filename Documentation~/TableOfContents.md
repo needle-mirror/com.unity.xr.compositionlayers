@@ -1,4 +1,5 @@
 * [Composition Layers](index.md)
+* [What's new](whats-new.md)
 * [Project setup](project-setup.md)
     * [Install XR Composition Layers](installation.md)
     * [Project settings](project-settings.md)
@@ -12,6 +13,7 @@
     * [Composition layer interactive UI](composition-layer-interactive-UI.md)
     * [Composition layer splash screen](composition-layer-splash-screen.md)
     * [Display video on composition layers](composition-layer-video.md)
+    * [Display Android Surface content](android-surface-usage.md)
 * [Composition layer components](component-reference.md)
     * [Composition Layer component](composition-layer-component.md)
     * [Color Bias and Scale extension](color-bias-scale-component.md)

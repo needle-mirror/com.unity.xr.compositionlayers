@@ -16,6 +16,13 @@ namespace Unity.XR.CompositionLayers.Rendering.Editor
         // Check for Standalone Builds and Add Uber Shader if detected.
         static GraphicsSettingsLoader()
         {
+            EditorApplication.delayCall += GraphicsLoaderDelayCall;
+        }
+
+        static void GraphicsLoaderDelayCall()
+        {
+            EditorApplication.delayCall -= GraphicsLoaderDelayCall;
+
             if ((EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows ||
                 EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows64 ||
                 EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSX ||
