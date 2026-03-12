@@ -25,3 +25,7 @@ In order to use XR Composition Layers, the project must meet the following requi
 * Configured for XR as described in [XR Project setup](xref:configuring-project-for-xr).
 * Uses a [compatible provider plug-in package](xref:xr-layers-install#required-packages).
 * Uses either the built-in rendering pipeline or the Universal Rendering Pipeline (URP).
+
+> [!IMPORTANT]
+> In Unity 6.5 and newer, the Built-In Render Pipeline is deprecated and will be made obsolete in a future release. For more information, refer to [Migrating from the Built-In Render Pipeline to URP](https://docs.unity3d.com/6000.5/Documentation/Manual/urp/upgrading-from-birp.html) and [Render pipeline feature comparison](https://docs.unity3d.com/6000.5/Documentation/Manual/render-pipelines-feature-comparison.html).
+

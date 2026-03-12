@@ -15,7 +15,10 @@ The following example shows how you can use `GetLayerAndroidSurfaceObject` to ac
 ``` csharp
 // Get Android Surface Object
 IntPtr surface = IntPtr.Zero;
-surface = OpenXRLayerUtility.GetLayerAndroidSurfaceObject(layer.GetInstanceID());
+if (CompositionLayerManager.TryGetLayerId(layer, out int layerId))
+{
+    surface = OpenXRLayerUtility.GetLayerAndroidSurfaceObject(layerId);
+}
 ```
 You can access a sample using Android Surface from the Package Manager, as outlined in the following instructions:
 

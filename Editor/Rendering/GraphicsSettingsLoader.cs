@@ -1,9 +1,5 @@
 using UnityEditor;
 using UnityEngine;
-using UnityEditor.XR.CompositionLayers.Editor.Emulation;
-using Unity.XR.CompositionLayers.Services;
-using Unity.XR.CompositionLayers.Emulation;
-using Unity.XR.CompositionLayers.Extensions;
 
 namespace Unity.XR.CompositionLayers.Rendering.Editor
 {

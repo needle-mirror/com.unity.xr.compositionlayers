@@ -12,19 +12,19 @@ namespace Unity.XR.CompositionLayers.UIInteraction
     [RequireComponent(typeof(CompositionLayer), typeof(MeshCollider))]
     public class CylinderUIScale : LayerUIScale
     {
-        private CompositionLayer cylinderLayer;
-        private CylinderLayerData cylinder;
+        CompositionLayer cylinderLayer;
+        CylinderLayerData cylinder;
 
-        private float cylinderAspect = -1;
-        private float radius = -1;
-        private float height = -1;
-        private Vector3 lossyScale;
-        private bool applyTransformScale;
+        float cylinderAspect = -1;
+        float radius = -1;
+        float height = -1;
+        Vector3 lossyScale;
+        bool applyTransformScale;
 
-        private MeshCollider meshCollider;
+        MeshCollider meshCollider;
 
         /// <inheritdoc cref="MonoBehaviour"/>
-        private void Awake()
+        void Awake()
         {
             if(!TryGetComponent<CompositionLayer>(out cylinderLayer))
                 throw new InvalidOperationException("Cylinder UI Scale is missing a Composition Layer!");
@@ -34,7 +34,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         }
 
         /// <inheritdoc cref="MonoBehaviour"/>
-        private void Update()
+        void Update()
         {
             cylinder = cylinderLayer.LayerData as CylinderLayerData;
             if (cylinder == null) return;
@@ -58,7 +58,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// Called whenever a mesh changing adjustment to the layer is done (i.e. scale change)
         /// Recalculates Cylinder collider mesh and applies it to the Mesh Collider
         /// </summary>
-        private void RedrawMesh()
+        void RedrawMesh()
         {
             Mesh colliderMesh = meshCollider.sharedMesh;
 
@@ -94,7 +94,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                                 0);
         }
 
-        private void GenerateCylinderMesh(ref Mesh mesh, Vector3 scale, Vector3 adjustment)
+        void GenerateCylinderMesh(ref Mesh mesh, Vector3 scale, Vector3 adjustment)
         {
             float radius = cylinder.Radius * adjustment.x;
             float height = cylinder.GetHeight() * adjustment.y;
@@ -163,7 +163,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             mesh.UploadMeshData(false);
         }
 
-        private void OnDestroy()
+        void OnDestroy()
         {
             if (meshCollider != null)
                 meshCollider.sharedMesh = null;

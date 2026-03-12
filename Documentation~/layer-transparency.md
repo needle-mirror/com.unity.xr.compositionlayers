@@ -9,6 +9,7 @@ Composition layers are drawn in order from most negative to most positive. A com
 * [Configure the camera for transparency](#camera-transparency)
 * [Configure HDR settings](#hdr-transparency)
 * [Configure Post-processing settings](#post-processing-transparency)
+* [Disable alpha-to-coverage](#alpha-to-coverage)
 
 If you do not configure these settings correctly, the following types of layers might not render correctly:
 
@@ -76,6 +77,9 @@ To change HDR settings when using URP:
 
 ### Built-In Render Pipeline
 
+> [!IMPORTANT]
+> In Unity 6.5 and newer, the Built-In Render Pipeline is deprecated and will be made obsolete in a future release. For more information, refer to [Migrating from the Built-In Render Pipeline to URP](https://docs.unity3d.com/6000.5/Documentation/Manual/urp/upgrading-from-birp.html) and [Render pipeline feature comparison](https://docs.unity3d.com/6000.5/Documentation/Manual/render-pipelines-feature-comparison.html).
+
 To change HDR settings when using the Built-In Render Pipeline:
 
 1. Open the **Project Settings** window.
@@ -116,4 +120,32 @@ To disable Post-processing:
 Refer to [Post-processing in URP](xref:um-post-processing-in-urp) for more information about Unity post-processing features.
 
 
-[HDR Tone mapping component]: xref:xr-layers-hdr-tonemapping
+[HDR Tone mapping component](xref:xr-layers-hdr-tonemapping)
+
+## Disable alpha-to-coverage {#alpha-to-coverage}
+
+Alpha-to-coverage isn't compatible with composition layers when rendering behind the scene layer if alpha cutout materials are present in the scene.
+
+Alpha-to-coverage converts the alpha channel into a coverage map. Alpha-to-coverage can result in holes in the scene layer, which means the compositor can't correctly render layers behind the scene layer.
+
+The Universal Render Pipeline Lit shader enables alpha-to-coverage when you enable Multisample Anti-aliasing (MSAA) in your project and if your scene materials with an opaque surface type.
+
+To prevent alpha-to-coverage problems in your project, you can:
+
+### Disable MSAA
+
+Disabling MSAA disables alpha-to-coverage globally. To disable MSAA:
+
+1. Locate your project's render pipeline assets. (By default Unity stores render pipeline assets in the `Assets/Settings` folder in the project.)
+2. For each render pipeline asset, open it in the **Inspector**, and under **Quality**, set **Anti Aliasing (MSAA)** to **Disabled**.
+
+![Anti Aliasing (MSAA) disabled](images/Inspector_MSAA_Disabled.png)<br />*Disabled **Anti Aliasing (MSAA)** setting in a render pipeline asset*
+
+### Use transparent surfaces for your URP Lit materials
+
+Modify your [URP Lit shader materials](xref:urp-lit-shader) that use alpha cutout (or alpha test) to use the transparent surface type as follows:
+
+   1. Open the material for your objects in the **Inspector**.
+   2. For each material, set the **Surface Type** to **Transparent**.
+
+![Surface Type Transparent Material Settings](images/Material_Inspector_Transparent_Surface_Type.png)<br />*A material with the surface type set to **Transparent**.*

@@ -16,6 +16,7 @@ namespace Unity.XR.CompositionLayers.Editor
         const string k_CompositionSplashSceneName = "CompositionSplash.unity";
         readonly string k_CompositionSplashScenePath = Path.Combine(k_CompositionFolder, k_CompositionSplashSceneName);
 
+        const string k_ScriptPropertyName = "m_Script";
 
         // Splash Settings
         const string k_EnableSplashScreen = "m_EnableSplashScreen";
@@ -69,8 +70,16 @@ namespace Unity.XR.CompositionLayers.Editor
             {
                 do
                 {
+                    // Since we are rendering the properties manually, we need to disable editing of the script field
+                    if (prop.name == k_ScriptPropertyName)
+                    {
+                        using (new EditorGUI.DisabledScope(true))
+                        {
+                            EditorGUILayout.PropertyField(prop, true);
+                        }
+                    }
                     // Draw the Splash Screen settings if the splash screen is enabled
-                    if(prop.name == k_EnableSplashScreen)
+                    else if (prop.name == k_EnableSplashScreen)
                     {
                         EditorGUI.BeginChangeCheck();
 

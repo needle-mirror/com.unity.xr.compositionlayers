@@ -115,7 +115,12 @@ public static class SampleLayers
 
     static GameObject[] FindObjectsWithLayer(int layer)
     {
+
+#if UNITY_6000_4_OR_NEWER
+        var goArray = Object.FindObjectsByType<GameObject>();
+#else
         var goArray = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+#endif
         var objectsWithLayer = new List<GameObject>();
 
         foreach (var go in goArray)

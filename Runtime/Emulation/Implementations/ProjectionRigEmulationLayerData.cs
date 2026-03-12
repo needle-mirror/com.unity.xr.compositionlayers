@@ -30,7 +30,6 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
         internal Camera rightCam;
         RenderTexture m_emulationLeftEyeTexture;
         RenderTexture m_emulationRightEyeTexture;
-
         bool exitingPlayMode;
 
 #if !UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
@@ -38,6 +37,8 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
         CommandBuffer m_playModeCommandBuffer = new CommandBuffer();
         int m_cachedLayer = -1;
 #endif
+
+        int m_CachedLayerId;
 
         public ProjectionRigEmulationLayerData()
         {
@@ -74,7 +75,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 }
             }
 
-            if (Application.isPlaying && !XRSettings.isDeviceActive) //For emulation cases only when using no headset: project rig cams follow mainCam transform.
+            if (Application.isPlaying && !CompositionLayerUtils.IsDisplaySubsystemActive()) //For emulation cases only when using no headset: project rig cams follow mainCam transform.
             {
                 leftCam.transform.SetPositionAndRotation(MainCamera.transform.position, MainCamera.transform.rotation);
                 rightCam.transform.SetPositionAndRotation(MainCamera.transform.position, MainCamera.transform.rotation);
@@ -98,6 +99,11 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
         private void CreateAndSetRenderTexture(int width, int height, int depth)
         {
             var layer = CompositionLayer;
+            if (!CompositionLayerManager.TryGetLayerId(layer, out m_CachedLayerId))
+            {
+                Debug.LogError("Failed to get layer id for projection rig emulation.");
+                return;
+            }
 
             if (leftCam == null && rightCam == null)
             {
@@ -227,7 +233,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
 #if UNITY_EDITOR
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             DestroyRig();
-            SceneEmulatedProjectionRig.DestroyAllEmulatedRigsForLayerId(CompositionLayer.GetInstanceID());
+            SceneEmulatedProjectionRig.DestroyAllEmulatedRigsForLayerId(m_CachedLayerId);
 #endif
             base.Dispose();
         }
@@ -275,7 +281,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
 
             var isSupported = !Application.isPlaying;
 #if ENABLE_UNITY_VR
-            isSupported = isSupported || !XRSettings.isDeviceActive;
+            isSupported = isSupported || !CompositionLayerUtils.IsDisplaySubsystemActive();
 #endif
             isSupported &= camera == CompositionLayerManager.mainCameraCache;
             if (isSupported)
@@ -306,6 +312,8 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 return;
 
             var rig = SceneEmulatedProjectionRig.CreateOrGet(CompositionLayer, currentSupportedCamera);
+            if (rig == null)
+                return;
 
             // Unity 6000+ uses this path when on URP.
 #if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH

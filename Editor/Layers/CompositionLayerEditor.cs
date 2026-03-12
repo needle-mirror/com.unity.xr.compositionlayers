@@ -360,7 +360,13 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             {
                 var camera = mainCamera;
                 if (camera == null)
+                {
+#if UNITY_6000_4_OR_NEWER
+                    camera = FindAnyObjectByType<Camera>();
+#else
                     camera = FindFirstObjectByType<Camera>();
+#endif
+                }
 
                 if (camera == null || camera.clearFlags == CameraClearFlags.Skybox)
                 {

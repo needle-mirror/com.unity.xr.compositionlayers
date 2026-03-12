@@ -24,6 +24,7 @@ Please note for older versions of Composition Layers there are different version
 
 |Composition Layers Package Version | OpenXR Package Version |
 | :--- | :--- |
+|`2.4.0` | `1.15.1`+
 |`2.3.0` | `1.15.1`+
 |`2.2.0` | `1.15.1`+
 |`2.1.0` | `1.14.3`+
@@ -52,7 +53,7 @@ After you install the package, refer to [Settings](xref:xr-layers-settings) for 
 
 ## Other common XR packages
 
-The following table outlines the recommended versions for other common XR packages when using composition layers <code class="long_version">2.2.0</code>:
+The following table outlines the recommended versions for other common XR packages when using composition layers <code class="long_version">2.4.0</code>:
 
 | Package | Version |
 |:--------|:--------|

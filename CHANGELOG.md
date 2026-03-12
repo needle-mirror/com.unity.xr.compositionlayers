@@ -8,6 +8,21 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-03-12
+
+### Added
+* Added `CompositionLayerManager.TryGetLayerId(CompositionLayer layer, out int layerId)` to get a layer's unique id instead of `GetInstanceID()` or `GetEntityID()`.
+
+### Fixed
+* Fixed `InteractableUIMirror` to support creating or duplicating them during runtime such as with prefabs or asset bundles.
+* Fixed `CompositionLayersRuntimeSettings` so that the `Script` property is no longer modifiable from the inspector.
+* Fixed `InteractableUIMirror` so cameras can be added at runtime without camera layer issues.
+* Fixed `ScriptableSingleton` warning log when first launching a project with the composition layers package.
+
+### Changed
+* Changed `InteractactableUIMirror` Cameras so they are visible in the inspector
+* Changed how CompositionLayerManager initializes `LayerInfo.Id` to use its own generated unique ids instead of `GetInstanceID()` or `GetEntityID()`.
+
 ## [2.3.0] - 2025-12-15
 
 ### Added

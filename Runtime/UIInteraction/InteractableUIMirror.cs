@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -10,6 +9,8 @@ using Unity.XR.CompositionLayers.Extensions;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.UI;
+using Unity.XR.CoreUtils;
+
 #if UNITY_XR_INTERACTION_TOOLKIT_3_0
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
@@ -32,67 +33,65 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 #if UNITY_XR_INTERACTION_TOOLKIT
         // reference to the Interactable for XRI interaction
         [SerializeField, HideInInspector]
-        private XRSimpleInteractable xrSimpleInteractable;
+        XRSimpleInteractable xrSimpleInteractable;
 
         // Reference to the camera that will be used to display the UI
         [SerializeField, HideInInspector]
-        private Camera canvasCamera;
+        Camera canvasCamera;
 
         // Reference to the render texture the UI camera will render to
         [SerializeField, HideInInspector]
-        private RenderTexture canvasCameraRenderTexture;
+        RenderTexture canvasCameraRenderTexture;
 
         // Reference to the Tracked DeviceGraphic Raycaster for XRI interaction
         [SerializeField, HideInInspector]
-        private TrackedDeviceGraphicRaycaster trackedDeviceGraphicRaycaster;
+        TrackedDeviceGraphicRaycaster trackedDeviceGraphicRaycaster;
 
         // Reference to the mesh collider for raycasting
         [SerializeField, HideInInspector]
-        private MeshCollider meshCollider;
+        MeshCollider meshCollider;
 
         // Reference to this object's UIHandle and UIFocus
         [SerializeField, HideInInspector]
-        private RectTransformData compositionLayerRectTransformData;
+        RectTransformData compositionLayerRectTransformData;
 
         // Reference to canvas UIHandle and UIFocus
         [SerializeField, HideInInspector]
-        private RectTransformData canvasRectTransformData;
+        RectTransformData canvasRectTransformData;
 
         // Reference to either a QuadUIScale or CylinderUIScale to handle colliders
         [SerializeField, HideInInspector]
-        private LayerUIScale layerUIScale;
+        LayerUIScale layerUIScale;
 
         // Reference to a canvas group which allows for raycast control
         [SerializeField, HideInInspector]
-        private CanvasGroup canvasGroup;
+        CanvasGroup canvasGroup;
 
         // Reference to the texture extension that the camera render texture will hook into
         [SerializeField, HideInInspector]
-        private TexturesExtension texturesExtension;
+        TexturesExtension texturesExtension;
 
         // Reference to the composition layer the UI will be mirroring to
         [SerializeField, HideInInspector]
-        private CompositionLayer compositionLayer;
+        CompositionLayer compositionLayer;
 
         // Reference to the RectTransform of the canvas
         [SerializeField, HideInInspector]
-        private RectTransform canvasRectTransform;
+        RectTransform canvasRectTransform;
 
-        private List<IXRRayProvider> interactors = new List<IXRRayProvider>();
-        private Canvas canvas;
-        private ProxyInteractorFactory proxyInteractorFactory;
-        private CanvasHitCalculator canvasHitCalculator;
+        List<IXRRayProvider> interactors = new List<IXRRayProvider>();
+        Canvas canvas;
+        ProxyInteractorFactory proxyInteractorFactory;
+        CanvasHitCalculator canvasHitCalculator;
 
-        private CanvasAndCameraSynchronizer canvasAndCameraSynchronizer;
-        private CameraTargetTextureFactory cameraTargetTextureFactory;
-#if UNITY_EDITOR
-        private CanvasLayerController canvasLayerController;
-#endif
+        CanvasAndCameraSynchronizer canvasAndCameraSynchronizer;
+        CameraTargetTextureFactory cameraTargetTextureFactory;
+        CanvasLayerCameraController canvasLayerCameraController;
 
         /// <summary>
         /// Data for each RectTransform in the hierarchy, used to add components if they don't exist
         /// </summary>
-        private sealed class RectTransformData
+        sealed class RectTransformData
         {
             public UIHandle m_UIHandle;
             public UIFocus m_UIFocus;
@@ -100,14 +99,14 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         }
 
         // Dictionary of RectTransforms and their data
-        private Dictionary<RectTransform, RectTransformData> rectTransformData = new Dictionary<RectTransform, RectTransformData>();
+        Dictionary<RectTransform, RectTransformData> rectTransformData = new Dictionary<RectTransform, RectTransformData>();
 
-        private void Awake()
+        void Awake()
         {
             InitializeCanvas();
         }
 
-        private void Start()
+        void Start()
         {
             compositionLayer = GetComponent<CompositionLayer>();
             proxyInteractorFactory = new ProxyInteractorFactory();
@@ -118,11 +117,12 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             texturesExtension = GetComponent<TexturesExtension>();
             texturesExtension.hideFlags = HideFlags.HideInInspector;
 
+            EditorApplication.quitting += OnEditorApplicationQuitting;
+#endif
             // Force canvas into WorldSpace render mode and set it's gameObject layer
             canvas.renderMode = RenderMode.WorldSpace;
-            canvasLayerController = new CanvasLayerController();
-            canvasLayerController.CreateAndSetCanvasLayer(canvas);
-#endif
+            CanvasLayerController.CreateAndSetCanvasLayer(canvas);
+            canvasLayerCameraController = new CanvasLayerCameraController(canvas.gameObject);
 
             // Only add components and init synchronizer if the Editor is not playing (like when creating or duplicating an object within the Inspector)
             if (!Application.isPlaying)
@@ -136,17 +136,14 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 xrSimpleInteractable.hoverExited.AddListener(OnHoverExit);
             }
 
+            EnsureCameraWithRenderTexture();
+
             // Synchronize the canvas and camera.
             canvasAndCameraSynchronizer = new CanvasAndCameraSynchronizer(canvas, canvasCamera);
             SyncTexturesExtensionWithCameraTarget();
-
-#if !UNITY_EDITOR
-            CompositionLayerUtils.UserLayers.OccupyBlankLayer(canvas.gameObject);
-            canvasCamera.cullingMask = 1 << canvas.gameObject.layer;
-#endif
         }
 
-        private void CreateAndSetCanvas()
+        void CreateAndSetCanvas()
         {
             var canvasGameObject = new GameObject("Canvas");
 # if UNITY_EDITOR
@@ -159,7 +156,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             canvas = GetOrAddComponent<Canvas>(canvasGameObject);
         }
 
-        private void InitializeCanvas()
+        void InitializeCanvas()
         {
             canvas = GetComponentInChildren<Canvas>();
 
@@ -195,7 +192,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// Updates the texture extension with the new render textures
         /// if there was a change in the canvas rect or scale
         /// </summary>
-        private void SyncTexturesExtensionWithCameraTarget()
+        void SyncTexturesExtensionWithCameraTarget()
         {
 #if UNITY_EDITOR
             if (canvasAndCameraSynchronizer != null)
@@ -213,7 +210,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 #endif
         }
 
-        private void Update()
+        void Update()
         {
 #if UNITY_EDITOR
             // Keep everything in sync if developer edits the canvas or comp layer sizes.
@@ -244,7 +241,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// The created camera is assigned to canvasCamera
         /// </summary>
         /// <seealso cref="canvasCamera"/>
-        private void CreateCamera()
+        void CreateCamera()
         {
             // Check in case gameObject has been duplicated.
             if (canvasCamera == null)
@@ -260,22 +257,24 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             var cameraGameObject = canvasCamera.gameObject;
             cameraGameObject.transform.parent = canvas.transform;
             cameraGameObject.transform.localScale = Vector3.one;
-            cameraGameObject.hideFlags = HideFlags.HideInHierarchy;
             cameraGameObject.transform.localPosition = new Vector3(0, 0, cameraDistance);
             cameraGameObject.transform.localRotation = Quaternion.Euler(0, 0, 0);
             canvasCamera.nearClipPlane = 0f;
             canvasCamera.clearFlags = CameraClearFlags.SolidColor;
             canvasCamera.backgroundColor = new Color(0, 0, 0, 0.001f);
-            canvasCamera.cullingMask = 1 << canvas.gameObject.layer;
+
+#if !UNITY_RENDER_PIPELINES_UNIVERSAL
             canvasCamera.stereoTargetEye = StereoTargetEyeMask.None;
+#endif
             canvasCamera.orthographic = true;
+            canvasCamera.gameObject.layer = canvas.gameObject.layer;
         }
 
         /// <summary>
         /// General initialization such as creating a camera for the ui, adding colliders and interactables to the layer,
         /// and updating the textures off the composition layer to the UI camera
         /// </summary>
-        private void AddComponents()
+        void AddComponents()
         {
             xrSimpleInteractable = GetOrAddComponent<XRSimpleInteractable>(gameObject);
             meshCollider = GetOrAddComponent<MeshCollider>(gameObject);
@@ -287,11 +286,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             };
 
             SyncLayerUIScaleWithLayerType();
-            CreateCamera();
-            cameraTargetTextureFactory = new CameraTargetTextureFactory();
-            var targetTexture = cameraTargetTextureFactory.CreateTargetTexture(canvasCamera, canvas.GetComponent<RectTransform>().rect);
-            texturesExtension.LeftTexture = targetTexture;
-            texturesExtension.RightTexture = targetTexture;
 
             // Create canvas group
             if (!canvas.TryGetComponent<CanvasGroup>(out canvasGroup))
@@ -305,7 +299,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// Adds and removes LayerUIScale components based on their type
         /// </summary>
         /// <remarks>(i.e. a changing from a Cylinder to a Quad layer will remove CylinderUIScale and add QuadUIScale)</remarks>
-        private void SyncLayerUIScaleWithLayerType()
+        void SyncLayerUIScaleWithLayerType()
         {
 #if UNITY_EDITOR
             if (compositionLayer == null)
@@ -345,7 +339,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <summary>
         /// Ensures the canvas is at least MINIMUM_CANVAS_SIZE on both width and height
         /// </summary>
-        private void HandleCanvasSize()
+        void HandleCanvasSize()
         {
             var width = Mathf.Max(canvasRectTransform.rect.width, MINIMUM_CANVAS_SIZE);
             var height = Mathf.Max(canvasRectTransform.rect.height, MINIMUM_CANVAS_SIZE);
@@ -358,16 +352,19 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// Cleans up creations from AddComponents such as the canvas camera, as well as coliders and render textures
         /// </summary>
         /// <seealso cref="AddComponents"/>
-        private void DestroyComponents()
+        void DestroyComponents()
         {
             // Only do this for when canvas is no longer a child or component is removed.
             if (gameObject.activeInHierarchy)
             {
-                DestroyObj(layerUIScale);
-                DestroyObj(xrSimpleInteractable);
-                DestroyObj(meshCollider);
-                DestroyObj(compositionLayerRectTransformData.m_UIHandle);
-                DestroyObj(compositionLayerRectTransformData.m_UIFocus);
+                UtilDestroy(layerUIScale);
+                UtilDestroy(xrSimpleInteractable);
+                UtilDestroy(meshCollider);
+                if (compositionLayerRectTransformData != null)
+                {
+                    UtilDestroy(compositionLayerRectTransformData.m_UIHandle);
+                    UtilDestroy(compositionLayerRectTransformData.m_UIFocus);
+                }
             }
 
             // Remove components from UI elements
@@ -375,20 +372,16 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             {
                 foreach (var rectTransformData in rectTransformData)
                 {
-                    DestroyObj(rectTransformData.Value?.m_UIHandle);
-                    DestroyObj(rectTransformData.Value?.m_UIFocus);
+                    UtilDestroy(rectTransformData.Value?.m_UIHandle);
+                    UtilDestroy(rectTransformData.Value?.m_UIFocus);
                 }
             }
-
-            // Return for when canvas gameObject is destroyed between stop/play and scene reloads + destroyed by user.
-            if (canvas != null && !canvas.gameObject.activeInHierarchy)
-                return;
 
             cameraTargetTextureFactory?.ReleaseTargetTexture(canvasCamera);
             texturesExtension.LeftTexture = null;
             texturesExtension.RightTexture = null;
-            DestroyObj(canvasCamera.gameObject);
-            DestroyObj(trackedDeviceGraphicRaycaster);
+            UtilDestroy(canvasCamera.gameObject);
+            UtilDestroy(trackedDeviceGraphicRaycaster);
         }
 
         /// <summary>
@@ -396,7 +389,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// </summary>
         /// <typeparam name="T">The Component to get or add</typeparam>
         /// <returns>the found component or the added component if not found</returns>
-        private T GetOrAddComponent<T>(GameObject gameObj) where T : Component
+        T GetOrAddComponent<T>(GameObject gameObj) where T : Component
         {
             var component = gameObj.GetComponent<T>();
             if (component == null)
@@ -408,17 +401,14 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             return component;
         }
 
-        private void DestroyObj(UnityEngine.Object obj)
+        void UtilDestroy(UnityEngine.Object obj)
         {
             if (obj == null) return;
 
-            if (Application.isPlaying)
-                Destroy(obj);
-            else
-                DestroyImmediate(obj);
+            UnityObjectUtils.Destroy(obj);
         }
 
-        private void OnHoverEnter(HoverEnterEventArgs args)
+        void OnHoverEnter(HoverEnterEventArgs args)
         {
             if (args.interactorObject is not IXRRayProvider interactor)
                 return;
@@ -452,7 +442,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             interactors.Add(interactor);
         }
 
-        private void OnHoverExit(HoverExitEventArgs args)
+        void OnHoverExit(HoverExitEventArgs args)
         {
             if (args.interactorObject is not IXRRayProvider interactor)
                 return;
@@ -460,15 +450,14 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             interactors.Remove(interactor);
         }
 
-        private void OnDestroy()
+        void OnDestroy()
         {
+            CanvasLayerController.SetCanvasLayerToDefault(canvas);
 
+            if (canvasLayerCameraController != null)
+                canvasLayerCameraController.Dispose();
 #if UNITY_EDITOR
-            if (canvasLayerController != null)
-            {
-                canvasLayerController.SetCanvasLayerToDefault(canvas);
-                canvasLayerController.Dispose();
-            }
+            EditorApplication.quitting -= OnEditorApplicationQuitting;
 
             if (xrSimpleInteractable != null)
             {
@@ -483,6 +472,32 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             if (canvas != null)
                 CompositionLayerUtils.UserLayers.UnOccupyBlankLayer(canvas.gameObject);
 #endif
+        }
+
+#if UNITY_EDITOR
+        void OnEditorApplicationQuitting()
+        {
+            // Set layer to default and clean up layers before saving the project during Editor shutdown
+            CanvasLayerController.SetCanvasLayerToDefault(canvas);
+        }
+#endif
+
+        void EnsureCameraWithRenderTexture()
+        {
+            if (cameraTargetTextureFactory == null)
+                cameraTargetTextureFactory = new CameraTargetTextureFactory();
+
+            if (canvasCamera == null)
+                CreateCamera();
+
+            if (canvasCamera.targetTexture == null || canvasCamera.activeTexture == null)
+            {
+                var targetTexture = cameraTargetTextureFactory.CreateTargetTexture(canvasCamera, canvas.GetComponent<RectTransform>().rect);
+                texturesExtension.LeftTexture = targetTexture;
+                texturesExtension.RightTexture = targetTexture;
+            }
+
+            canvasCamera.cullingMask = 1 << canvas.gameObject.layer;
         }
 
 

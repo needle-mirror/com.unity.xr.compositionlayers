@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEditor;
 
 namespace Unity.XR.CompositionLayers.UIInteraction
@@ -5,25 +6,24 @@ namespace Unity.XR.CompositionLayers.UIInteraction
     /// <summary>
     /// Helper for creating a TagManager asset file for controlling Canvas Layers
     /// </summary>
-    internal class TagManagerController
+    internal static class TagManagerController
     {
-#if UNITY_EDITOR
         // Index to start creating new layers (8 ignores the provided layers)
-        private const int ArrayStartIndex = 8;
+        const int ArrayStartIndex = 8;
 
         // TagManager asset (ProjectSettings/TagManager.asset)
-        private SerializedObject tagManager;
+        static SerializedObject s_TagManager;
 
         // Layer property in tagManager
-        private SerializedProperty layersProp;
+        static SerializedProperty s_LayersProp;
 
         /// <summary>
         /// Initialize TagManager asset file
         /// </summary>
-        public TagManagerController()
+        static TagManagerController()
         {
-            tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
-            layersProp = tagManager.FindProperty("layers");
+            s_TagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+            s_LayersProp = s_TagManager.FindProperty("layers");
         }
 
         /// <summary>
@@ -31,17 +31,17 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// </summary>
         /// <param name="layerName">Layer name to add</param>
         /// <returns>Whether or not the layer was added</returns>
-        public bool TryAddLayer(string layerName)
+        public static bool TryAddLayer(string layerName)
         {
             SerializedProperty firstEmptyLayer = null;
 
-            tagManager.Update();
+            s_TagManager.Update();
 
             // Check if the layerName already exists and try cache the first empty layer found
             bool found = false;
-            for (int i = ArrayStartIndex; i < layersProp.arraySize; i++)
+            for (int i = ArrayStartIndex; i < s_LayersProp.arraySize; i++)
             {
-                SerializedProperty layer = layersProp.GetArrayElementAtIndex(i);
+                SerializedProperty layer = s_LayersProp.GetArrayElementAtIndex(i);
                 if (layer.stringValue.Equals(layerName))
                 {
                     found = true;
@@ -58,7 +58,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 if (firstEmptyLayer != null)
                 {
                     firstEmptyLayer.stringValue = layerName;
-                    tagManager.ApplyModifiedProperties();
+                    s_TagManager.ApplyModifiedPropertiesWithoutUndo();
                 }
                 else
                     return false;
@@ -71,18 +71,18 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// Removes layer from tagManager
         /// </summary>
         /// <param name="layerName">Layer name to remove</param>
-        public void RemoveLayer(string layerName)
+        public static void RemoveLayer(string layerName)
         {
-            tagManager.Update();
+            s_TagManager.Update();
 
-            if (layerName == null)
+            if (string.IsNullOrEmpty(layerName))
                 return;
 
             SerializedProperty layer = null;
 
-            for (int i = 0; i < layersProp.arraySize; i++)
+            for (int i = 0; i < s_LayersProp.arraySize; i++)
             {
-                layer = layersProp.GetArrayElementAtIndex(i);
+                layer = s_LayersProp.GetArrayElementAtIndex(i);
                 if (layer.stringValue.Equals(layerName))
                     break;
             }
@@ -92,19 +92,20 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
             layer.stringValue = string.Empty;
 
-            tagManager.ApplyModifiedProperties();
+            s_TagManager.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        public void RemoveAllLayersContaining(string layerName)
+        public static void RemoveAllLayersContaining(string layerName)
         {
-            for (int i = ArrayStartIndex; i < layersProp.arraySize; i++)
+            for (int i = ArrayStartIndex; i < s_LayersProp.arraySize; i++)
             {
-                SerializedProperty layer = layersProp.GetArrayElementAtIndex(i);
+                SerializedProperty layer = s_LayersProp.GetArrayElementAtIndex(i);
                 if (layer.stringValue.Contains(layerName))
                     layer.stringValue = string.Empty;
             }
-            tagManager.ApplyModifiedProperties();
+            s_TagManager.ApplyModifiedPropertiesWithoutUndo();
         }
-#endif
+
     }
 }
+#endif

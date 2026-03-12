@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.XR.CompositionLayers
@@ -17,7 +15,7 @@ namespace Unity.XR.CompositionLayers
             }
         }
 
-        private void ChangeLayerOfAllChildren(GameObject gameObj, int layerBit)
+        void ChangeLayerOfAllChildren(GameObject gameObj, int layerBit)
         {
             gameObj.layer = layerBit;
             foreach (Transform t in gameObj.transform)
@@ -52,7 +50,13 @@ namespace Unity.XR.CompositionLayers
 #endif
             if (removeFromAllCameras)
             {
+
+#if UNITY_6000_4_OR_NEWER
+                var cameras = UnityEngine.Object.FindObjectsByType<Camera>();
+#else
                 var cameras = UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
+#endif
+
                 foreach (var camera in cameras)
                 {
                     camera.cullingMask &= ~(1 << layerBit);

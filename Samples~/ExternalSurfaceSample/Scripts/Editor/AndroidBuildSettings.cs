@@ -34,10 +34,15 @@ public class AndroidBuildSettings : IPreprocessBuildWithReport
     /// </summary>
     private static void SetAndroidBuildSettings()
     {
-        if (PlayerSettings.Android.minSdkVersion < AndroidSdkVersions.AndroidApiLevel24)
+#if UNITY_6000_5_OR_NEWER
+        var currentMinSdkVersion =  AndroidSdkVersions.AndroidApiLevel26;
+#else
+        var currentMinSdkVersion =  AndroidSdkVersions.AndroidApiLevel24;
+#endif
+        if (PlayerSettings.Android.minSdkVersion < currentMinSdkVersion)
         {
-            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
-            Debug.Log("Android minimum SDK version has been updated to Level 24. The lowest level supported by the composition layers package.");
+            PlayerSettings.Android.minSdkVersion = currentMinSdkVersion;
+            Debug.Log($"Android minimum SDK version has been updated to Level {currentMinSdkVersion}. The lowest level supported by the composition layers package.");
         }
     }
 }

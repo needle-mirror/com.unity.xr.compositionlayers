@@ -315,7 +315,13 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
                 return;
+
+#if UNITY_6000_4_OR_NEWER
+            var compositionLayers = UnityEngine.Object.FindObjectsByType<CompositionLayer>(FindObjectsInactive.Include);
+#else
             var compositionLayers = UnityEngine.Object.FindObjectsByType<CompositionLayer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#endif
+
             foreach (var compositionLayer in compositionLayers)
             {
                 if (CompositionLayerManager.IsLayerSceneValid(compositionLayer))

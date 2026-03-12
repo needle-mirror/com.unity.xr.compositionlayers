@@ -6,6 +6,7 @@ using UnityEngine.Rendering;
 using Unity.XR.CompositionLayers.Emulation.Implementations;
 using System.Linq;
 using Unity.XR.CompositionLayers.Layers;
+using Unity.XR.CompositionLayers.Services;
 
 #if UNITY_EDITOR
 using UnityEditor.Build;
@@ -39,11 +40,14 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// </summary>
         /// <param name="compositionLayer">The composition layer that will be emulated.</param>
         /// <param name="sceneViewCamera">The scene camera to send projections to.</param>
-        /// <param name="layerName">The layer that the rig camera will render.</param>
         /// <returns>Reference to the SceneEmulatedProjectionRig component.</returns>
         internal static SceneEmulatedProjectionRig CreateOrGet(CompositionLayer compositionLayer, Camera sceneViewCamera)
         {
-            var compositionLayerId = compositionLayer.GetInstanceID();
+            if (!CompositionLayerManager.TryGetLayerId(compositionLayer, out int compositionLayerId))
+            {
+                Debug.LogError("Failed to get layer id for projection rig scene view emulation.");
+                return null;
+            }
 
             if (!cameraToRigs.ContainsKey(sceneViewCamera))
                 cameraToRigs.Add(sceneViewCamera, new Dictionary<int, SceneEmulatedProjectionRig>());
@@ -87,14 +91,14 @@ namespace Unity.XR.CompositionLayers.Emulation
 
 #endif
 
-        public static void DestroyAllEmulatedRigsForLayerId(int layerInstanceId)
+        public static void DestroyAllEmulatedRigsForLayerId(int layerId)
         {
             for (int i = 0; i < cameraToRigs.Keys.Count; ++i)
             {
                 var idToRigs = cameraToRigs.ElementAt(i).Value;
-                if (idToRigs.ContainsKey(layerInstanceId))
+                if (idToRigs.ContainsKey(layerId))
                 {
-                    var rig = idToRigs[layerInstanceId];
+                    var rig = idToRigs[layerId];
                     DestroyImmediate(rig.gameObject);
                 }
             }

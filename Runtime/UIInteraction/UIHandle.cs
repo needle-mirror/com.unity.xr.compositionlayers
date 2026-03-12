@@ -1,4 +1,3 @@
-using Unity.XR.CompositionLayers.UIInteraction;
 using UnityEngine;
 
 namespace Unity.XR.CompositionLayers.UIInteraction
@@ -14,20 +13,20 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// Reference to the parent Composition Layer's Transform
         /// </summary>
         public Transform CompositionLayerTransform { get => m_CompositionLayerTransform; }
-        private Transform m_CompositionLayerTransform;
+        Transform m_CompositionLayerTransform;
 
         /// <summary>
         /// Reference to the Canvas this element is attached to
         /// </summary>
         public Canvas Canvas { get => m_Canvas; }
-        private Canvas m_Canvas;
-        private RectTransform m_CanvasRectTransform;
+        Canvas m_Canvas;
+        RectTransform m_CanvasRectTransform;
 
         /// <summary>
         /// Reference to this element's RectTransform
         /// </summary>
         public RectTransform RectTransform { get => m_RectTransform; }
-        private RectTransform m_RectTransform;
+        RectTransform m_RectTransform;
 
         /// <inheritdoc cref="MonoBehaviour"/>
         void OnEnable()
@@ -105,6 +104,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// </summary>
         /// <param name="canvas"></param>
         /// <returns>Returns the maximum size on the X or Y axis of the canvas</returns>
-        private float GetMaxCanvasSize() => Mathf.Max(m_CanvasRectTransform.sizeDelta.x, m_CanvasRectTransform.sizeDelta.y);
+        float GetMaxCanvasSize() => Mathf.Max(m_CanvasRectTransform.sizeDelta.x, m_CanvasRectTransform.sizeDelta.y);
     }
 }

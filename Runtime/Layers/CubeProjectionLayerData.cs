@@ -1,3 +1,4 @@
+using System;
 using Unity.XR.CompositionLayers.Extensions;
 
 namespace Unity.XR.CompositionLayers.Layers
@@ -7,6 +8,7 @@ namespace Unity.XR.CompositionLayers.Layers
     /// A cube always centered at the user's head position with only its inside faces visible.
     /// Useful for skyboxes and rendering 360 panoramic images.
     /// </summary>
+    [Serializable]
     [CompositionLayerData(
         Provider = "Unity",
         Name = "Cube Projection",

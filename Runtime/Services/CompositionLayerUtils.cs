@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.XR.CoreUtils;
 using Unity.XR.CompositionLayers.Layers;
 using UnityEngine;
+using UnityEngine.XR;
 
 namespace Unity.XR.CompositionLayers.Services
 {
@@ -16,6 +17,7 @@ namespace Unity.XR.CompositionLayers.Services
         internal static UserLayerCache UserLayers;
 
         static readonly List<Type> k_LayerDataTypes = new List<Type>();
+        static readonly List<XRDisplaySubsystem> k_DisplaySubsystems = new List<XRDisplaySubsystem>();
 
         static CompositionLayerUtils()
         {
@@ -236,6 +238,14 @@ namespace Unity.XR.CompositionLayers.Services
             }
 
             return false;
+        }
+
+        internal static bool IsDisplaySubsystemActive()
+        {
+            SubsystemManager.GetSubsystems(k_DisplaySubsystems);
+            if (k_DisplaySubsystems.Count == 0)
+                return false;
+            return k_DisplaySubsystems[0].running;
         }
 
         static void CleanUpExtraInstancesOfLayer(CompositionLayer layer, int newOrder)

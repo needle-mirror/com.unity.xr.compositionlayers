@@ -2,7 +2,6 @@ using System;
 using Unity.XR.CompositionLayers.Emulation;
 using Unity.XR.CoreUtils;
 using Unity.XR.CoreUtils.Editor;
-using UnityEditor.XR.CompositionLayers.Editor.Emulation;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -38,6 +37,13 @@ namespace Unity.XR.CompositionLayers
 
         internal bool EmulationInPlayMode => m_EmulationInPlayMode;
 
+        void OnEnable()
+        {
+            EmulatedCompositionLayerUtils.GetEmulationInScene = () => EnableEmulationInScene;
+            EmulatedCompositionLayerUtils.GetEmulationInPlayMode = () => EmulationInPlayMode;
+            RefreshEmulationSettings();
+        }
+
         void OnDisable()
         {
             EmulatedCompositionLayerUtils.GetEmulationInScene = null;
@@ -46,12 +52,9 @@ namespace Unity.XR.CompositionLayers
 
         internal static void RefreshEmulationSettings()
         {
-            CompositionLayersEmulationLoader.ConnectCompositionLayerFunctions();
-
             EmulatedLayerProvider.DisconnectEmulatedLayerProvider();
             EmulatedLayerProvider.ConnectEmulatedLayerProvider();
 
-#if UNITY_EDITOR
             EditorApplication.delayCall += () =>
             {
                 foreach (var obj in SceneView.sceneViews)
@@ -60,7 +63,16 @@ namespace Unity.XR.CompositionLayers
                         sceneView.Repaint();
                 }
             };
-#endif
+        }
+
+        [InitializeOnLoadMethod]
+        static void EnsureInstanceIsCreated()
+        {
+            EditorApplication.delayCall += () =>
+            {
+                // Ensure the instance is created so this script can auto-setup
+                _ = Instance;
+            };
         }
     }
 }

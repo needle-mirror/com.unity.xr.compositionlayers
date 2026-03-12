@@ -5,6 +5,7 @@ using Unity.XR.CompositionLayers;
 using Unity.XR.CompositionLayers.Emulation;
 using Unity.XR.CompositionLayers.Emulation.Implementations;
 using Unity.XR.CompositionLayers.Layers;
+using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CoreUtils;
 using UnityEngine.Rendering;
 
@@ -28,7 +29,7 @@ namespace UnityEngine.XR.CompositionLayers.Emulation.Implementations
 
             var isSupported = !Application.isPlaying;
 #if ENABLE_UNITY_VR
-            isSupported = isSupported || !XRSettings.isDeviceActive;
+            isSupported = isSupported || !CompositionLayerUtils.IsDisplaySubsystemActive();
 #endif
             return isSupported;
         }

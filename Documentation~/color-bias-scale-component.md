@@ -42,6 +42,9 @@ Color scale and bias adjustments on the default scene layer can be emulated by t
 
 #### Built-in Render Pipeline
 
+> [!IMPORTANT]
+> In Unity 6.5 and newer, the Built-In Render Pipeline is deprecated and will be made obsolete in a future release. For more information, refer to [Migrating from the Built-In Render Pipeline to URP](https://docs.unity3d.com/6000.5/Documentation/Manual/urp/upgrading-from-birp.html) and [Render pipeline feature comparison](https://docs.unity3d.com/6000.5/Documentation/Manual/render-pipelines-feature-comparison.html).
+
 To implement the color and scale bias effect in the Built-in Render Pipeline, Composition Layers automatically adds a `EmulatedColorScaleBias` component to the main camera when the **Color Scale and Bias** component is enabled on the default layer.
 
 #### Universal Render Pipeline (URP)

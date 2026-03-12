@@ -23,6 +23,10 @@ In some case, the mirror view rendering with composition layers isn't supported 
 
 This function is provided to assist them.
 
+> [!IMPORTANT]
+> In Unity 6.5 and newer, the Built-In Render Pipeline is deprecated and will be made obsolete in a future release. For more information, refer to [Migrating from the Built-In Render Pipeline to URP](https://docs.unity3d.com/6000.5/Documentation/Manual/urp/upgrading-from-birp.html) and [Render pipeline feature comparison](https://docs.unity3d.com/6000.5/Documentation/Manual/render-pipelines-feature-comparison.html).
+
+
 ## Supplement
 
 Below shaders are added to the **Always Include Shaders list** when the MirrorViewRenderer is added.

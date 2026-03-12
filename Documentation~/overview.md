@@ -89,3 +89,22 @@ Other XR packages and provider plug-ins can define additional layer extension co
 In-editor layer emulation provides rough visual approximation of your composition layers and layers will display differently on devices. As such, you should only rely on layer emulation to check rough layout and previews. Emulation In Playmode or Standalone is only available when no XR provider is active or no headset connected.
 
 If your project uses URP, then you must configure the [Emulation Layer Renderer Feature (URP)](xref:xr-layers-settings#emulation-layer-renderer-feature).
+
+## Platform support
+
+Composition layer support replies on platform implementation. Not all features are available on all platform
+
+### OpenXR runtimes
+
+The following table lists the supported features for each OpenXR runtime:
+
+| Feature              | Meta Quest | Android XR | SteamVR |
+|:---------------------|:----------:|:----------:|:-------:|
+| Cube Layers          |    Yes     |    Yes     |         |
+| Cylinder Layers      |    Yes     |    Yes     |         |
+| Equirect Layers      |    Yes     |    Yes     |         |
+| Projection Layers    |    Yes     |    Yes     |   Yes   |
+| Quad Layers          |    Yes     |    Yes     |   Yes   |
+| Color Bias and Scale |    Yes     |    Yes     |         |
+| HDR Tonemapping      |            |            |         |
+| Android Surfaces     |    Yes     |    Yes     |         |
