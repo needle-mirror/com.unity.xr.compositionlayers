@@ -32,7 +32,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
         {
             return new CompositionLayerBuildValidationRule
             {
-                Message = "Enable Alpha Processing on Universal Render Pipeline Asset under Post Processing to enable composition layer support.",
+                Message = "Enable **Post-processing** > **Alpha processing** on your Universal Render Pipeline asset if your project uses transparent composition layers (Quad, Cylinder, Equirect, Cubemap, or Projection Eye Rig). If your project only uses Passthrough, you can leave it disabled for better performance.",
                 CheckPredicate = () =>
                 {
 #if UNITY_2023_1_OR_NEWER
@@ -47,7 +47,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
                 },
                 FixIt = () => CompositionLayerProjectValidation.OpenFirstURPAssetWithAlphaOutputOff(buildTargetGroup),
                 FixItAutomatic = false,
-                FixItMessage = "Open Universal Render Pipeline Asset to enable Alpha Processing under Post Processing.",
+                FixItMessage = "Open the Universal Render Pipeline Asset to enable/disable the Alpha Processing setting under Post Processing.",
                 Error = false,
                 buildTargetGroup = buildTargetGroup
             };

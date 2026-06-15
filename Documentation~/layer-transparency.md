@@ -48,7 +48,7 @@ In order to store information to the alpha channel, the format of the render tex
 
 If you are using HDR, ensure your graphics Quality or Tier settings are set to allow the scene to be rendered with an alpha channel. Otherwise, you must disable HDR in the project settings.
 
-Refer to [HDR Tone mapping component] for information about the Composition Layers tone mapping component.
+Refer to [HDR Tone mapping component](xref:xr-layers-hdr-tonemapping) for information about the Composition Layers tone mapping component.
 
 ### Universal Render Pipeline (URP)
 
@@ -100,6 +100,17 @@ Refer to [Graphics settings](xref:um-class-graphics-settings) for the version of
 
 Post-processing effects in URP may discard alpha channel data. To preserve the composition layer alpha channel, enable **Alpha Processing** or disable Post-processing entirely.
 
+### Enable Alpha Processing
+
+Enable **Alpha Processing** when your project uses any of the following layers and relies on transparency:
+- Quad
+- Cylinder
+- Equirect
+- Cubemap
+- Projection Eye Rig
+
+Without **Alpha Processing**, post-processing effects can discard the alpha channel, and these layers won't blend correctly with underlays or the scene.
+
 To enable **Alpha Processing**:
 
 1. Locate your project's render pipeline assets. (By default these assets are stored in the `Assets/Settings` folder in the project.)
@@ -109,6 +120,13 @@ To enable **Alpha Processing**:
    b. Enable **Alpha processing**.
 
 ![Alpha Processing Enabled](images/Inspector_PC_RPAsset_Alpha_Processing.png)<br />*Enabled **Alpha Processing** setting in a render pipeline asset*
+
+> [!NOTE]
+> You can keep **Alpha Processing** disabled if your project only uses Passthrough composition layers, or your project does not require alpha blending between composition layers and the scene.
+>
+> Disabling **Alpha Processing** can improve performance.
+
+### Disable Post-processing
 
 To disable Post-processing:
 

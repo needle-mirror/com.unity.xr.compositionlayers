@@ -16,7 +16,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
         {
             new CompositionLayerBuildValidationRule
             {
-                Message = "Install OpenXR Plugin 1.15.1 or later to enable composition layer runtime support.",
+                Message = "OpenXR Plugin 1.18.0-pre.1 or later is recommended for full feature support. Minimum version required is 1.12.0-exp.1 for the composition layers runtime.",
                 CheckPredicate = () =>
                 {
 #if UNITY_XR_OPENXR_COMPLAYER

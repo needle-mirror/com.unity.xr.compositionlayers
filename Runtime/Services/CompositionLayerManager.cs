@@ -28,8 +28,8 @@ namespace Unity.XR.CompositionLayers.Services
     /// | OnDestroy | <see cref="CompositionLayerDestroyed" /> | Removed |
     ///
     ///
-    /// The manager will report the set of created, removed, modified and active layers to the
-    /// <see cref="s_LayerProvider" /> instance on every Update call. These lists are
+        /// The manager will report the set of created, removed, modified and active layers to the
+        /// <see cref="ILayerProvider" /> instance on every Update call. These lists are
     /// defined to contain layers a follows:
     ///
     /// **Created** : Any layer that has just been created. Populated on calls to <see cref="CompositionLayerCreated" />.
@@ -48,10 +48,10 @@ namespace Unity.XR.CompositionLayers.Services
     ///
     /// This list is ephemeral and is cleared after each call to the layer provider.
     ///
-    /// A layer will only exist in one of Removed, Created or Modified on any call to the <see cref="s_LayerProvider" />.
+        /// A layer will only exist in one of Removed, Created or Modified on any call to the <see cref="ILayerProvider" />.
     ///
-    /// **Active** : This list contains the current set of active layers for this update call to
-    /// the <see cref="s_LayerProvider" />. Layers passed to <see cref="CompositionLayerEnabled" /> will
+        /// **Active** : This list contains the current set of active layers for this update call to
+        /// the <see cref="ILayerProvider" />. Layers passed to <see cref="CompositionLayerEnabled" /> will
     /// be added to this list, and layers passed to <see cref="CompositionLayerDisabled" /> or
     /// <see cref="CompositionLayerDestroyed" /> will be removed from this list.
     /// </summary>
@@ -626,6 +626,15 @@ namespace Unity.XR.CompositionLayers.Services
 #else
             var foundLayers = UnityEngine.Object.FindObjectsByType<CompositionLayer>(isPlaying ? FindObjectsInactive.Exclude : FindObjectsInactive.Include, FindObjectsSortMode.None);
 #endif
+#if UNITY_EDITOR
+            var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+            if (prefabStage != null)
+            {
+                var extraCompLayerPrefabs = prefabStage.FindComponentsOfType<CompositionLayer>();
+                if (extraCompLayerPrefabs != null && extraCompLayerPrefabs.Length > 0)
+                    foundLayers = foundLayers.Concat(extraCompLayerPrefabs).Distinct().ToArray();
+            }
+#endif
 
             foreach (var layer in foundLayers)
             {
@@ -760,20 +769,6 @@ namespace Unity.XR.CompositionLayers.Services
             {
                 return false;
             }
-
-#if UNITY_EDITOR
-            // Check if the layer is being created in the active scene
-            for (var i = 0; i < SceneManager.sceneCount; i++)
-            {
-                if (layer.gameObject.scene == SceneManager.GetSceneAt(i))
-                    return true;
-            }
-
-            // Do not manage layers in prefab isolation stage
-            var stage = PrefabStageUtility.GetCurrentPrefabStage();
-            if (stage != null && stage.scene.IsValid() && stage.scene == layer.gameObject.scene)
-                return false;
-#endif
 
             return true;
         }

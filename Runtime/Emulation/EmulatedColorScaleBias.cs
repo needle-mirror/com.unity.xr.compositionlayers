@@ -44,7 +44,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             // Force refresh after domain reload
             EditorApplication.delayCall += () =>
             {
-                var instance = FindObjectOfType<EmulatedColorScaleBias>();
+                var instance = FindAnyObjectByType<EmulatedColorScaleBias>();
                 if (instance != null) instance.ForceSceneViewRefresh();
             };
         }

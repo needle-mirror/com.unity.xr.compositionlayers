@@ -40,6 +40,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             var scale = Mathf.Max(1.0f, MINIMUM_RENDER_TEXTURE_SIZE / largerDimension);
             m_RenderTextureSize = new Vector2(rect.width * scale, rect.height * scale);
             var rt = new RenderTexture((int)m_RenderTextureSize.x, (int)m_RenderTextureSize.y, 24, RenderTextureFormat.ARGB32);
+            rt.hideFlags |= HideFlags.DontSaveInEditor;
             camera.targetTexture = rt;
             s_CamerasByRenderTexture.Add(rt, camera);
             return rt;

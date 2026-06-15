@@ -6,6 +6,7 @@ using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CompositionLayers.Extensions;
 
 #if UNITY_XR_INTERACTION_TOOLKIT
+using System;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.UI;
@@ -15,6 +16,11 @@ using Unity.XR.CoreUtils;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 #endif
+#endif
+
+#if UNITY_EDITOR
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 #endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction
@@ -55,10 +61,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         [SerializeField, HideInInspector]
         RectTransformData compositionLayerRectTransformData;
 
-        // Reference to canvas UIHandle and UIFocus
-        [SerializeField, HideInInspector]
-        RectTransformData canvasRectTransformData;
-
         // Reference to either a QuadUIScale or CylinderUIScale to handle colliders
         [SerializeField, HideInInspector]
         LayerUIScale layerUIScale;
@@ -91,6 +93,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <summary>
         /// Data for each RectTransform in the hierarchy, used to add components if they don't exist
         /// </summary>
+        [Serializable]
         sealed class RectTransformData
         {
             public UIHandle m_UIHandle;
@@ -165,11 +168,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
             canvasRectTransform = canvas.GetComponent<RectTransform>();
 
-            canvasRectTransformData = new RectTransformData
-            {
-                m_UIHandle = GetOrAddComponent<UIHandle>(canvas.gameObject),
-                m_UIFocus = GetOrAddComponent<UIFocus>(canvas.gameObject)
-            };
+            GetOrAddComponent<UIHandle>(canvas.gameObject);
+            GetOrAddComponent<UIFocus>(canvas.gameObject);
 
             canvas.renderMode = RenderMode.WorldSpace;
             GetOrAddComponent<CanvasScaler>(canvas.gameObject);
@@ -218,6 +218,16 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             SyncLayerUIScaleWithLayerType();
             HandleCanvasSize();
 
+            if (compositionLayer != null && canvasCamera != null)
+            {
+                var currentPrefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+                if (currentPrefabStage != null && currentPrefabStage == PrefabStageUtility.GetPrefabStage(compositionLayer.gameObject))
+                {
+                    if (canvasCamera.scene != currentPrefabStage.scene)
+                        canvasCamera.scene = currentPrefabStage.scene;
+                    canvasCamera.Render();
+                }
+            }
 #endif
 
             // Calculate canvas hits with interactors that have been registered inside OnHoverEnter

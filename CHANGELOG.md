@@ -8,6 +8,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-06-15
+
+### Added
+* Added hierarchy window warning icon and inspector warnings for camera clear flags or background alpha using underlay or passthrough composition layers.
+* Added Individual, Left and Right Target Eye option to the source texture component. Allowing per-eye or single eye textures for standard Quad, Cylinder, Equirect, and Cube layers.
+
+### Fixed
+* Fixed Color Scale and Bias emulation in the Editor and Standalone builds.
+* Fixed composition layer emulation not rendering in Editor Play Mode or Standalone builds.
+* Fixed `CompositionLayer` to successfully open prefabs from scenes that do not contain any composition layers.
+* Fixed `EmulatedLayerData` so it no longer logs an error related to a destroyed CompositionLayer when changing scenes from within prefab mode.
+* Fixed `InteractableUIMirror` so that its fields are correctly serialized, resolving a warning that was previously logged to the console in Unity 6000.6.0a5 or newer.
+* Fixed `CameraTargetTextureFactory` so that it no longer logs an error related to releasing render texture that is set as Camera.targetTexture.
+
+### Changed
+* Emulation in Play mode and Standalone builds previously depended on the now obsolete `com.unity.modules.vr` and now depends on`com.unity.modules.xr` and falls back to always emulating when the XR module is not present.
+
 ## [2.4.0] - 2026-03-12
 
 ### Added

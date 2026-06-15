@@ -133,8 +133,6 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         {
             if (!CompositionLayerManager.ManagerActive)
                 CompositionLayerManager.StartCompositionLayerManager();
-            else
-                CompositionLayerManager.Instance.EnsureFallbackSceneCompositionLayer();
 
             var layers = new List<CompositionLayer>();
             CompositionLayerManager.GetOccupiedLayers(layers);
@@ -148,9 +146,11 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                         layer.gameObject.hideFlags = UnityEngine.HideFlags.None;
 
                     EditorGUIUtility.PingObject(layer.gameObject);
-                    break;
+                    return;
                 }
             }
+
+            CompositionLayerEditorUtils.CreateLayerGameObjectMenuItem(typeof(DefaultLayerData));
         }
     }
 }

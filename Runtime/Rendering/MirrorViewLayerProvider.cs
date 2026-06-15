@@ -5,6 +5,9 @@ using Unity.XR.CompositionLayers.Services;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.XR.CompositionLayers.Emulation;
+#if UNITY_EDITOR
+using UnityEditor.SceneManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Rendering
 {
@@ -194,10 +197,20 @@ namespace Unity.XR.CompositionLayers.Rendering
 
             m_SortedLayers.Clear();
 
+#if UNITY_EDITOR
+            var currentPrefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+            bool isUsingPrefabStage = currentPrefabStage != null && currentPrefabStage.scene.IsValid();
+#endif
             foreach (var compositionLayerSet in m_AllCompositionLayers)
             {
                 if (compositionLayerSet.Value == null || !compositionLayerSet.Value.Enabled)
                     continue;
+
+#if UNITY_EDITOR
+                var compLayerPrefabStage = PrefabStageUtility.GetPrefabStage(compositionLayerSet.Value.CompositionLayer.gameObject);
+                if (isUsingPrefabStage && currentPrefabStage != compLayerPrefabStage)
+                    continue;
+#endif
 
                 var emulatedLayerData = compositionLayerSet.Value.EmulatedLayerData;
                 if (emulatedLayerData != null)

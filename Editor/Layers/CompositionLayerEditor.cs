@@ -316,8 +316,6 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             if (m_HelpBoxElement == null || m_InstructionElement == null)
                 return;
 
-            var mainCamera = CompositionLayerManager.mainCameraCache;
-
             // Check that layer data is set to valid type
             var layerData = m_LayerDataProperty.managedReferenceValue as LayerData;
             if (layerData == null)
@@ -355,30 +353,19 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 m_HelpBoxElement.messageType = HelpBoxMessageType.Info;
 
             }
-            // Check if camera background will block underlay layers
-            else if (m_OrderProperty.intValue < 0 && mainCamera.clearFlags == CameraClearFlags.Skybox)
-            {
-                var camera = mainCamera;
-                if (camera == null)
-                {
-#if UNITY_6000_4_OR_NEWER
-                    camera = FindAnyObjectByType<Camera>();
-#else
-                    camera = FindFirstObjectByType<Camera>();
-#endif
-                }
-
-                if (camera == null || camera.clearFlags == CameraClearFlags.Skybox)
-                {
-                    // Show the help Box
-                    m_HelpBoxElement.style.display = DisplayStyle.Flex;
-                    m_HelpBoxElement.text = "Cameras with clear flags set to Skybox may obscure this layer.";
-                    m_HelpBoxElement.messageType = HelpBoxMessageType.Warning;
-                }
-            }
             else
             {
-                m_HelpBoxElement.style.display = DisplayStyle.None;
+                var warning = CompositionLayerSceneValidation.GetCameraConfigWarning(target as CompositionLayer);
+                if (warning != null)
+                {
+                    m_HelpBoxElement.style.display = DisplayStyle.Flex;
+                    m_HelpBoxElement.text = warning;
+                    m_HelpBoxElement.messageType = HelpBoxMessageType.Warning;
+                }
+                else
+                {
+                    m_HelpBoxElement.style.display = DisplayStyle.None;
+                }
             }
 
             if (layerData?.GetType().Name == "ProjectionLayerRigData")

@@ -1,5 +1,5 @@
 ---
-uid: xr-layers-splash-scren
+uid: xr-layers-splash-screen
 ---
 
 # Composition Layer Splash Screen
@@ -27,7 +27,7 @@ To access the Composition Layer Splash Screen settings, navigate to `Assets/Comp
 |Setting:|Default Value:|Description:|
 |:---|:---|:---|
 |**Splash Screen Texture**|`Editor/Textures/Logo_MadeWithUnity.png`|The texture to display as the splash screen.|
-|**Background Type**|`Solid Color`|The background style of the splash screen. **Solid color** will use the background color, while **Passthrough** will show the passthrough layer (if available). When set to **Passthrough**, you must properly configure your [HDR Settings](layer-transparency.md#configure-high-dynamic-range-hdr-settings-hdr-transparency).|
+|**Background Type**|`Solid Color`|The background style of the splash screen. **Solid color** will use the background color, while **Passthrough** will show the passthrough layer (if available). When set to **Passthrough**, you must properly configure your [HDR settings](xref:xr-layers-transparency#hdr-transparency).|
 |**Background Color**|`#231F20`|The color to display behind the splash screen texture.|
 
 **Duration Settings**

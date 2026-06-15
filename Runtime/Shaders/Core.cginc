@@ -259,17 +259,8 @@ inline float4 CheckCoordsRangeEquirect(float4 color, float4 coords, float centra
 // Apply color scale & bias.
 inline float4 ApplyColorScaleBias(float4 color, float4 scale, float4 bias)
 {
-    if (color.a > 0.0)
-    {
-        color.rgb = color.rgb / color.a;
-    }
-    else
-    {
-        color.rgb = 0.0;
-    }
-
-    color = color * scale + bias;
-    color.rgb *= color.a;
+    color.rgb = color.rgb * scale.rgb + bias.rgb;
+    color.a   = saturate(color.a * scale.a + bias.a);
     return color;
 }
 

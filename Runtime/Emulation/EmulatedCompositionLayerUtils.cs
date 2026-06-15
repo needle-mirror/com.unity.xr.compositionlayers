@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Unity.XR.CompositionLayers.Layers;
+using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CoreUtils;
+using UnityEngine;
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
@@ -15,6 +17,18 @@ namespace Unity.XR.CompositionLayers.Emulation
         internal static bool EmulationInScene => GetEmulationInScene != null && GetEmulationInScene();
         internal static bool EmulationInPlayMode => GetEmulationInPlayMode != null && GetEmulationInPlayMode();
         internal static bool EmulationInStandalone => GetEmulationInStandalone != null && GetEmulationInStandalone();
+
+        internal static bool IsRuntimeEmulationSupported()
+        {
+            if (!Application.isPlaying)
+                return true;
+
+#if ENABLE_UNITY_XR
+            return !CompositionLayerUtils.IsDisplaySubsystemActive();
+#else
+            return true;
+#endif
+        }
 
         static EmulatedCompositionLayerUtils()
         {

@@ -55,6 +55,16 @@ namespace Unity.XR.CompositionLayers.Extensions
             /// Allow Emulation in each individual eye for seperate images to be used.
             /// </summary>
             Individual,
+#if XR_OPENXR_1_18_OR_GREATER
+            /// <summary>
+            /// Render only in the left eye.
+            /// </summary>
+            Left,
+            /// <summary>
+            /// Render only in the right eye.
+            /// </summary>
+            Right,
+#endif
         }
 
         static readonly Rect k_DefaultRect = new(0f, 0f, 1f, 1f);

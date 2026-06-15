@@ -3,7 +3,6 @@ using Unity.XR.CompositionLayers.Extensions;
 using Unity.XR.CompositionLayers.Layers;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.XR;
 using UnityEditor;
 using Unity.XR.CoreUtils;
 using Unity.XR.CompositionLayers.Services;
@@ -279,15 +278,10 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 return true;
             }
 
-            var isSupported = !Application.isPlaying;
-#if ENABLE_UNITY_VR
-            isSupported = isSupported || !CompositionLayerUtils.IsDisplaySubsystemActive();
-#endif
-            isSupported &= camera == CompositionLayerManager.mainCameraCache;
-            if (isSupported)
-                currentSupportedCamera = camera;
-            else
-                currentSupportedCamera = null;
+            var isSupported = EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported()
+                && camera == CompositionLayerManager.mainCameraCache;
+
+            currentSupportedCamera = isSupported ? camera : null;
             return isSupported;
         }
 

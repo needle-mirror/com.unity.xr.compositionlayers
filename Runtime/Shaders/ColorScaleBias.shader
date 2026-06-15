@@ -12,19 +12,8 @@ Shader "Hidden/XRCompositionLayers/ColorScaleBias"
         /// </summary>
         inline float4 ApplyColorScaleBias(float4 color, float4 scale, float4 bias)
         {
-            if (color.a > 0.0)
-            {
-                // Unmultiplies alpha for color correction
-                color.rgb = color.rgb / color.a;
-            }
-            else
-            {
-                color.rgb = 0.0;
-            }
-            // Applies scale and bias
-            color = color * scale + bias;
-            // Re-multiplies alpha for proper blending
-            color.rgb *= color.a;
+            color.rgb = color.rgb * scale.rgb + bias.rgb;
+            color.a   = saturate(color.a * scale.a + bias.a);
             return color;
         }
     ENDHLSL

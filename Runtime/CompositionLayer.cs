@@ -62,7 +62,7 @@ namespace Unity.XR.CompositionLayers
         /// <summary>
         /// Serialized binaries for PlatformLayerData.
         /// </summary>
-        [SerializeReference]
+        [SerializeField]
         internal int[] m_PlatformLayerDataBinary;
 
 #pragma warning disable 0414
@@ -211,7 +211,7 @@ namespace Unity.XR.CompositionLayers
         /// </summary>
         internal void InitializeLayerOrder()
         {
-            // Since used in delay call the object could have bee destroyed
+            // Since used in delay call the object could have been destroyed
             if (!this || OrderInitialized)
                 return;
 

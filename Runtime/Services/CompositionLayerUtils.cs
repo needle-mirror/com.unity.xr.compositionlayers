@@ -151,14 +151,14 @@ namespace Unity.XR.CompositionLayers.Services
         }
 
         /// <summary>
-        /// Uses <see cref="type"/> to find the <see cref="LayerData"/> type in the corresponding
+        /// Uses <paramref name="type"/> to find the <see cref="LayerData"/> type in the corresponding
         /// <see cref="LayerDataDescriptor"/>. Then creates and returns an instance of the <see cref="LayerData"/>.
         /// </summary>
         /// <param name="type">The type of the Layer Data</param>
         /// <returns>
-        /// If the <c>string</c> matches a <see cref="LayerDataDescriptor"/> an
+        /// If the <c>Type</c> <paramref name="type"/> matches a <see cref="LayerDataDescriptor"/>, an
         /// instance of the <see cref="LayerData"/> type stored in the <see cref="LayerDataDescriptor"/> is returned.
-        /// If no matching <see cref="LayerDataDescriptor"/> is found <c>null</c> is returned.
+        /// If no matching <see cref="LayerDataDescriptor"/> is found, <c>null</c> is returned.
         /// </returns>
         public static LayerData CreateLayerData(Type type)
         {

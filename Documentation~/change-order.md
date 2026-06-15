@@ -30,9 +30,9 @@ The Default Scene Layer is an implicit Projection Layer to which the Unity scene
 
 You can change the sorting order of layers at runtime in the following ways:
 
-* Use [CompositionLayerUtils.TryChangeLayerOrder] to assign an order value to a layer without risk of assigning the same order as another layer. You can use [GetFirstUnusedLayer] or [GetNextUnusedLayer] to find unused slots in the sorting order.
-* Use [CompositionLayerManager.TrySwapLayers] to switch the order values of two layers.
-* Assign an order value directly to [CompositionLayer.order]. If the assigned value is already in use, then the first available, positive location in the sorting list is used instead.
+* Use [CompositionLayerUtils.TryChangeLayerOrder](xref:Unity.XR.CompositionLayers.Services.CompositionLayerUtils.TryChangeLayerOrder(Unity.XR.CompositionLayers.CompositionLayer,System.Int32,System.Int32)) to assign an order value to a layer without risk of assigning the same order as another layer. You can use [GetFirstUnusedLayer](xref:Unity.XR.CompositionLayers.Services.CompositionLayerManager.GetFirstUnusedLayer) or [GetNextUnusedLayer](xref:Unity.XR.CompositionLayers.Services.CompositionLayerManager.GetNextUnusedLayer(System.Int32)) to find unused slots in the sorting order.
+* Use [CompositionLayerUtils.TrySwapLayers](xref:Unity.XR.CompositionLayers.Services.CompositionLayerUtils.TrySwapLayers(Unity.XR.CompositionLayers.CompositionLayer,Unity.XR.CompositionLayers.CompositionLayer)) to switch the order values of two layers.
+* Assign an order value directly to [CompositionLayer.Order](xref:Unity.XR.CompositionLayers.CompositionLayer.Order). If the assigned value is already in use, then the first available, positive location in the sorting list is used instead.
 
 Examples of setting the sorting order:
 

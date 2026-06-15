@@ -7,7 +7,7 @@ This release includes the following significant changes:
 
 ## GetInstanceID is deprecated in Unity 6.4
 
-Across all APIs, whenever a composition layer is identified by an `int Id`, this ID value used to be the layer's Instance ID and now comes from the new API [CompositionLayerManager.GetLayerId](xref:UnityEngine.XR.CompositionLayers.GetLayerId*).
+Across all APIs, whenever a composition layer is identified by an `int Id`, this ID value used to be the layer's Instance ID and now comes from the new API [CompositionLayerManager.TryGetLayerId](xref:Unity.XR.CompositionLayers.Services.CompositionLayerManager.TryGetLayerId*).
 
 > [!IMPORTANT]
 > If your app uses `GetInstanceID` to create input parameters for [OpenXRLayerUtility](https://docs.unity3d.com/Packages/com.unity.xr.openxr@1.17/api/UnityEngine.XR.OpenXR.CompositionLayers.OpenXRLayerUtility.html), you must migrate to `CompositionLayerManager.TryGetLayerId` for continued support.

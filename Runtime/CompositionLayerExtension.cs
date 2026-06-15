@@ -6,10 +6,10 @@ namespace Unity.XR.CompositionLayers
     /// <summary>
     /// Abstract class used to define a composition layer extension. A CompositionLayerExtension
     /// is a component that can be added to a game object that is already given an instance of
-    /// a <see cref="CompositionLayer"/> as a means of adding additional data or usability for
+    /// a <see cref="Unity.XR.CompositionLayers.CompositionLayer"/> as a means of adding additional data or usability for
     /// that given layer type.
     ///
-    /// By default this requires that the game object have a <see cref="CompositionLayer" /> instance
+    /// By default this requires that the game object have a <see cref="Unity.XR.CompositionLayers.CompositionLayer" /> instance
     /// of some implementation type on it.
     /// </summary>
     [ExecuteAlways]
@@ -54,7 +54,7 @@ namespace Unity.XR.CompositionLayers
         public abstract unsafe void* GetNativeStructPtr();
 
         /// <summary>
-        /// Report state change for the <see cref="CompositionLayer"/> associated with this <see cref="CompositionLayerExtension"/>.
+        /// Report state change for the <see cref="Unity.XR.CompositionLayers.CompositionLayer"/> associated with this <see cref="CompositionLayerExtension"/>.
         /// </summary>
         protected internal Action ReportStateChange;
 

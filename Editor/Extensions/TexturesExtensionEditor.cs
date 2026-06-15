@@ -137,16 +137,38 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
 
             EditorGUI.BeginChangeCheck();
 
-            if ((layerDataType == typeof(ProjectionLayerData)))
+            bool isUILayer = m_CompositionLayer.GetComponent<UIInteraction.InteractableUIMirror>() != null;
+
+            if (layerDataType == typeof(ProjectionLayerData))
+            {
                 selectedTargetEye = TexturesExtension.TargetEyeEnum.Individual;
-            else
+            }
+            else if (isUILayer)
+            {
                 selectedTargetEye = TexturesExtension.TargetEyeEnum.Both;
+                m_TargetEyeProperty.enumValueIndex = (int)TexturesExtension.TargetEyeEnum.Both;
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(m_TargetEyeProperty, new GUIContent("Target Eye"));
+                selectedTargetEye = (TexturesExtension.TargetEyeEnum)m_TargetEyeProperty.enumValueIndex;
+            }
+
+#if XR_OPENXR_1_18_OR_GREATER
+            if (selectedTargetEye == TexturesExtension.TargetEyeEnum.Left || selectedTargetEye == TexturesExtension.TargetEyeEnum.Right)
+                m_InEditorEmulationProperty.intValue = 0;
+#endif
 
             EditorGUILayout.Space();
 
             EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
 
-            if (selectedTargetEye == TexturesExtension.TargetEyeEnum.Both)
+            if (selectedTargetEye == TexturesExtension.TargetEyeEnum.Both
+#if XR_OPENXR_1_18_OR_GREATER
+                || selectedTargetEye == TexturesExtension.TargetEyeEnum.Left
+                || selectedTargetEye == TexturesExtension.TargetEyeEnum.Right
+#endif
+                )
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.PrefixLabel(" "); // Used to align Rect with Custom Rects with other properties

@@ -1,5 +1,7 @@
 using System;
 using Unity.XR.CompositionLayers.Services;
+using Unity.XR.CoreUtils;
+using UnityEngine;
 
 namespace Unity.XR.CompositionLayers.Layers
 {
@@ -48,8 +50,18 @@ namespace Unity.XR.CompositionLayers.Layers
             // Since a user created Default Layer will exist BEFORE the manager, it is valid as long as it is not hidden.
             if (layerManager == null && !layer.gameObject.hideFlags.HasFlag(UnityEngine.HideFlags.HideAndDontSave))
                 return true;
+            // If the manager exists but no default scene layer has been set yet, allow this layer to become it.
+            if (layerManager != null && layerManager.DefaultSceneCompositionLayer == null)
+                return true;
             // If the layer exists AFTER the manager, it can only be valid if it is the default scene layer set by the manager.
-            return layerManager != null && layerManager.DefaultSceneCompositionLayer == layer;
+            if (layerManager != null && layerManager.DefaultSceneCompositionLayer == layer)
+                return true;
+
+            // If the validation checks fail, we can destroy this layer and log a warning.
+            // This can happen if a user force duplicates the default layer, or if a new scene is loaded with a default layer already in it
+            Debug.LogWarning($"A Default Scene Layer already exists in the scene, destroying duplicate layer.");
+            UnityObjectUtils.Destroy(layer.gameObject);
+            return false;
         }
     }
 }

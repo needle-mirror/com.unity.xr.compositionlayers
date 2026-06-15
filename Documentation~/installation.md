@@ -18,20 +18,19 @@ The XR Composition Layers package contains interfaces, types, and emulation for 
 
 | Provider plug-in package | Version |
 | :----------------------- | :------ |
-| OpenXR                   | [1.15.1](com.unity3d.kharma:upmpackage/com.unity.xr.openxr@1.15.1)   |
+| OpenXR                   | [1.18.0-pre.1](com.unity3d.kharma:upmpackage/com.unity.xr.openxr@1.18.0-pre.1)   |
 
 Please note for older versions of Composition Layers there are different versions of the OpenXR package that are compatible. The following chart highlights the compatibility between past Composition Layers and OpenXR package versions.
 
 |Composition Layers Package Version | OpenXR Package Version |
 | :--- | :--- |
-|`2.4.0` | `1.15.1`+
-|`2.3.0` | `1.15.1`+
-|`2.2.0` | `1.15.1`+
-|`2.1.0` | `1.14.3`+
-|`2.0.0` | `1.14.0`+
-|`1.0.0` | `1.13.0`
-|`0.6.0` | `1.12.1-exp.1`
-|`0.5.0` | `1.11.0-exp.1`
+|`2.5.0` | `1.18.0-pre.1`|
+|`2.4.0` | `1.15.1`+ |
+|`2.3.0` | `1.15.1`+ |
+|`2.2.0` | `1.15.1`+ |
+|`2.1.0` | `1.14.3` |
+|`2.0.0` | `1.14.0` |
+|`1.0.0` | `1.13.0` |
 
 
 <a id="installation"></a>
@@ -53,7 +52,7 @@ After you install the package, refer to [Settings](xref:xr-layers-settings) for 
 
 ## Other common XR packages
 
-The following table outlines the recommended versions for other common XR packages when using composition layers <code class="long_version">2.4.0</code>:
+The following table outlines the recommended versions for other common XR packages when using composition layers <code class="long_version">2.5.0</code>:
 
 | Package | Version |
 |:--------|:--------|

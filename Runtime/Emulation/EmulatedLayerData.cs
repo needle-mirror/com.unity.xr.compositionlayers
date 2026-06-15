@@ -254,7 +254,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                             }
 #endif
                             if ((texturesExtension.RightTexture != null) && (texturesExtension.InEditorEmulation == 1) &&
-                                (CompositionLayer.LayerData.GetType() == typeof(ProjectionLayerData)))
+                                ((CompositionLayer.LayerData.GetType() == typeof(ProjectionLayerData)) || (texturesExtension.TargetEye == TexturesExtension.TargetEyeEnum.Individual)))
                             {
                                 eyeIndex = 1;
                                 texture = texturesExtension.RightTexture;
@@ -509,6 +509,9 @@ namespace Unity.XR.CompositionLayers.Emulation
         public void AddToCommandBuffer(RenderContext renderContext, CommandArgs commandArgs)
         {
 #if UNITY_EDITOR
+            if (CompositionLayer == null)
+                return;
+
             // Skip rendering if the layer is hidden in the scene view.
             if (SceneVisibilityManager.instance.IsHidden(CompositionLayer.gameObject) && commandArgs.IsSceneView)
                 return;

@@ -154,6 +154,7 @@ using UnityEngine.XR.CompositionLayers.Provider;
 [LayerData]: xref:Unity.XR.CompositionLayers.Layers.LayerData
 [layerProvider]: xref:Unity.XR.CompositionLayers.Services.CompositionLayerManager.LayerProvider
 [Order of execution for event functions]: xref:ExecutionOrder
+[ProjectionLayerData]: xref:Unity.XR.CompositionLayers.Layers.ProjectionLayerData
 [QuadLayerData]: xref:Unity.XR.CompositionLayers.Layers.QuadLayerData
 [ScriptableObject]: xref:UnityEngine.ScriptableObject
 [standard Unity LateUpdate event]: https://docs.unity3d.com/ScriptReference/MonoBehaviour.LateUpdate.html

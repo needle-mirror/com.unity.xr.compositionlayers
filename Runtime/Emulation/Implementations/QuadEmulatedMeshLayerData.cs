@@ -1,8 +1,6 @@
 using Unity.XR.CompositionLayers.Extensions;
 using UnityEngine;
 using Unity.XR.CompositionLayers.Layers;
-using Unity.XR.CompositionLayers.Services;
-using UnityEngine.XR;
 
 namespace Unity.XR.CompositionLayers.Emulation.Implementations
 {
@@ -16,11 +14,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             if (camera.cameraType == CameraType.SceneView)
                 return true;
 
-            var isSupported = !Application.isPlaying;
-#if ENABLE_UNITY_VR
-            isSupported = isSupported || !CompositionLayerUtils.IsDisplaySubsystemActive();
-#endif
-            return isSupported;
+            return EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported();
         }
 
         protected override void UpdateMesh(ref Mesh mesh)

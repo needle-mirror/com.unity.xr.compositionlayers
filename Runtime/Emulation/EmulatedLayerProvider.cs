@@ -12,6 +12,7 @@ using UnityEngine.Rendering.Universal;
 #endif
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 #endif
 
 namespace Unity.XR.CompositionLayers.Emulation
@@ -370,11 +371,21 @@ namespace Unity.XR.CompositionLayers.Emulation
 #endif
             m_SortedLayers.Clear();
 
+#if UNITY_EDITOR
+            var currentPrefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+            bool isUsingPrefabStage = currentPrefabStage != null && currentPrefabStage.scene.IsValid();
+#endif
             // Gather command buffer based layers
             foreach (var compositionLayerSet in m_AllCompositionLayers)
             {
                 if (compositionLayerSet.Value == null || !compositionLayerSet.Value.Enabled)
                     continue;
+
+#if UNITY_EDITOR
+                var compLayerPrefabStage = PrefabStageUtility.GetPrefabStage(compositionLayerSet.Value.CompositionLayer.gameObject);
+                if (isUsingPrefabStage && currentPrefabStage != compLayerPrefabStage)
+                    continue;
+#endif
 
                 var emulatedRenderLayerData = compositionLayerSet.Value.EmulatedLayerData;
                 if (emulatedRenderLayerData != null)

@@ -90,6 +90,9 @@ namespace Unity.XR.CompositionLayers
 
             foreach (CompositionLayer layer in manager.CompositionLayers)
             {
+                if (layer == null)
+                    continue;
+
                 var layerDataType = layer.LayerData?.GetType();
                 if (layerDataType == null)
                     continue;
