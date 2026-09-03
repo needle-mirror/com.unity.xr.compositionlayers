@@ -1,12 +1,21 @@
 using System;
 using Unity.XR.CompositionLayers.Services;
 using UnityEngine;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
-    static class CompositionLayerSceneValidation
+    static partial class CompositionLayerSceneValidation
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static Camera s_CachedCamera;
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static int s_CachedCameraFrame = -1;
 
         internal static string GetCameraConfigWarning(CompositionLayer layer)

@@ -1,5 +1,8 @@
 using UnityEditor;
 using UnityEngine;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
@@ -9,6 +12,9 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         const float k_IconSize = 16f;
         const float k_IconPadding = 2f;
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static GUIContent s_WarningIcon;
 
         static CompositionLayerHierarchyIcon()

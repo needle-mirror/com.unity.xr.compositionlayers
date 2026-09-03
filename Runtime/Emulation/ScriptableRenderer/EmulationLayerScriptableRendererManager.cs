@@ -1,3 +1,6 @@
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 #if UNITY_RENDER_PIPELINES_UNIVERSAL || UNITY_RENDER_PIPELINES_HDRENDER
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -5,9 +8,15 @@ using System.Collections.Generic;
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
-    internal static class EmulationLayerScriptableRendererManager
+    internal static partial class EmulationLayerScriptableRendererManager
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static List<EmulatedLayerData> m_UnderlayLayers = new List<EmulatedLayerData>();
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static List<EmulatedLayerData> m_OverlayLayers = new List<EmulatedLayerData>();
 
         internal static List<EmulatedLayerData> GetEmulatedLayerDataList(bool isOverlay)

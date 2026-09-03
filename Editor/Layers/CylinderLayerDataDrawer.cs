@@ -1,11 +1,14 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
     [CustomPropertyDrawer(typeof(CylinderLayerData))]
-    class CylinderLayerDataDrawer : LayerDataDrawer
+    partial class CylinderLayerDataDrawer : LayerDataDrawer
     {
         class Styles
         {
@@ -42,6 +45,9 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         const string k_MaintainAspectRatioToolTip = "|Toggles the option for locking and unlocking Radius and Aspect Ratio. " +
             "When Radius is locked, its value will be driven by the value of Height, and the Aspect Ratio value is unconstrained. When Aspect Ratio is locked, its value will be driven by the value of Height, and the Radius value is unconstrained.";
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static Styles s_Styles;
         static Styles styles
         {

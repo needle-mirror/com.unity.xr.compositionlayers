@@ -1,6 +1,5 @@
 
 using System;
-using System.Linq;
 using Unity.XR.CompositionLayers;
 using Unity.XR.CompositionLayers.Emulation;
 using Unity.XR.CompositionLayers.Emulation.Implementations;
@@ -42,7 +41,9 @@ namespace UnityEngine.XR.CompositionLayers.Emulation.Implementations
                 mesh = new Mesh();
                 mesh.vertices = GetScaledVertices(sphereMesh.vertices, k_Size);
                 mesh.uv = sphereMesh.uv;
-                mesh.triangles = sphereMesh.triangles.Reverse().ToArray();
+                var triangles = sphereMesh.triangles;
+                Array.Reverse(triangles);
+                mesh.triangles = triangles;
                 mesh.RecalculateNormals();
                 mesh.UploadMeshData(true);
             }

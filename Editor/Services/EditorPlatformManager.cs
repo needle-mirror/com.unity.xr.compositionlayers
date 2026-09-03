@@ -7,6 +7,9 @@ using UnityEditor;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Provider;
 using Unity.XR.CompositionLayers.Emulation;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Services.Editor
 {
@@ -14,7 +17,7 @@ namespace Unity.XR.CompositionLayers.Services.Editor
     /// Managing All PlatformProvider/PlatformLayerData for Editor.
     /// </summary>
     [InitializeOnLoad]
-    internal static class EditorPlatformManager
+    static class EditorPlatformManager
     {
         /// <summary>
         /// All active PlatformProvider. It includes all platforms which are inactive build targets.
@@ -26,11 +29,20 @@ namespace Unity.XR.CompositionLayers.Services.Editor
         /// </summary>
         internal static IReadOnlyList<Type> ActivePlatformLayerDataTypes { get => s_ActivePlatformLayerDataTypes; }
 
-        internal static IReadOnlyList<PlatformProvider> SupportingHDRProviders { get => m_supportingHDRProviders; }
+        internal static IReadOnlyList<PlatformProvider> SupportingHDRProviders { get => s_SupportingHDRProviders; }
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static List<PlatformProvider> s_ActivePlatformProviders;
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static List<Type> s_ActivePlatformLayerDataTypes;
-        static List<PlatformProvider> m_supportingHDRProviders;
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
+        static List<PlatformProvider> s_SupportingHDRProviders;
 
         static EditorPlatformManager()
         {
@@ -63,22 +75,22 @@ namespace Unity.XR.CompositionLayers.Services.Editor
 
         static void RefreshSupportingHDRProviders()
         {
-            if (m_supportingHDRProviders == null)
-                m_supportingHDRProviders = new List<PlatformProvider>();
+            if (s_SupportingHDRProviders == null)
+                s_SupportingHDRProviders = new List<PlatformProvider>();
             else
-                m_supportingHDRProviders.Clear();
+                s_SupportingHDRProviders.Clear();
 
-            var activePlatformProviders = EditorPlatformManager.ActivePlatformProviders;
+            var activePlatformProviders = ActivePlatformProviders;
             if (activePlatformProviders != null)
             {
                 foreach (var provider in activePlatformProviders)
                 {
                     if (!provider.IsInternal() && provider.IsSupportedHDR)
-                        m_supportingHDRProviders.Add(provider);
+                        s_SupportingHDRProviders.Add(provider);
                 }
             }
 
-            PlatformManager.IsSupportedHDR = m_supportingHDRProviders.Count > 0;
+            PlatformManager.IsSupportedHDR = s_SupportingHDRProviders.Count > 0;
         }
 
         static List<PlatformProvider> GetActivePlatformProviders()

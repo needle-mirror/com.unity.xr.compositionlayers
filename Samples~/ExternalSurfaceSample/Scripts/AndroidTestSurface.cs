@@ -1,5 +1,8 @@
 using UnityEngine;
 using System.Runtime.InteropServices;
+#if UNITY_6000_5_OR_NEWER
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 /// <summary>
 /// A static class that initializes a test surface on Android
@@ -8,7 +11,13 @@ using System.Runtime.InteropServices;
 /// </summary>
 public static class AndroidTestSurface
 {
+#if UNITY_6000_5_OR_NEWER
+    [NoAutoStaticsCleanup]
+#endif
     private static System.IntPtr? _TestSurfaceClass;
+#if UNITY_6000_5_OR_NEWER
+    [NoAutoStaticsCleanup]
+#endif
     private static System.IntPtr initTestSurfaceMethodId;
 
     /// <summary>

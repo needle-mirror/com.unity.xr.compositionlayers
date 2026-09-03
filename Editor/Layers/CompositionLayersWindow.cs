@@ -170,7 +170,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                     {
                         EditorGUIUtility.PingObject(compositionLayer);
                         Selection.activeGameObject = compositionLayer.gameObject;
-                        if (isDefault && compositionLayer.gameObject.hideFlags.HasFlag(HideFlags.HideAndDontSave))
+                        if (isDefault && compositionLayer.gameObject.hideFlags.HasFlag(DefaultLayerData.DefaultLayerHideFlags))
                             compositionLayer.gameObject.hideFlags = HideFlags.None;
                     }
 

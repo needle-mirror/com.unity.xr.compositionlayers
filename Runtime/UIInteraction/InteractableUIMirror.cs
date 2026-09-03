@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using Unity.XR.CompositionLayers.Layers;
-using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CompositionLayers.Extensions;
-
+#if !UNITY_EDITOR
+using Unity.XR.CompositionLayers.Services;
+#endif
 #if UNITY_XR_INTERACTION_TOOLKIT
 using System;
 using UnityEngine.UI;
@@ -12,15 +13,16 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using Unity.XR.CoreUtils;
 
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
+using UnityEngine.XR.Interaction.Toolkit.Filtering;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Interactors.Casters;
 #endif
 #endif
 
 #if UNITY_EDITOR
 using UnityEditor.SceneManagement;
-using UnityEngine.SceneManagement;
 #endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction
@@ -37,6 +39,12 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         const float MINIMUM_CANVAS_SIZE = 0.001f;
 
 #if UNITY_XR_INTERACTION_TOOLKIT
+        struct ProxyHoverBinding
+        {
+            public IUIHoverInteractor proxyHoverInteractor;
+            public IUIHoverInteractor realHoverInteractor;
+            public bool isProxyHoveringUI;
+        }
         // reference to the Interactable for XRI interaction
         [SerializeField, HideInInspector]
         XRSimpleInteractable xrSimpleInteractable;
@@ -86,6 +94,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         ProxyInteractorFactory proxyInteractorFactory;
         CanvasHitCalculator canvasHitCalculator;
 
+        readonly Dictionary<IXRRayProvider, ProxyHoverBinding> proxyHoverBindings = new();
+
         CanvasAndCameraSynchronizer canvasAndCameraSynchronizer;
         CameraTargetTextureFactory cameraTargetTextureFactory;
         CanvasLayerCameraController canvasLayerCameraController;
@@ -103,6 +113,22 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
         // Dictionary of RectTransforms and their data
         Dictionary<RectTransform, RectTransformData> rectTransformData = new Dictionary<RectTransform, RectTransformData>();
+
+        /// <summary>
+        /// The pixel resolution (width x height) of the render texture the Canvas is drawn into.
+        /// Determined by the Canvas width and height, not by the Transform Scale or layer size.
+        /// Returns <see cref="Vector2Int.zero"/> if the texture has not been generated yet.
+        /// </summary>
+        public Vector2Int CurrentResolution
+        {
+            get
+            {
+                var renderTexture = canvasCamera != null ? canvasCamera.targetTexture : null;
+                return renderTexture != null
+                    ? new Vector2Int(renderTexture.width, renderTexture.height)
+                    : Vector2Int.zero;
+            }
+        }
 
         void Awake()
         {
@@ -137,7 +163,15 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 // Subscribe to hover events for when application is actually running.
                 xrSimpleInteractable.hoverEntered.AddListener(OnHoverEnter);
                 xrSimpleInteractable.hoverExited.AddListener(OnHoverExit);
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
+                xrSimpleInteractable.selectFilters.Add(new XRSelectFilterDelegate((_, _) => false));
+#endif
             }
+
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
+            if (xrSimpleInteractable != null)
+                xrSimpleInteractable.selectFilters.Add(new XRSelectFilterDelegate((_, _) => false));
+#endif
 
             EnsureCameraWithRenderTexture();
 
@@ -215,7 +249,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 #if UNITY_EDITOR
             // Keep everything in sync if developer edits the canvas or comp layer sizes.
             SyncTexturesExtensionWithCameraTarget();
-            SyncLayerUIScaleWithLayerType();
             HandleCanvasSize();
 
             if (compositionLayer != null && canvasCamera != null)
@@ -230,6 +263,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             }
 #endif
 
+            SyncLayerUIScaleWithLayerType();
+
             // Calculate canvas hits with interactors that have been registered inside OnHoverEnter
             foreach (var interactor in interactors)
             {
@@ -237,13 +272,12 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 if (proxyInteractor == null)
                     continue;
 
-                if (canvasHitCalculator.CalculateCanvasHit(interactor, out Pose hitPose))
+                if (canvasHitCalculator.CalculateCanvasHit(interactor, layerUIScale, out var hitPose))
                 {
                     proxyInteractor.transform.position = hitPose.position;
                     proxyInteractor.transform.rotation = hitPose.rotation;
                 }
             }
-
         }
 
         /// <summary>
@@ -273,9 +307,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             canvasCamera.clearFlags = CameraClearFlags.SolidColor;
             canvasCamera.backgroundColor = new Color(0, 0, 0, 0.001f);
 
-#if !UNITY_RENDER_PIPELINES_UNIVERSAL
             canvasCamera.stereoTargetEye = StereoTargetEyeMask.None;
-#endif
             canvasCamera.orthographic = true;
             canvasCamera.gameObject.layer = canvas.gameObject.layer;
         }
@@ -287,6 +319,9 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         void AddComponents()
         {
             xrSimpleInteractable = GetOrAddComponent<XRSimpleInteractable>(gameObject);
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
+            xrSimpleInteractable.selectFilters.Add(new XRSelectFilterDelegate((_, _) => false));
+#endif
             meshCollider = GetOrAddComponent<MeshCollider>(gameObject);
             trackedDeviceGraphicRaycaster = GetOrAddComponent<TrackedDeviceGraphicRaycaster>(canvas.gameObject);
             compositionLayerRectTransformData = new RectTransformData
@@ -311,39 +346,44 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <remarks>(i.e. a changing from a Cylinder to a Quad layer will remove CylinderUIScale and add QuadUIScale)</remarks>
         void SyncLayerUIScaleWithLayerType()
         {
-#if UNITY_EDITOR
-            if (compositionLayer == null)
+            if (compositionLayer == null || compositionLayer.LayerData == null)
                 return;
 
             var layerType = compositionLayer.LayerData.GetType();
-            bool isChangedFromQuad = layerType == typeof(QuadLayerData) && layerUIScale is not QuadUIScale;
-            bool isChangedFromCylinder = layerType == typeof(CylinderLayerData) && layerUIScale is not CylinderUIScale;
+            var isChangedFromQuad = layerType == typeof(QuadLayerData) && layerUIScale is not QuadUIScale;
+            var isChangedFromCylinder = layerType == typeof(CylinderLayerData) && layerUIScale is not CylinderUIScale;
 
             if (!isChangedFromQuad && !isChangedFromCylinder)
                 return;
 
-            if (compositionLayer.LayerData.GetType() == typeof(QuadLayerData))
+            if (layerUIScale != null)
             {
-                if (layerUIScale != null && layerUIScale is not QuadUIScale)
-                {
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
                     Undo.DestroyObjectImmediate(layerUIScale);
-                    layerUIScale = (LayerUIScale)Undo.AddComponent(this.gameObject, typeof(QuadUIScale));
-                }
                 else
-                    layerUIScale = (LayerUIScale)Undo.AddComponent(this.gameObject, typeof(QuadUIScale));
+#endif
+                    UtilDestroy(layerUIScale);
             }
 
-            else if (compositionLayer.LayerData.GetType() == typeof(CylinderLayerData))
+            if (layerType == typeof(QuadLayerData))
             {
-                if (layerUIScale != null && layerUIScale is not CylinderUIScale)
-                {
-                    Undo.DestroyObjectImmediate(layerUIScale);
-                    layerUIScale = (LayerUIScale)Undo.AddComponent(this.gameObject, typeof(CylinderUIScale));
-                }
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
+                    layerUIScale = Undo.AddComponent<QuadUIScale>(gameObject);
                 else
-                    layerUIScale = (LayerUIScale)Undo.AddComponent(this.gameObject, typeof(CylinderUIScale));
-            }
 #endif
+                    layerUIScale = gameObject.AddComponent<QuadUIScale>();
+            }
+            else if (layerType == typeof(CylinderLayerData))
+            {
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
+                    layerUIScale = Undo.AddComponent<CylinderUIScale>(gameObject);
+                else
+#endif
+                    layerUIScale = gameObject.AddComponent<CylinderUIScale>();
+            }
         }
 
         /// <summary>
@@ -431,8 +471,27 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
             switch(interactor)
             {
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
                 case NearFarInteractor:
+#if UNITY_XR_INTERACTION_TOOLKIT_3_6_0_OR_NEWER
+                    var realNearFar = (NearFarInteractor)interactor;
+                    var realFarCaster = realNearFar.farInteractionCaster;
+                    if (realFarCaster != null)
+                        realFarCaster.raycastMask &= ~(1 << layerBit);
+
+                    var proxyNearFar = (NearFarInteractor)proxyInteractor;
+                    var proxyFarCaster = proxyNearFar.farInteractionCaster;
+                    if (proxyFarCaster != null)
+                        proxyFarCaster.raycastMask = 1 << layerBit;
+#else
+                    var realCaster = ((Component)interactor).GetComponent<CurveInteractionCaster>();
+                    if (realCaster != null)
+                        realCaster.raycastMask &= ~(1 << layerBit);
+
+                    var proxyCaster = ((Component)proxyInteractor).GetComponent<CurveInteractionCaster>();
+                    if (proxyCaster != null)
+                        proxyCaster.raycastMask = 1 << layerBit;
+#endif
                     break;
 #endif
                 case XRRayInteractor:
@@ -445,10 +504,11 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             }
 
 
-            // Alow the canvas to receive raycasts
+            // Allow the canvas to receive raycasts
             if (canvasGroup)
                 canvasGroup.blocksRaycasts = true;
 
+            SubscribeToProxyUIHoverEvents(interactor);
             interactors.Add(interactor);
         }
 
@@ -457,11 +517,138 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             if (args.interactorObject is not IXRRayProvider interactor)
                 return;
 
+            UnsubscribeFromProxyUIHoverEvents(interactor);
             interactors.Remove(interactor);
+        }
+
+        void SubscribeToProxyUIHoverEvents(IXRRayProvider realInteractor)
+        {
+            var proxyGO = proxyInteractorFactory.GetProxy(realInteractor);
+            if (proxyGO == null ||
+                !proxyGO.TryGetComponent(out IUIHoverInteractor proxyHover) ||
+                realInteractor is not IUIHoverInteractor realHover)
+                return;
+
+            proxyHover.uiHoverEntered.AddListener(OnProxyUIHoverEntered);
+            proxyHover.uiHoverExited.AddListener(OnProxyUIHoverExited);
+            proxyHoverBindings[realInteractor] = new ProxyHoverBinding
+            {
+                proxyHoverInteractor = proxyHover,
+                realHoverInteractor = realHover,
+            };
+        }
+
+        void UnsubscribeFromProxyUIHoverEvents(IXRRayProvider realInteractor)
+        {
+            if (!proxyHoverBindings.TryGetValue(realInteractor, out var binding))
+                return;
+
+            binding.proxyHoverInteractor.uiHoverEntered.RemoveListener(OnProxyUIHoverEntered);
+            binding.proxyHoverInteractor.uiHoverExited.RemoveListener(OnProxyUIHoverExited);
+
+            if (binding.isProxyHoveringUI)
+            {
+                binding.realHoverInteractor.OnUIHoverExited(
+                    new UIHoverEventArgs { interactorObject = binding.realHoverInteractor });
+            }
+
+            proxyHoverBindings.Remove(realInteractor);
+        }
+
+        void OnProxyUIHoverEntered(UIHoverEventArgs args)
+        {
+            IXRRayProvider foundInteractor = null;
+            ProxyHoverBinding foundBinding = default;
+
+            foreach (var (realInteractor, binding) in proxyHoverBindings)
+            {
+                if (ReferenceEquals(binding.proxyHoverInteractor, args.interactorObject))
+                {
+                    foundInteractor = realInteractor;
+                    foundBinding = binding;
+                    break;
+                }
+            }
+
+            if (foundInteractor != null)
+            {
+                foundBinding.isProxyHoveringUI = true;
+                proxyHoverBindings[foundInteractor] = foundBinding;
+                foundBinding.realHoverInteractor.OnUIHoverEntered(
+                    CreateForwardedArgs(foundBinding.realHoverInteractor, args));
+            }
+        }
+
+        void OnProxyUIHoverExited(UIHoverEventArgs args)
+        {
+            IXRRayProvider foundInteractor = null;
+            ProxyHoverBinding foundBinding = default;
+
+            foreach (var (realInteractor, binding) in proxyHoverBindings)
+            {
+                if (ReferenceEquals(binding.proxyHoverInteractor, args.interactorObject))
+                {
+                    foundInteractor = realInteractor;
+                    foundBinding = binding;
+                    break;
+                }
+            }
+
+            if (foundInteractor != null)
+            {
+                foundBinding.isProxyHoveringUI = false;
+                proxyHoverBindings[foundInteractor] = foundBinding;
+                foundBinding.realHoverInteractor.OnUIHoverExited(
+                    CreateForwardedArgs(foundBinding.realHoverInteractor, args));
+            }
+        }
+
+        static UIHoverEventArgs CreateForwardedArgs(IUIHoverInteractor realHoverInteractor, UIHoverEventArgs proxyArgs)
+        {
+            return new UIHoverEventArgs
+            {
+                interactorObject = realHoverInteractor,
+                deviceModel = proxyArgs.deviceModel,
+                uiObject = proxyArgs.uiObject,
+#if UNITY_XR_INTERACTION_TOOLKIT_3_5_0_PRE_1_OR_NEWER
+                uiSystem = proxyArgs.uiSystem,
+#endif
+            };
+        }
+
+        static bool IsAlive(object obj)
+        {
+            return obj switch
+            {
+                null => false,
+                UnityEngine.Object unityObj => unityObj != null,
+                _ => true
+            };
+        }
+
+        void CleanUpAllProxyHoverBindings()
+        {
+            foreach (var binding in proxyHoverBindings.Values)
+            {
+                if (IsAlive(binding.proxyHoverInteractor))
+                {
+                    binding.proxyHoverInteractor.uiHoverEntered.RemoveListener(OnProxyUIHoverEntered);
+                    binding.proxyHoverInteractor.uiHoverExited.RemoveListener(OnProxyUIHoverExited);
+                }
+
+                if (binding.isProxyHoveringUI && IsAlive(binding.realHoverInteractor))
+                {
+                    binding.realHoverInteractor.OnUIHoverExited(
+                        new UIHoverEventArgs { interactorObject = binding.realHoverInteractor });
+                }
+            }
+            proxyHoverBindings.Clear();
         }
 
         void OnDestroy()
         {
+            CleanUpAllProxyHoverBindings();
+
             CanvasLayerController.SetCanvasLayerToDefault(canvas);
 
             if (canvasLayerCameraController != null)
@@ -508,6 +695,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             }
 
             canvasCamera.cullingMask = 1 << canvas.gameObject.layer;
+            canvas.worldCamera = canvasCamera;
         }
 
 
@@ -516,12 +704,17 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         {
             EditorApplication.hierarchyChanged += OnHierarchyChanged;
         }
+#endif
 
         void OnDisable()
         {
+            CleanUpAllProxyHoverBindings();
+#if UNITY_EDITOR
             EditorApplication.hierarchyChanged -= OnHierarchyChanged;
+#endif
         }
 
+#if UNITY_EDITOR
         void OnHierarchyChanged()
         {
             RectTransform[] rectTransforms = canvas.GetComponentsInChildren<RectTransform>(true);

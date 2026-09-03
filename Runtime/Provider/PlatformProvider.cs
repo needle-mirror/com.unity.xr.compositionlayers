@@ -137,7 +137,7 @@ namespace Unity.XR.CompositionLayers.Provider
     /// <summary>
     /// Default PlatformProvider implementation for generic  platforms.
     /// </summary>
-    internal class DefaultPlatformProvider : PlatformProvider
+    class DefaultPlatformProvider : PlatformProvider
     {
         Type m_LayerProviderType;
 

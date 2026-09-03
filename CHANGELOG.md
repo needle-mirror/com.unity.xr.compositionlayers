@@ -8,10 +8,32 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-09-03
+
+### Added
+* Added a Dynamic Texture option to the source texture component. When enabled, the layer's swapchain image is rewritten every frame, so textures whose contents are updated externally on the GPU (such as native plugin or AHardwareBuffer-backed `Texture2D` objects) no longer appear static.
+* Added a `Mip Mode` option to the source texture component that controls how a Local Texture's mip levels reach the layer swapchain: `CopyFromSource`, `AutoGenerate`, or `None` (default). See the [Source Textures component](xref:xr-layers-source-textures) documentation for details.
+* Added an inspector warning to the Equirect layer when the Upper Vertical Angle is at or below the Lower Vertical Angle.
+
+### Fixed
+* Fixed per-frame managed allocations in `CompositionLayerManager` caused by `CompositionLayerManager.LayerInfo` not implementing `IEquatable<LayerInfo>`.
+* Fixed `InteractableUIMirror` so that XRI input continues to work correctly when switching a composition layer's type at runtime via `ChangeLayerDataType`.
+* Fixed `InteractableUIMirror` so that interactive UI controls like sliders, scrollbars, scroll views, and joystick scrolling work correctly on composition layer canvases.
+* Fixed the Default Scene Layer so it is reliably found after domain reload, scene reopening, and other editor lifecycle events, and no longer produces an error when duplicated.
+* Fixed documentation to clarify that single-pass instanced (SPI) rendering and GPU Instancing are supported for projection layers.
+* Fixed static cleanup analyzer warnings in Unity 6000.7.
+* Fixed Equirect layer emulation so that the Editor preview matches the headset output.
+
+### Changed
+* Raised the minimum supported Unity Editor version to 6000.0.
+* The Default Scene Layer is now serialized into the scene (persisted in the scene file, still excluded from builds) instead of being recreated on load.
+* Changed how the Equirect layer's Upper and Lower Vertical Angles are represented. They are now measured from the equator (positive above, negative below), so a full sphere uses Upper +90 and Lower -90 instead of the previous +90 and +90. Existing layers are upgraded automatically.
+
 ## [2.5.0] - 2026-06-15
 
 ### Added
 * Added hierarchy window warning icon and inspector warnings for camera clear flags or background alpha using underlay or passthrough composition layers.
+* Added the current render texture resolution to the `InteractableUIMirror` inspector.
 * Added Individual, Left and Right Target Eye option to the source texture component. Allowing per-eye or single eye textures for standard Quad, Cylinder, Equirect, and Cube layers.
 
 ### Fixed

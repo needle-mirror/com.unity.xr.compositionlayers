@@ -4,6 +4,8 @@ uid: xr-layer-overview
 
 # Composition layers
 
+Understand the core concepts behind composition layers.
+
 Composition layers are essentially textures that are presented to the device runtime to be composited into the final display shown to the user. At least one layer always exists and your scene content is projected to this layer through the stereo eye cameras.
 
 The XR Composition Layers package allows you to create application-defined layers and specify the order in which they are drawn. You can use composition layers for purposes such as:
@@ -79,7 +81,7 @@ Layer extensions are components that you use to assign data to a composition lay
 
 The Unity-defined layer extensions include:
 
-* [Color Bias and Scale extension](xref:xr-layers-color-bias-scale): applies a color treatment, such as a tint, to the texture displayed in the composition layer.
+* [Color Scale and Bias extension](xref:xr-layers-color-bias-scale): applies a color treatment, such as a tint, to the texture displayed in the composition layer.
 * [Source Textures extension](xref:xr-layers-source-textures): defines the texture assets to display in a composition layer.
 
 Other XR packages and provider plug-ins can define additional layer extension components.
@@ -88,7 +90,7 @@ Other XR packages and provider plug-ins can define additional layer extension co
 
 In-editor layer emulation provides rough visual approximation of your composition layers and layers will display differently on devices. As such, you should only rely on layer emulation to check rough layout and previews. Emulation In Playmode or Standalone is only available when no XR provider is active or no headset connected.
 
-If your project uses URP, then you must configure the [Emulation Layer Renderer Feature (URP)](xref:xr-layers-settings#emulation-layer-renderer-feature).
+If your project uses URP, then you must configure the [Emulation Layer Renderer Feature (URP)](xref:xr-layers-graphics-settings#emulation-layer-renderer-feature).
 
 ## Platform support
 
@@ -105,6 +107,6 @@ The following table lists the supported features for each OpenXR runtime:
 | Equirect Layers      |    Yes     |    Yes     |         |
 | Projection Layers    |    Yes     |    Yes     |   Yes   |
 | Quad Layers          |    Yes     |    Yes     |   Yes   |
-| Color Bias and Scale |    Yes     |    Yes     |         |
+| Color Scale and Bias |    Yes     |    Yes     |         |
 | HDR Tonemapping      |            |            |         |
 | Android Surfaces     |    Yes     |    Yes     |         |

@@ -6,6 +6,9 @@ using UnityEditor.Build;
 using UnityEditor.XR.Management;
 using UnityEngine.XR.Management;
 using Unity.XR.CompositionLayers.Provider;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Services.Editor
 {
@@ -45,7 +48,7 @@ namespace Unity.XR.CompositionLayers.Services.Editor
     /// Manage PlatformManager.ActivePlatformProvider (Editor only).
     /// It'll be updated on changing build target or updating build settings.
     /// </summary>
-    static class PlatformSelector
+    static partial class PlatformSelector
     {
         [InitializeOnLoadMethod]
         static void Initialize()
@@ -123,10 +126,13 @@ namespace Unity.XR.CompositionLayers.Services.Editor
                 return null;
             }
 
-            var managerSettings = generalSettings.AssignedSettings;
+            var managerSettings = generalSettings.Manager;
             return managerSettings?.activeLoaders?.ToArray();
         }
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static string s_XRGeneralSettingsAssetPath;
         const string k_XRGeneralSettingsDefaultAssetPath = "Assets/XR/XRGeneralSettings.asset";
 
@@ -138,7 +144,12 @@ namespace Unity.XR.CompositionLayers.Services.Editor
             }
 
             XRGeneralSettingsPerBuildTarget result = null;
+
+#if XR_MANAGEMENT_4_7_0_PRE_1_OR_NEWER
+            EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.settingsKey, out result);
+#else
             EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.k_SettingsKey, out result);
+#endif
             if (result == null)
             {
                 return k_XRGeneralSettingsDefaultAssetPath;

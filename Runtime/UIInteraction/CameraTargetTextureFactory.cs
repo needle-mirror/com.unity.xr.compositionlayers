@@ -1,6 +1,8 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction
 {
@@ -8,12 +10,15 @@ namespace Unity.XR.CompositionLayers.UIInteraction
     /// Helper class for InteractableUIMirror that helps with creating Render Textures of a world space canvas
     /// </summary>
     /// <seealso cref="InteractableUIMirror"/>
-    internal class CameraTargetTextureFactory
+    internal partial class CameraTargetTextureFactory
     {
         const int MINIMUM_RENDER_TEXTURE_SIZE = 100;
         // Desired size of render texture
         Vector2 m_RenderTextureSize = new Vector2(500, 500);
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static readonly Dictionary<RenderTexture, Camera> s_CamerasByRenderTexture = new();
 
         /// <summary>
@@ -78,7 +83,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
         void CleanCameraRenderTexturesDictionary()
         {
-            foreach (var entry in s_CamerasByRenderTexture.Keys.ToList())
+            foreach (var entry in new List<RenderTexture>(s_CamerasByRenderTexture.Keys))
             {
                 if (entry == null || s_CamerasByRenderTexture[entry] == null)
                     s_CamerasByRenderTexture.Remove(entry);

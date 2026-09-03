@@ -55,7 +55,7 @@ namespace Unity.XR.CompositionLayers.Extensions
             /// Allow Emulation in each individual eye for seperate images to be used.
             /// </summary>
             Individual,
-#if XR_OPENXR_1_18_OR_GREATER
+#if XR_OPENXR_1_18_0_PRE_1_OR_NEWER
             /// <summary>
             /// Render only in the left eye.
             /// </summary>
@@ -65,6 +65,30 @@ namespace Unity.XR.CompositionLayers.Extensions
             /// </summary>
             Right,
 #endif
+        }
+
+        /// <summary>
+        /// Mipmap Mode enumeration.
+        /// Determines how mipmap levels are written into the layer's swapchain.
+        /// </summary>
+        public enum MipMapModeEnum
+        {
+            /// <summary>
+            ///  This is the default. No mipmaps. The swapchain is created single-mip.
+            /// </summary>
+            None = 0,
+            /// <summary>
+            /// Copy every authored mip level directly from the source texture into the swapchain image.
+            /// Requires a source whose format is compatible with
+            /// <see cref="UnityEngine.Graphics.CopyTexture(Texture, Texture)"/>.
+            /// </summary>
+            CopyFromSource = 1,
+            /// <summary>
+            /// Blit mip level 0 into the swapchain image, then derive the lower mip levels with
+            /// <see cref="UnityEngine.RenderTexture.GenerateMips"/>.
+            /// Use when the source texture cannot be copied directly (eg. compressed or cross-format sources).
+            /// </summary>
+            AutoGenerate = 2,
         }
 
         static readonly Rect k_DefaultRect = new(0f, 0f, 1f, 1f);
@@ -121,6 +145,16 @@ namespace Unity.XR.CompositionLayers.Extensions
         [SerializeField]
         [Tooltip("Crop the hosting layer to the aspect ratio of the texture")]
         bool m_CropToAspect;
+
+        [SerializeField]
+        [Tooltip("When enabled, the layer's swapchain image is rewritten every frame regardless of the source texture type. " +
+            "Enable this for textures whose contents are updated externally on the GPU (e.g. native plugins or AHardwareBuffer-backed Texture2D) " +
+            "that would otherwise appear static.")]
+        bool m_IsDynamic;
+
+        [SerializeField]
+        [Tooltip("Controls how mipmap levels are written into the layer's swapchain image.")]
+        MipMapModeEnum m_MipMapMode = MipMapModeEnum.None;
 
         bool m_TextureAdded;
 
@@ -260,6 +294,34 @@ namespace Unity.XR.CompositionLayers.Extensions
         {
             get => m_CropToAspect;
             set => m_CropToAspect = UpdateValue(m_CropToAspect, value);
+        }
+
+        /// <summary>
+        /// When true, the layer is treated as always dirty so its swapchain image is rewritten every frame,
+        /// regardless of the source texture type.
+        ///
+        /// Enable this for textures whose contents are updated externally on the GPU (for example by a native
+        /// plugin or an AHardwareBuffer-backed <see cref="Texture2D"/>). Such textures are not
+        /// <see cref="RenderTexture"/>s and do not trigger the layer provider's normal change detection, so they
+        /// would otherwise appear static after the first write.
+        /// </summary>
+        public bool IsDynamic
+        {
+            get => m_IsDynamic;
+            set => m_IsDynamic = UpdateValue(m_IsDynamic, value);
+        }
+
+        /// <summary>
+        /// Controls how mipmap levels are propagated into the layer's swapchain image for
+        /// <see cref="SourceTextureEnum.LocalTexture"/> sources. Defaults to <see cref="MipMapModeEnum.None"/>.
+        ///
+        /// The mode can be changed at runtime. Transitions that change the mip count (to or from <see cref="MipMapModeEnum.None"/>) trigger a swapchain recreation.
+        /// switching between <see cref="MipMapModeEnum.CopyFromSource"/> and <see cref="MipMapModeEnum.AutoGenerate"/> only changes the per-frame write path.
+        /// </summary>
+        public MipMapModeEnum MipMapMode
+        {
+            get => m_MipMapMode;
+            set => m_MipMapMode = UpdateValue(m_MipMapMode, value);
         }
 
         ///<summary>

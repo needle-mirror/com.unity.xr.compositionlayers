@@ -4,7 +4,7 @@ using System.Collections;
 using System.IO;
 using Unity.XR.CompositionLayers;
 using Unity.XR.CompositionLayers.Services;
-#if UNITY_XR_OPENXR_COMPLAYER
+#if XR_OPENXR_1_12_0_EXP_1_OR_NEWER
 using UnityEngine.XR.OpenXR.CompositionLayers;
 #endif
 using UnityEngine.Networking;
@@ -109,7 +109,7 @@ public class TestAndroidImage : MonoBehaviour
             IntPtr surface = IntPtr.Zero;
             yield return new WaitUntil(() =>
             {
-#if UNITY_XR_OPENXR_COMPLAYER
+#if XR_OPENXR_1_12_0_EXP_1_OR_NEWER
                 if (CompositionLayerManager.TryGetLayerId(layer, out int layerId))
                 {
                     surface = OpenXRLayerUtility.GetLayerAndroidSurfaceObject(layerId);

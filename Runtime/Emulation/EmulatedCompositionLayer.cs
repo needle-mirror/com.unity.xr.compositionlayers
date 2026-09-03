@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.XR.CompositionLayers;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
@@ -24,6 +27,9 @@ namespace Unity.XR.CompositionLayers.Emulation
             }
         }
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static readonly Type k_EmulatedLayerDataType = typeof(EmulatedLayerData);
 
         [NonSerialized]

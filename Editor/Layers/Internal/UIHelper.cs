@@ -6,14 +6,20 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.XR.CompositionLayers.Provider;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Internal.Editor
 {
-    internal static class UIHelper
+    internal static partial class UIHelper
     {
         const string k_WarningIconPath = "d_console.warnicon.sml";
         const string k_ErrorIconPath = "d_console.erroricon.sml";
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static int s_PushDisabledCount = 0;
 
         /// <summary>

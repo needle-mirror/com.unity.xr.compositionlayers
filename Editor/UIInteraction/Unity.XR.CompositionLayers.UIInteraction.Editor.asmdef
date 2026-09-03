@@ -18,6 +18,11 @@
             "name": "com.unity.xr.interaction.toolkit",
             "expression": "",
             "define": "UNITY_XR_INTERACTION_TOOLKIT"
+        },
+        {
+            "name": "Unity",
+            "expression": "6000.5.0a9",
+            "define": "LIFECYCLE_APIS_AVAILABLE"
         }
     ],
     "noEngineReferences": false

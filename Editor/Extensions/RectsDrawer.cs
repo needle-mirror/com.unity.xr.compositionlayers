@@ -2,13 +2,16 @@ using System;
 using Unity.XR.CompositionLayers.Layers.Editor;
 using UnityEditor;
 using UnityEngine;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Extensions.Editor
 {
     /// <summary>
     /// Base custom drawer for rects.
     /// </summary>
-    abstract class RectsDrawer
+    abstract partial class RectsDrawer
     {
         internal class RectData
         {
@@ -49,11 +52,14 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
 
         static class Content
         {
-            public static GUIContent defaultImage = EditorGUIUtility.IconContent("scenevis_visible_hover@2x");
+            public static readonly GUIContent defaultImage = EditorGUIUtility.IconContent("scenevis_visible_hover@2x");
         }
 
-        static class Styles
+        static partial class Styles
         {
+#if LIFECYCLE_APIS_AVAILABLE
+            [AutoStaticsCleanup]
+#endif
             public static GUIStyle centeredText;
         }
 

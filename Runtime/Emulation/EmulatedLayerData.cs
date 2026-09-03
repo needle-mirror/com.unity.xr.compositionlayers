@@ -422,14 +422,14 @@ namespace Unity.XR.CompositionLayers.Emulation
         public struct RenderContext
         {
             public CommandBuffer m_CommandBuffer;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
             public RasterCommandBuffer m_RasterCommandBuffer;
 #endif
 
             public RenderContext(CommandBuffer commandBuffer)
             {
                 m_CommandBuffer = commandBuffer;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
                 m_RasterCommandBuffer = null;
 #endif
             }
@@ -439,7 +439,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                 return new RenderContext(commandBuffer);
             }
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
             public RenderContext(RasterCommandBuffer rasterCommandBuffer)
             {
                 m_CommandBuffer = null;
@@ -456,7 +456,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             {
                 if (m_CommandBuffer != null)
                     m_CommandBuffer.DrawMesh(mesh, matrix, material, subMeshIndex, shaderPass, properties);
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
                 else if (m_RasterCommandBuffer != null)
                     m_RasterCommandBuffer.DrawMesh(mesh, matrix, material, subMeshIndex, shaderPass, properties);
 #endif
@@ -466,7 +466,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             {
                 if (m_CommandBuffer != null)
                     m_CommandBuffer.ClearRenderTarget(clearDepth, clearColor, backgroundColor);
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
                 else if (m_RasterCommandBuffer != null)
                     m_RasterCommandBuffer.ClearRenderTarget(clearDepth, clearColor, backgroundColor);
 #endif

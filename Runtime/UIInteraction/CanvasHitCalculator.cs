@@ -3,7 +3,7 @@ using Unity.XR.CompositionLayers.Layers;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.XR.Interaction.Toolkit;
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 #endif
 
@@ -39,19 +39,26 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// Calculates location on canvas where the raycast hit
         /// </summary>
         /// <param name="interactor">Current interactor</param>
+        /// <param name="layerUIScale">The active LayerUIScale component for coordinate mapping</param>
         /// <param name="hitPose">Calculated hit pose</param>
         /// <returns>whether or not the raycast hit the Composition Layer</returns>
-        public bool CalculateCanvasHit(IXRRayProvider interactor, out Pose hitPose)
+        public bool CalculateCanvasHit(IXRRayProvider interactor, LayerUIScale layerUIScale, out Pose hitPose)
         {
             hitPose = Pose.identity;
+
+            if (layerUIScale == null ||
+                layerUIScale.WidthScale == 0f ||
+                layerUIScale.HeightScale == 0f)
+                return false;
+
             if (interactor.rayEndTransform)
             {
-                var canvasHitPosition = RecalculateHitToCanvas(interactor.rayEndPoint);
+                var canvasHitPosition = RecalculateHitToCanvas(interactor.rayEndPoint, layerUIScale);
                 var pointerDistance = -0.1f;
 
-                Vector3 pointerToCanvasLocalPosition = canvas.transform.TransformPoint(canvasHitPosition);
-                Vector3 finalPosition = pointerToCanvasLocalPosition + (canvas.transform.forward * pointerDistance);
-                Quaternion finalRotation = Quaternion.LookRotation(canvas.transform.forward);
+                var pointerToCanvasLocalPosition = canvas.transform.TransformPoint(canvasHitPosition);
+                var finalPosition = pointerToCanvasLocalPosition + (canvas.transform.forward * pointerDistance);
+                var finalRotation = Quaternion.LookRotation(canvas.transform.forward);
                 hitPose = new Pose(finalPosition, finalRotation);
                 return true;
             }
@@ -59,30 +66,24 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             return false;
         }
         /// <summary>
-        /// Calculates location on canvas where the raycast hit from a RaycastHit
-        /// Calls propor function depending if layer is a Quad or a Cylinder as the calculations vary
+        /// Calculates location on canvas where the raycast hit from a RaycastHit.
+        /// Calls proper function depending if layer is a Quad or a Cylinder as the calculations vary.
         /// </summary>
-        /// <param name="hit">The hit against the composition layer</param>
+        /// <param name="raycastHit">The hit position against the composition layer</param>
+        /// <param name="layerUIScale">The active LayerUIScale component for coordinate mapping</param>
         /// <returns>The location on the canvas where the ray should hit</returns>
-        private Vector3 RecalculateHitToCanvas(Vector3 raycastHit)
+        private Vector3 RecalculateHitToCanvas(Vector3 raycastHit, LayerUIScale layerUIScale)
         {
-            var recalculatedHit = Vector3.zero;
+            var hasCompositionLayer = compositionLayerGameObject.TryGetComponent<CompositionLayer>(out var compositionLayer);
+            if (!hasCompositionLayer || compositionLayer.LayerData == null)
+                return Vector3.zero;
 
-            if (!compositionLayerGameObject.TryGetComponent<CompositionLayer>(out var compositionLayer) || compositionLayer.LayerData == null)
-                return recalculatedHit;
-
-            switch (compositionLayer.LayerData)
+            return compositionLayer.LayerData switch
             {
-                case QuadLayerData quadLayerData:
-                    recalculatedHit = RecalculateHitToCanvas(raycastHit, quadLayerData);
-                    break;
-
-                case CylinderLayerData cylinderLayerData:
-                    recalculatedHit = RecalculateHitToCanvas(raycastHit, cylinderLayerData);
-                    break;
-            }
-
-            return recalculatedHit;
+                QuadLayerData quadLayerData => RecalculateHitToCanvas(raycastHit, quadLayerData, layerUIScale),
+                CylinderLayerData cylinderLayerData => RecalculateHitToCanvas(raycastHit, cylinderLayerData, layerUIScale),
+                _ => Vector3.zero
+            };
         }
 
         /// <summary>
@@ -90,18 +91,21 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// </summary>
         /// <param name="raycastHit">The hit position against the composition layer</param>
         /// <param name="quadLayerData">The hit layer</param>
+        /// <param name="layerUIScale">The active LayerUIScale component for coordinate mapping</param>
         /// <returns>The location on the canvas where the ray should hit</returns>
-        private Vector3 RecalculateHitToCanvas(Vector3 raycastHit, QuadLayerData quadLayerData)
+        private Vector3 RecalculateHitToCanvas(Vector3 raycastHit, QuadLayerData quadLayerData, LayerUIScale layerUIScale)
         {
-            Vector2 quadSize = quadLayerData.GetScaledSize(compositionLayerGameObject.transform.lossyScale);
-            QuadUIScale quadUIScale = compositionLayerGameObject.GetComponent<QuadUIScale>();
+            var quadSize = quadLayerData.GetScaledSize(compositionLayerGameObject.transform.lossyScale);
+            var scale = quadLayerData.ApplyTransformScale ? compositionLayerGameObject.transform.lossyScale : Vector3.one;
+            var localHit = compositionLayerGameObject.transform.InverseTransformPoint(raycastHit);
 
-            Vector3 scale = quadLayerData.ApplyTransformScale ? compositionLayerGameObject.transform.lossyScale : Vector3.one;
-            Vector3 localHit = compositionLayerGameObject.transform.InverseTransformPoint(raycastHit);
-            Vector2 localHitPosition = new Vector2((-localHit.x) / (quadSize.x * 0.5f) / quadUIScale.WidthScale,
-                                                (-localHit.y) / (quadSize.y * 0.5f) / quadUIScale.HeightScale);
+            var localX = -localHit.x / (quadSize.x * 0.5f) / layerUIScale.WidthScale;
+            var localY = -localHit.y / (quadSize.y * 0.5f) / layerUIScale.HeightScale;
+            var localHitPosition = new Vector2(localX, localY);
 
-            var canvasHitPosition = new Vector3(localHitPosition.x * canvasRectTransform.rect.x * scale.x, localHitPosition.y * canvasRectTransform.rect.y * scale.y, 0);
+            var canvasX = localHitPosition.x * canvasRectTransform.rect.x * scale.x;
+            var canvasY = localHitPosition.y * canvasRectTransform.rect.y * scale.y;
+            var canvasHitPosition = new Vector3(canvasX, canvasY, 0);
 
             return canvasHitPosition;
         }
@@ -111,28 +115,30 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// </summary>
         /// <param name="raycastHit">The hit position against the composition layer</param>
         /// <param name="cylinderLayerData">The hit layer</param>
+        /// <param name="layerUIScale">The active LayerUIScale component for coordinate mapping</param>
         /// <returns>The location on the canvas where the ray should hit</returns>
-        private Vector3 RecalculateHitToCanvas(Vector3 raycastHit, CylinderLayerData cylinderLayerData)
+        private Vector3 RecalculateHitToCanvas(Vector3 raycastHit, CylinderLayerData cylinderLayerData, LayerUIScale layerUIScale)
         {
-            CylinderUIScale cylinderUIScale = compositionLayerGameObject.GetComponent<CylinderUIScale>();
-
-            Vector3 scale = compositionLayerGameObject.transform.lossyScale;
-            Vector3 layerHitPoint = compositionLayerGameObject.transform.worldToLocalMatrix.MultiplyPoint3x4(raycastHit);
-            Vector3 scaledHitPoint = new Vector3(layerHitPoint.x * scale.x, 0, layerHitPoint.z);
+            var scale = compositionLayerGameObject.transform.lossyScale;
+            var layerHitPoint = compositionLayerGameObject.transform.worldToLocalMatrix.MultiplyPoint3x4(raycastHit);
+            var scaledHitPoint = new Vector3(layerHitPoint.x * scale.x, 0, layerHitPoint.z);
 
             // angle between hit point and cylinder center
-            float angle = -Vector3.SignedAngle(scaledHitPoint.normalized, Vector3.forward, Vector3.up);
+            var angle = -Vector3.SignedAngle(scaledHitPoint.normalized, Vector3.forward, Vector3.up);
 
             // Invert the y height to be used as a scalar
-            float yHeightInverted = 1.0f / (cylinderLayerData.GetHeight() / 2.0f);
+            var yHeightInverted = 1.0f / (cylinderLayerData.GetHeight() / 2.0f);
 
             // Scale the hit point to a relative size of 1x1
-            float centralAngleHalf = cylinderLayerData.CentralAngleInDegrees / 2.0f;
-            Vector2 canvasPos = new Vector2(Remap(angle, -centralAngleHalf, centralAngleHalf, -1, 1), layerHitPoint.y * yHeightInverted);
+            var centralAngleHalf = cylinderLayerData.CentralAngleInDegrees / 2.0f;
+            var canvasPos = new Vector2(
+                Remap(angle, -centralAngleHalf, centralAngleHalf, -1, 1),
+                layerHitPoint.y * yHeightInverted);
 
             // Scale the hit point on the composition layer to the world space canvas
-            var hitPosition = new Vector2(canvasPos.x * canvasRectTransform.sizeDelta.x / 2.0f / cylinderUIScale.WidthScale,
-                                            canvasPos.y * canvasRectTransform.sizeDelta.y / 2.0f / cylinderUIScale.HeightScale);
+            var hitX = canvasPos.x * canvasRectTransform.sizeDelta.x / 2.0f / layerUIScale.WidthScale;
+            var hitY = canvasPos.y * canvasRectTransform.sizeDelta.y / 2.0f / layerUIScale.HeightScale;
+            var hitPosition = new Vector2(hitX, hitY);
             var canvasHitPosition = new Vector3(hitPosition.x * (1 / scale.x), hitPosition.y, 0);
 
             return canvasHitPosition;

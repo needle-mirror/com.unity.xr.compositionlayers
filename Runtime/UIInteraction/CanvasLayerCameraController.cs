@@ -1,14 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction
 {
-    class CanvasLayerCameraController : IDisposable
+    partial class CanvasLayerCameraController : IDisposable
     {
         // The cameras cached that we manage
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static readonly List<Camera> s_ConfiguredCameras = new();
 
         public GameObject canvasToManage { get; set; }
@@ -65,7 +70,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         public static void RemoveObjectFromAllCameras(GameObject objectToCull)
         {
             // The copied list will contain the same object references as original list.
-            var listCopy = s_ConfiguredCameras.ToList();
+            var listCopy = new List<Camera>(s_ConfiguredCameras);
             foreach (var cam in listCopy)
             {
                 if (cam == null)

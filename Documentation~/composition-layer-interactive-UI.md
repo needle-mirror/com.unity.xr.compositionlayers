@@ -61,6 +61,18 @@ To make the Composition Layer interactable, there is a collider inside the Compo
 > Because Composition Layer UI uses User Layers for culling cameras and masking events, and since there are a limited number of User Layers per project (27), it is important that you limit the number of Composition Layer UIs you create and reuse them as much as possible.
 
 
+## Control UI resolution
+
+A Composition Layer UI's resolution and its physical size in world space are independent of each other, and are controlled by different properties. The resolution is determined by the **Width** and **Height** of the Canvas. The physical size is determined by the Composition Layer shape: the Quad **Size**, or the Cylinder **Radius** and **Height**. If **Apply Transform Scale** is enabled on the layer, the layer GameObject's Transform Scale is also applied to the physical size.
+
+Because these properties are separate, changing the Canvas width and height does not change the physical size of the panel, and changing the layer shape does not change the resolution. The Canvas Transform Scale affects neither the resolution nor the physical size.
+
+The render texture is created at a 1:1 pixel ratio with the Canvas, so a Canvas that is `1024 x 768` produces a `1024 x 768` texture. The current resolution is displayed on the **Interactable UI Mirror** component in the **Inspector**, so you can confirm what is being generated.
+
+> [!TIP]
+> To make a UI sharper, increase the Canvas width and height. Because resolution is independent of physical size, the panel stays exactly the same size in the world.
+
+
 ## Working with XRI ##
 
 By default Composition Layer UI works with the XR Interaction Toolkit. Simply import the XRI package into your project, and make use of any of the XR Rigs that are available through XRI, and you will be able to interact with Composition Layer UIs.

@@ -4,6 +4,9 @@ using Unity.XR.CoreUtils;
 using Unity.XR.CompositionLayers.Layers;
 using UnityEngine;
 using UnityEngine.XR;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Services
 {
@@ -12,11 +15,26 @@ namespace Unity.XR.CompositionLayers.Services
     /// </summary>
     public static class CompositionLayerUtils
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static readonly Dictionary<string, LayerDataDescriptor> k_LayerDescriptors = new Dictionary<string, LayerDataDescriptor>();
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static Action<CompositionLayer, int> SetOrderValueInEditor;
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static UserLayerCache UserLayers;
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static readonly List<Type> k_LayerDataTypes = new List<Type>();
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static readonly List<XRDisplaySubsystem> k_DisplaySubsystems = new List<XRDisplaySubsystem>();
 
         static CompositionLayerUtils()
@@ -42,7 +60,7 @@ namespace Unity.XR.CompositionLayers.Services
                     var supportTransform = hasCompAttr && compAttr.SupportTransform;
                     var suggestedExtenstionTypes = hasCompAttr ? compAttr.SuggestedExtenstionTypes : Type.EmptyTypes;
 
-                    var ld = new LayerDataDescriptor(
+                    var layerDataDescriptor = new LayerDataDescriptor(
                         provider,
                         name,
                         layerDataType.FullName,
@@ -55,10 +73,10 @@ namespace Unity.XR.CompositionLayers.Services
                         layerDataType,
                         suggestedExtenstionTypes);
 
-                    if (k_LayerDescriptors.ContainsKey(ld.TypeFullName))
-                        throw new ArgumentException($"Layer Data already exists with Id of {ld.TypeFullName}");
+                    if (k_LayerDescriptors.ContainsKey(layerDataDescriptor.TypeFullName))
+                        throw new ArgumentException($"Layer Data already exists with Id of {layerDataDescriptor.TypeFullName}");
 
-                    k_LayerDescriptors.Add(ld.TypeFullName, ld);
+                    k_LayerDescriptors.Add(layerDataDescriptor.TypeFullName, layerDataDescriptor);
                 }
             }
         }
@@ -273,8 +291,8 @@ namespace Unity.XR.CompositionLayers.Services
         /// <summary>
         /// Tries to swap the <see cref="CompositionLayer.Order"/> values of <paramref name="lhl"/> and <paramref name="rhl"/>.
         /// </summary>
-        /// <param name="lhl">Left hand <see cref="CompositionLayer"/> to swap the order of.</param>
-        /// <param name="rhl">Right hand <see cref="CompositionLayer"/> to swap the order of.</param>
+        /// <param name="lhl">The <see cref="CompositionLayer"/> to swap the order of.</param>
+        /// <param name="rhl">The <see cref="CompositionLayer"/> to swap the order with.</param>
         /// <returns><c>true</c> if the method was able to swap the <paramref name="lhl"/> and <paramref name="rhl"/>
         /// <see cref="CompositionLayer"/>.
         ///
@@ -299,18 +317,18 @@ namespace Unity.XR.CompositionLayers.Services
             if (!layerManager.OccupiedLayers.ContainsValue(lhl) || !layerManager.OccupiedLayers.ContainsValue(rhl))
                 return false;
 
-            var lhlOrder = lhl.Order;
-            var rhlOrder = rhl.Order;
-            layerManager.OccupiedLayers.TryGetValue(lhlOrder, out var lho);
-            layerManager.OccupiedLayers.TryGetValue(rhlOrder, out var rho);
-            if ((lho != null && lho != lhl) || (rho != null && rho != rhl))
+            var layerOrder = lhl.Order;
+            var otherLayerOrder = rhl.Order;
+            layerManager.OccupiedLayers.TryGetValue(layerOrder, out var layerOccupant);
+            layerManager.OccupiedLayers.TryGetValue(otherLayerOrder, out var otherLayerOccupant);
+            if ((layerOccupant != null && layerOccupant != lhl) || (otherLayerOccupant != null && otherLayerOccupant != rhl))
                 return false;
 
-            layerManager.OccupiedLayers.Remove(lhlOrder);
-            layerManager.OccupiedLayers.Remove(rhlOrder);
+            layerManager.OccupiedLayers.Remove(layerOrder);
+            layerManager.OccupiedLayers.Remove(otherLayerOrder);
 
-            lhl.Order = rhlOrder;
-            rhl.Order = lhlOrder;
+            lhl.Order = otherLayerOrder;
+            rhl.Order = layerOrder;
             CompositionLayerManager.OccupiedLayersUpdated?.Invoke();
             return true;
         }

@@ -2,30 +2,19 @@
 uid: xr-layers-setup
 ---
 
-# Project setup
+# Get started
 
-To set up a project to use Composition Layers:
+Get started with the Composition Layers package.
 
-1. Create a Unity project that satisfies the [Prerequisites](#prerequisites).
-2. [Install](xref:xr-layers-install) XR Composition Layers and any additional, required packages.
-3. Adjust the project's [settings](xref:xr-layers-settings).
-
-For more information, refer to the following topics:
+The following topics outline how to install the Composition Layers project and configure a project to use Composition Layers:
 
 | Topic | Description |
 | :---- | :---------- |
-| [Install XR Composition Layers](xref:xr-layers-install) | How to install the package. |
-| [Settings](xref:xr-layers-settings) | Describes the project-level settings that affect Composition Layers. |
+| [Install XR Composition Layers](xref:xr-layers-install) | Install the XR Composition Layers package. |
+| [Set up a Composition Layers project](xref:xr-layers-configure-project) | Understand the requirements for Composition Layers and create a project that uses Composition Layers. |
+| [Configure settings](xref:xr-layers-settings) | Configure project-level settings that affect Composition Layers. |
 
-## Prerequisites
+## Additional resources
 
-In order to use XR Composition Layers, the project must meet the following requirements:
-
-* Uses a [compatible version](xref:xr-layers-install#editor-compatibility) of the Unity Editor.
-* Configured for XR as described in [XR Project setup](xref:configuring-project-for-xr).
-* Uses a [compatible provider plug-in package](xref:xr-layers-install#required-packages).
-* Uses either the built-in rendering pipeline or the Universal Rendering Pipeline (URP).
-
-> [!IMPORTANT]
-> In Unity 6.5 and newer, the Built-In Render Pipeline is deprecated and will be made obsolete in a future release. For more information, refer to [Migrating from the Built-In Render Pipeline to URP](https://docs.unity3d.com/6000.5/Documentation/Manual/urp/upgrading-from-birp.html) and [Render pipeline feature comparison](https://docs.unity3d.com/6000.5/Documentation/Manual/render-pipelines-feature-comparison.html).
-
+* [Composition layers overview](xref:xr-layer-overview)
+* [Use Composition Layers](xref:xr-layers-using)

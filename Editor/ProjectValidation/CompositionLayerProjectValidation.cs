@@ -1,3 +1,6 @@
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
@@ -10,16 +13,19 @@ using Unity.XR.CompositionLayers.Emulation;
 
 namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 {
-    public static class CompositionLayerProjectValidation
+    public static partial class CompositionLayerProjectValidation
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         private static readonly CompositionLayerBuildValidationRule[] BuiltinValidationRules =
         {
             new CompositionLayerBuildValidationRule
             {
-                Message = "OpenXR Plugin 1.18.0-pre.1 or later is recommended for full feature support. Minimum version required is 1.12.0-exp.1 for the composition layers runtime.",
+                Message = "OpenXR Plugin 1.19.0-pre.2 or later is recommended for full feature support. Minimum version required is 1.12.0-exp.1 for the composition layers runtime.",
                 CheckPredicate = () =>
                 {
-#if UNITY_XR_OPENXR_COMPLAYER
+#if XR_OPENXR_1_12_0_EXP_1_OR_NEWER
                     return true;
 #else
                     return false;
@@ -39,7 +45,10 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 #endif
         };
 
-        private static readonly List<CompositionLayerBuildValidationRule> CachedValidationList = new List<CompositionLayerBuildValidationRule>(BuiltinValidationRules.Length);
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
+        private static List<CompositionLayerBuildValidationRule> CachedValidationList = new List<CompositionLayerBuildValidationRule>(BuiltinValidationRules.Length);
 
 
         /// <summary>

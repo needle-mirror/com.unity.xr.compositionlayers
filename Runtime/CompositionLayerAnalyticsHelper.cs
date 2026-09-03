@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
@@ -7,6 +6,9 @@ using UnityEngine.SceneManagement;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CompositionLayers.Extensions;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -17,6 +19,9 @@ namespace Unity.XR.CompositionLayers
 {
     internal partial class CompositionLayerAnalyticsHelper
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static readonly Type k_UIMirrorComponentType = System.Reflection.Assembly.Load("Unity.XR.CompositionLayers.UIInteraction").GetType("Unity.XR.CompositionLayers.UIInteraction.InteractableUIMirror");
         /// <summary>
         /// Reference to all the Layer Types and their usage in all scenes created in the project.
@@ -25,6 +30,9 @@ namespace Unity.XR.CompositionLayers
         {
             get => m_layerTypesUsage;
         }
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         private static Dictionary<string, int> m_layerTypesUsage = new Dictionary<string, int>();
         /// <summary>
         /// Tracks the number of ColorScaleAndBias components in the active scene
@@ -33,6 +41,9 @@ namespace Unity.XR.CompositionLayers
         {
             get => m_totalLayerTypesUsage;
         }
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         private static int m_totalLayerTypesUsage = 0;
         /// <summary>
         /// Tracks the number of ColorScaleAndBias components in the active scene
@@ -41,6 +52,9 @@ namespace Unity.XR.CompositionLayers
         {
             get => m_colorScaleAndBiasExtensionsUsage;
         }
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         private static int m_colorScaleAndBiasExtensionsUsage = 0;
 
         /// <summary>
@@ -50,6 +64,9 @@ namespace Unity.XR.CompositionLayers
         {
             get => m_isEnabledSplashScreen;
         }
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         private static bool m_isEnabledSplashScreen = false;
 
         /// <summary>
@@ -64,10 +81,12 @@ namespace Unity.XR.CompositionLayers
 
 #if UNITY_EDITOR
             // Retrieve all scenes included in the build
-            var scenePaths = EditorBuildSettings.scenes
-                .Where(scene => scene.enabled)
-                .Select(scene => scene.path)
-                .ToArray();
+            var scenePaths = new List<string>(EditorBuildSettings.scenes.Length);
+            foreach (var scene in EditorBuildSettings.scenes)
+            {
+                if (scene.enabled)
+                    scenePaths.Add(scene.path);
+            }
 
             foreach (var scenePath in scenePaths)
             {
@@ -75,7 +94,11 @@ namespace Unity.XR.CompositionLayers
                 ProcessSceneLayerTypesUsage();
             }
 #endif
-            m_totalLayerTypesUsage = m_layerTypesUsage.Values.Sum();
+            foreach (var layerTypeUsage in m_layerTypesUsage.Values)
+            {
+                m_totalLayerTypesUsage += layerTypeUsage;
+            }
+
             m_isEnabledSplashScreen = CompositionLayersRuntimeSettings.Instance.EnableSplashScreen;
         }
 
@@ -101,7 +124,7 @@ namespace Unity.XR.CompositionLayers
                 var extensions = layer.Extensions;
 
                 // To prevent countinug DefaultLayers automatically generated in each new scene.
-                if ((layerDataType == typeof(DefaultLayerData)) && layer.hideFlags.HasFlag(HideFlags.HideAndDontSave))
+                if ((layerDataType == typeof(DefaultLayerData)) && layer.hideFlags.HasFlag(DefaultLayerData.DefaultLayerHideFlags))
                 { continue; }
 
                 if ((layerDataType == typeof(QuadLayerData) || layerDataType == typeof(CylinderLayerData)))
@@ -113,9 +136,16 @@ namespace Unity.XR.CompositionLayers
                     }
 
                     // Check for AndroidSurface Texture
-                    var texturesExtension =
-                        extensions.FirstOrDefault(ext => ext.GetType() == typeof(TexturesExtension)) as
-                            TexturesExtension;
+                    TexturesExtension texturesExtension = null;
+                    foreach (var extension in extensions)
+                    {
+                        if (extension.GetType() == typeof(TexturesExtension))
+                        {
+                            texturesExtension = extension as TexturesExtension;
+                            break;
+                        }
+                    }
+
                     if (texturesExtension != null && (texturesExtension.sourceTexture ==
                                                       TexturesExtension.SourceTextureEnum.AndroidSurface))
                     {
@@ -123,9 +153,13 @@ namespace Unity.XR.CompositionLayers
                     }
                 }
 
-                if (extensions.Any(ext => ext.GetType() == typeof(ColorScaleBiasExtension)))
+                foreach (var extension in extensions)
                 {
-                    m_colorScaleAndBiasExtensionsUsage++;
+                    if (extension.GetType() == typeof(ColorScaleBiasExtension))
+                    {
+                        m_colorScaleAndBiasExtensionsUsage++;
+                        break;
+                    }
                 }
 
                 if (m_layerTypesUsage.ContainsKey(layerTypeName))

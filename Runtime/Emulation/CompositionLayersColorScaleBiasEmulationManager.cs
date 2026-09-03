@@ -6,6 +6,9 @@ using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CompositionLayers.Emulation;
 using Unity.XR.CompositionLayers.Extensions;
 using UnityEngine.XR.CompositionLayers.Rendering.Internals;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -13,9 +16,15 @@ using UnityEditor;
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
-    static class CompositionLayersColorScaleBiasEmulationManager
+    static partial class CompositionLayersColorScaleBiasEmulationManager
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static Camera s_MainCamera;
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static bool s_EmulationEnabled; // Tracks whether emulation is enabled.
 
 #if UNITY_EDITOR

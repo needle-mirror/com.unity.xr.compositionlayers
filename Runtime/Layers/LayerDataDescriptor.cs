@@ -1,4 +1,7 @@
 using System;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Layers
 {
@@ -40,6 +43,9 @@ namespace Unity.XR.CompositionLayers.Layers
         /// <summary>Suggested extension types to use with the <see cref="LayerData"/> on the <see cref="CompositionLayer"/>.</summary>
         public readonly Type[] SuggestedExtensions;
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static readonly LayerDataDescriptor k_Empty = new("", "", "", "", "", "", "", true, false, null, new Type[] { });
 
         /// <summary>

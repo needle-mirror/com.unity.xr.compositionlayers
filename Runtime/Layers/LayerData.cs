@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using UnityEngine;
 
 namespace Unity.XR.CompositionLayers.Layers
@@ -51,12 +50,16 @@ namespace Unity.XR.CompositionLayers.Layers
             get
             {
                 var supportedBlendTypes = Services.PlatformManager.ActivePlatformProvider.SupportedBlendTypes;
-                if (supportedBlendTypes != null && supportedBlendTypes.Length > 0 && !supportedBlendTypes.Contains(m_BlendType))
+                if (supportedBlendTypes == null || supportedBlendTypes.Length == 0)
+                    return m_BlendType;
+
+                foreach (var supportedBlendType in supportedBlendTypes)
                 {
-                    return supportedBlendTypes[0]; // Fallback to supported 1st blend type.
+                    if (supportedBlendType == m_BlendType)
+                        return m_BlendType;
                 }
 
-                return m_BlendType;
+                return supportedBlendTypes[0]; // Fallback to supported 1st blend type.
             }
 
             set => m_BlendType = UpdateValue(m_BlendType, value);

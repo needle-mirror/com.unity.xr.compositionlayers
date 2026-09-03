@@ -31,7 +31,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
         RenderTexture m_emulationRightEyeTexture;
         bool exitingPlayMode;
 
-#if !UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if !UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
         // Caches a command buffer to use during play mode.
         CommandBuffer m_playModeCommandBuffer = new CommandBuffer();
         int m_cachedLayer = -1;
@@ -310,7 +310,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 return;
 
             // Unity 6000+ uses this path when on URP.
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
 
             if (renderContext.m_CommandBuffer != null)
                 rig.ClearAndAddCommand(renderContext.m_CommandBuffer);
@@ -330,7 +330,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
         void SetCommandBufferToPlayModeBuffer(RenderContext renderContext = default)
         {
             // Unity 6000+ uses this path when on URP.
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
             if (renderContext.m_CommandBuffer != null)
                 base.AddCommands(renderContext.m_CommandBuffer, new CommandArgs { IsSceneView = false });
 

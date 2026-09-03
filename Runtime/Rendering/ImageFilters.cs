@@ -3,13 +3,16 @@ using UnityEngine.XR;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
 using System;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Rendering
 {
     /// <summary>
     /// Provides image filtering and blitting functionalities for composition layers in XR applications.
     /// </summary>
-    public static class ImageFilters
+    public static partial class ImageFilters
     {
         /// <summary>
         /// Defines the alpha blending modes.
@@ -320,9 +323,21 @@ namespace Unity.XR.CompositionLayers.Rendering
 
         const string ShaderName = "Unlit/XRCompositionLayers/BlitCopyHDR";
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static Material s_Material = null;
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static MaterialPropertyBlock s_MaterialProperty = new MaterialPropertyBlock();
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static CommandBuffer s_CommandBuffer = null;
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static int s_BatchingDepth = 0;
 
         static readonly int k_MainTex = Shader.PropertyToID("_MainTex");
@@ -661,6 +676,9 @@ namespace Unity.XR.CompositionLayers.Rendering
         }
 
 #if UNITY_EDITOR
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static RenderTexture s_CachedTempRenderTexture;
 
         static RenderTexture GetTempRenderTexture(int width, int height)

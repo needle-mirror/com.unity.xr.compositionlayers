@@ -1,9 +1,11 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using Unity.XR.CompositionLayers.Services;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -17,7 +19,7 @@ using UnityEngine.Analytics;
 
 namespace Unity.XR.CompositionLayers
 {
-    internal static class CompositionLayerAnalytics
+    internal static partial class CompositionLayerAnalytics
     {
         private const int kMaxEventsPerHour = 1000;
         private const int kMaxNumberOfElements = 1000;
@@ -25,6 +27,9 @@ namespace Unity.XR.CompositionLayers
         private const string kEventUsageMetrics = "compositionlayers_usage";
 
 #if ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         private static bool s_Initialized = false;
 #endif
         [Serializable]
@@ -98,11 +103,15 @@ namespace Unity.XR.CompositionLayers
         private static UsageMetricsEvent GatherUsageMetrics() {
             CompositionLayerAnalyticsHelper.ProcessCompositionLayersAnalyticsData();
 
+            var layerTypesUsage = new List<LayerTypeUsage>(CompositionLayerAnalyticsHelper.LayerTypesUsage.Count);
+            foreach (var layerTypeUsage in CompositionLayerAnalyticsHelper.LayerTypesUsage)
+            {
+                layerTypesUsage.Add(new LayerTypeUsage { LayerTypeName = layerTypeUsage.Key, UsageCount = layerTypeUsage.Value });
+            }
+
             return new UsageMetricsEvent
             {
-                layerTypesUsage = CompositionLayerAnalyticsHelper.LayerTypesUsage
-                    .Select(kvp => new LayerTypeUsage { LayerTypeName = kvp.Key, UsageCount = kvp.Value })
-                    .ToList(),
+                layerTypesUsage = layerTypesUsage,
                 compositionLayersCreated = CompositionLayerAnalyticsHelper.TotalLayerTypesUsage,
                 colorScaleAndBiasComponentsCreated = CompositionLayerAnalyticsHelper.ColorScaleAndBiasExtensionsUsage,
                 splashScreenCreated = CompositionLayerAnalyticsHelper.IsEnabledSplashScreen,

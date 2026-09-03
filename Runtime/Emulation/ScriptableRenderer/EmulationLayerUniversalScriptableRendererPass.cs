@@ -1,8 +1,11 @@
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
 using System.Collections.Generic;
 using UnityEngine.Rendering.RenderGraphModule;
 #endif
@@ -10,12 +13,12 @@ using UnityEngine.Rendering.Universal;
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
-    public class EmulationLayerUniversalScriptableRendererPass : ScriptableRenderPass
+    public partial class EmulationLayerUniversalScriptableRendererPass : ScriptableRenderPass
     {
         const RenderPassEvent UnderlayRenderPassEvent = RenderPassEvent.BeforeRenderingGbuffer;
         const RenderPassEvent OverlayRenderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
         ProfilingSampler m_ProfilingSampler;
         readonly Dictionary<RenderPassEvent, string> RenderPassNames = new Dictionary<RenderPassEvent, string>()
         {
@@ -32,7 +35,7 @@ namespace Unity.XR.CompositionLayers.Emulation
         public EmulationLayerUniversalScriptableRendererPass(RenderPassEvent renderPassEvent)
         {
             this.renderPassEvent = renderPassEvent;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
             m_ProfilingSampler = new ProfilingSampler(RenderPassNames[renderPassEvent]);
 #endif
         }
@@ -62,7 +65,7 @@ namespace Unity.XR.CompositionLayers.Emulation
 #pragma warning restore CS0114
 #endif
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
         // 17.0.0 or newer
         static void ExecutePass(PassData data, RasterGraphContext rgContext)
         {
@@ -92,9 +95,18 @@ namespace Unity.XR.CompositionLayers.Emulation
         }
 #endif
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static EmulationLayerUniversalScriptableRendererPass s_UnderlayPass;
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static EmulationLayerUniversalScriptableRendererPass s_OverlayPass;
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static bool s_InjectPassRegistered;
 
         static bool IsOverlay(RenderPassEvent renderPassEvent) => renderPassEvent == OverlayRenderPassEvent;

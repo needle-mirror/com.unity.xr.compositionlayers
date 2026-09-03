@@ -4,20 +4,26 @@ using UnityEditor.PackageManager;
 using System;
 using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CoreUtils.Editor;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 {
     /// <summary>
     /// Project validation rule class for composition layer package.
     /// </summary>
-    public class CompositionLayerProjectValidationRuleSetup
+    public partial class CompositionLayerProjectValidationRuleSetup
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static BuildTargetGroup[] s_BuildTargetGroups =
             ((BuildTargetGroup[])Enum.GetValues(typeof(BuildTargetGroup))).Distinct().ToArray();
 
         internal const string CompositionLayersProjectValidationSettingsPath = "Project/XR Plug-in Management/Project Validation";
 
-        internal static string PackageId = "com.unity.xr.compositionlayers";
+        internal static readonly string PackageId = "com.unity.xr.compositionlayers";
 
         [InitializeOnLoadMethod]
         static void CompositionLayersProjectValidationCheck()

@@ -1,16 +1,18 @@
 using System;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Unity.XR.CompositionLayers.Extensions;
+using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Provider;
 using Unity.XR.CompositionLayers.Services;
 using UnityEngine;
-using UnityEngine.TestTools;
 using LayerInfo = Unity.XR.CompositionLayers.Services.CompositionLayerManager.LayerInfo;
 
 using UnityObject = UnityEngine.Object;
 
 namespace Unity.XR.CompositionLayers.Tests
 {
+    // Implements ILayerProvider so testing enviorment pretends to be a platform.
     class CompositionLayerManagerTestBase : ILayerProvider
     {
         protected bool hasCreatedLayers;
@@ -22,6 +24,11 @@ namespace Unity.XR.CompositionLayers.Tests
         protected List<int> lastRemovedLayers = new();
         protected List<LayerInfo> lastModifiedLayers = new();
         protected List<LayerInfo> lastActiveLayers = new();
+
+        // Every layer created via the CreateActiveLayer helpers is tracked here so Teardown can destroy
+        // it even if it never became active. The CompositionLayerManager is a process-wide singleton, so
+        // any layer left in the scene leaks into the next test's OccupiedLayers/known-layers state.
+        protected readonly List<CompositionLayer> m_TrackedLayers = new();
 
         bool m_EditorProviderState;
 
@@ -49,20 +56,36 @@ namespace Unity.XR.CompositionLayers.Tests
             lastModifiedLayers.Clear();
             lastActiveLayers.Clear();
 
-            LogAssert.ignoreFailingMessages = true;
             CompositionLayerManager.Instance?.ClearAllState();
             CompositionLayerManager.Instance?.EnsureSceneCompositionManager();
         }
 
         protected virtual void Teardown()
         {
-            foreach (var layer in lastActiveLayers)
+            foreach (var layer in m_TrackedLayers)
             {
-                if (layer.Layer)
-                    UnityObject.Destroy(layer.Layer.gameObject);
+                if (layer)
+                    UnityObject.DestroyImmediate(layer.gameObject);
             }
+            m_TrackedLayers.Clear();
 
-            CompositionLayerManager.Instance?.ClearAllState();
+            // Reset the manager, then immediately destroy every CompositionLayer still in the scene,
+            // including the hidden auto-created "Default Scene Layer". In play mode StopCompositionLayerManager
+            // destroys that layer with a deferred Object.Destroy, so without this immediate sweep the hidden
+            // default layers linger, accumulate into duplicates, and survive play-mode exit (HideAndDontSave).
+            // In edit mode a duplicate is then validated and DestroyImmediate'd from within OnEnable, which is
+            // illegal and logs "Destroying object ... is not allowed at this time" plus a duplicate-layer warning.
+            CompositionLayerManager.StopCompositionLayerManager();
+#if UNITY_6000_4_OR_NEWER
+            var sceneLayers = UnityObject.FindObjectsByType<CompositionLayer>(FindObjectsInactive.Include);
+#else
+            var sceneLayers = UnityObject.FindObjectsByType<CompositionLayer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#endif
+            foreach (var layer in sceneLayers)
+            {
+                if (layer)
+                    UnityObject.DestroyImmediate(layer.gameObject);
+            }
 
             lastCreatedLayers.Clear();
             lastRemovedLayers.Clear();
@@ -167,5 +190,54 @@ namespace Unity.XR.CompositionLayers.Tests
             index = 0;
             return false;
         }
+
+        // Creates a <see cref="CompositionLayer"/> of the layer data type,
+        // optionally assigns an order, activates it and optionally adds a suggested extensions.
+        protected CompositionLayer CreateActiveLayer(Type layerDataType = null, int? order = null, bool addSuggestedExtensions = false)
+        {
+            var layer = CreateLayerGameObject(false);
+
+            if (layerDataType != null)
+                layer.ChangeLayerDataType(layerDataType);
+
+            if (order.HasValue)
+                layer.Order = order.Value;
+
+            layer.gameObject.SetActive(true);
+
+            if (addSuggestedExtensions)
+                layer.AddSuggestedExtensions();
+
+            m_TrackedLayers.Add(layer); // Tracked for Teardown.
+            return layer;
+        }
+
+        protected CompositionLayer CreateActiveLayer<T>(bool addSuggestedExtensions = false) where T : LayerData
+            => CreateActiveLayer(typeof(T), null, addSuggestedExtensions);
+
+        // Creates an inactive <see cref="CompositionLayer"/> of the layer data type
+        // Useful for pure property/logic tests that do not need the layer to be registered with the manager.
+
+        protected CompositionLayer CreateTrackedLayer(Type layerDataType = null)
+        {
+            var layer = CreateLayerGameObject(false);
+            if (layerDataType != null)
+                layer.ChangeLayerDataType(layerDataType);
+            m_TrackedLayers.Add(layer);
+            return layer;
+        }
+
+        /// Returns the extension component on the layer, or null.
+        protected static T GetExtension<T>(CompositionLayer layer) where T : CompositionLayerExtension
+            => layer.gameObject.GetComponent<T>();
+
+        /// True if the layer was reported in the modified list during the last provider update cycle.
+        protected bool WasReportedModified(CompositionLayer layer) => FindLayer(lastModifiedLayers, layer, out _);
+
+        /// True if the layer was reported in the active list during the last provider update cycle.
+        protected bool WasReportedActive(CompositionLayer layer) => FindLayer(lastActiveLayers, layer, out _);
+
+        /// True if the layer was reported in the created list during the last provider update cycle.
+        protected bool WasReportedCreated(CompositionLayer layer) => FindLayer(lastCreatedLayers, layer, out _);
     }
 }

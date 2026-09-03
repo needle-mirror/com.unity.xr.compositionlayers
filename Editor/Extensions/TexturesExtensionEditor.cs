@@ -6,6 +6,9 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Extensions.Editor
 {
@@ -13,8 +16,11 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
     /// Custom editor for the <see cref="TexturesExtension" /> component.
     /// </summary>
     [CustomEditor(typeof(TexturesExtension))]
-    class TexturesExtensionEditor : CompositionLayerExtensionEditor
+    partial class TexturesExtensionEditor : CompositionLayerExtensionEditor
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static List<Type> s_SupportedRectLayerTypes = new List<Type>
         {
             typeof(QuadLayerData), typeof(CylinderLayerData), typeof(ProjectionLayerData)
@@ -27,6 +33,12 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
         SerializedProperty m_TargetEyeProperty;
         SerializedProperty m_CustomRectProperty;
         SerializedProperty m_CropToAspectProperty;
+#if XR_OPENXR_1_19_0_PRE_2_OR_NEWER
+        SerializedProperty m_IsDynamicProperty;
+#endif
+#if XR_OPENXR_1_19_0_PRE_2_OR_NEWER && UNITY_ENGINE_MIPMAPS_SUPPORT
+        SerializedProperty m_MipMapModeProperty;
+#endif
 
         SourceRectsDrawer m_SourceRectsDrawer;
         DestinationRectsDrawer m_DestinationRectsDrawer;
@@ -47,6 +59,12 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             m_TargetEyeProperty = serializedObject.FindProperty("m_TargetEye");
             m_CustomRectProperty = serializedObject.FindProperty("m_CustomRects");
             m_CropToAspectProperty = serializedObject.FindProperty("m_CropToAspect");
+#if XR_OPENXR_1_19_0_PRE_2_OR_NEWER
+            m_IsDynamicProperty = serializedObject.FindProperty("m_IsDynamic");
+#endif
+#if XR_OPENXR_1_19_0_PRE_2_OR_NEWER && UNITY_ENGINE_MIPMAPS_SUPPORT
+            m_MipMapModeProperty = serializedObject.FindProperty("m_MipMapMode");
+#endif
 
             m_SourceRectsDrawer = new SourceRectsDrawer(serializedObject);
             m_SourceRectsDrawer.Initialize();
@@ -154,7 +172,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
                 selectedTargetEye = (TexturesExtension.TargetEyeEnum)m_TargetEyeProperty.enumValueIndex;
             }
 
-#if XR_OPENXR_1_18_OR_GREATER
+#if XR_OPENXR_1_18_0_PRE_1_OR_NEWER
             if (selectedTargetEye == TexturesExtension.TargetEyeEnum.Left || selectedTargetEye == TexturesExtension.TargetEyeEnum.Right)
                 m_InEditorEmulationProperty.intValue = 0;
 #endif
@@ -164,7 +182,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
 
             if (selectedTargetEye == TexturesExtension.TargetEyeEnum.Both
-#if XR_OPENXR_1_18_OR_GREATER
+#if XR_OPENXR_1_18_0_PRE_1_OR_NEWER
                 || selectedTargetEye == TexturesExtension.TargetEyeEnum.Left
                 || selectedTargetEye == TexturesExtension.TargetEyeEnum.Right
 #endif
@@ -248,6 +266,15 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             if(layerDataType != typeof(CubeProjectionLayerData) && layerDataType != typeof(EquirectMeshLayerData))
                 EditorGUILayout.PropertyField(m_CustomRectProperty);
 
+#if XR_OPENXR_1_19_0_PRE_2_OR_NEWER
+            EditorGUILayout.PropertyField(m_IsDynamicProperty, new GUIContent("Dynamic Texture"));
+#endif
+
+#if XR_OPENXR_1_19_0_PRE_2_OR_NEWER && UNITY_ENGINE_MIPMAPS_SUPPORT
+            if (HasMipChain(m_LeftTextureProperty) || HasMipChain(m_RightTextureProperty))
+                EditorGUILayout.PropertyField(m_MipMapModeProperty, new GUIContent("Mip Mode"));
+#endif
+
             if (EditorGUI.EndChangeCheck())
             {
                 serializedObject.ApplyModifiedProperties();
@@ -272,6 +299,11 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
 
             EditorGUILayout.HelpBox($"{layerDataName} type may not support the use of Custom Rects.", MessageType.Info);
         }
+
+#if XR_OPENXR_1_19_0_PRE_2_OR_NEWER && UNITY_ENGINE_MIPMAPS_SUPPORT
+        static bool HasMipChain(SerializedProperty textureProperty) =>
+            textureProperty.objectReferenceValue is Texture texture && texture.mipmapCount > 1;
+#endif
 
         private bool IsValidTexture(Texture texture)
         {

@@ -1,8 +1,7 @@
 using System;
-using System.Collections;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CompositionLayers.Tests;
@@ -12,70 +11,97 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
 {
     class TexturesExtensionTests : CompositionLayerManagerTestBase
     {
-        [UnityTest]
-        public IEnumerator TexturesExtensionReportsEyeModification()
+        [Test]
+        public async Task TexturesExtensionReportsEyeModification()
         {
-            LogAssert.ignoreFailingMessages = true;
             var layer = CreateLayerGameObject();
             layer.ChangeLayerDataType(typeof(QuadLayerData));
             layer.gameObject.SetActive(true);
 
             layer.AddSuggestedExtensions();
 
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
 
             var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
             Assert.IsNotNull(textureExt);
 
             textureExt.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsTrue(hasModifiedLayers);
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsFalse(hasModifiedLayers);
 
             textureExt.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsFalse(hasModifiedLayers);
-            LogAssert.ignoreFailingMessages = false;
-
         }
 
-        [UnityTest]
-        public IEnumerator TexturesExtensionReportsEyeTextureModification()
+        [Test]
+        public async Task TexturesExtensionReportsEyeTextureModification()
         {
-            LogAssert.ignoreFailingMessages = true;
             var layer = CreateLayerGameObject();
             layer.ChangeLayerDataType(typeof(QuadLayerData));
             layer.gameObject.SetActive(true);
 
             layer.AddSuggestedExtensions();
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
 
             var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
             Assert.IsNotNull(textureExt);
 
             textureExt.LeftTexture = Texture2D.whiteTexture;
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsTrue(hasModifiedLayers);
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsFalse(hasModifiedLayers);
 
             textureExt.LeftTexture = Texture2D.whiteTexture;
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsFalse(hasModifiedLayers);
 
             textureExt.LeftTexture = Texture2D.blackTexture;
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsTrue(hasModifiedLayers);
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsFalse(hasModifiedLayers);
 
             textureExt.LeftTexture = null;
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsTrue(hasModifiedLayers);
-            yield return new WaitForUpdateCall(this);
+            await new WaitForUpdateCall(this);
             Assert.IsFalse(hasModifiedLayers);
-            LogAssert.ignoreFailingMessages = false;
+        }
+
+        [Test]
+        public async Task TexturesExtensionReportsMipMapModeModification()
+        {
+            var layer = CreateLayerGameObject();
+            layer.ChangeLayerDataType(typeof(QuadLayerData));
+            layer.gameObject.SetActive(true);
+
+            layer.AddSuggestedExtensions();
+            await new WaitForUpdateCall(this);
+
+            var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
+            Assert.IsNotNull(textureExt);
+            Assert.AreEqual(TexturesExtension.MipMapModeEnum.None, textureExt.MipMapMode);
+
+            textureExt.MipMapMode = TexturesExtension.MipMapModeEnum.CopyFromSource;
+            await new WaitForUpdateCall(this);
+            Assert.IsTrue(hasModifiedLayers);
+            await new WaitForUpdateCall(this);
+            Assert.IsFalse(hasModifiedLayers);
+
+            // Setting the same value again should not report a modification.
+            textureExt.MipMapMode = TexturesExtension.MipMapModeEnum.CopyFromSource;
+            await new WaitForUpdateCall(this);
+            Assert.IsFalse(hasModifiedLayers);
+
+            textureExt.MipMapMode = TexturesExtension.MipMapModeEnum.AutoGenerate;
+            await new WaitForUpdateCall(this);
+            Assert.IsTrue(hasModifiedLayers);
+            await new WaitForUpdateCall(this);
+            Assert.IsFalse(hasModifiedLayers);
         }
     }
 }

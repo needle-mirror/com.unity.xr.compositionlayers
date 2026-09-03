@@ -27,6 +27,11 @@ namespace Unity.XR.CompositionLayers.Layers
     public class DefaultLayerData : LayerData
     {
         /// <summary>
+        /// Represents the set of hide flags assigned to the Default Scene Layer.
+        /// </summary>
+        public const HideFlags DefaultLayerHideFlags = HideFlags.HideInHierarchy | HideFlags.DontUnloadUnusedAsset | HideFlags.DontSaveInBuild;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="DefaultLayerData"/> class.
         /// </summary>
         [UnityEngine.Scripting.Preserve]
@@ -48,7 +53,7 @@ namespace Unity.XR.CompositionLayers.Layers
             var layerManager = CompositionLayerManager.Instance;
 
             // Since a user created Default Layer will exist BEFORE the manager, it is valid as long as it is not hidden.
-            if (layerManager == null && !layer.gameObject.hideFlags.HasFlag(UnityEngine.HideFlags.HideAndDontSave))
+            if (layerManager == null && (layer.gameObject.hideFlags & DefaultLayerHideFlags) == 0)
                 return true;
             // If the manager exists but no default scene layer has been set yet, allow this layer to become it.
             if (layerManager != null && layerManager.DefaultSceneCompositionLayer == null)
@@ -60,6 +65,23 @@ namespace Unity.XR.CompositionLayers.Layers
             // If the validation checks fail, we can destroy this layer and log a warning.
             // This can happen if a user force duplicates the default layer, or if a new scene is loaded with a default layer already in it
             Debug.LogWarning($"A Default Scene Layer already exists in the scene, destroying duplicate layer.");
+
+#if UNITY_EDITOR
+            // In the Editor mode UnityObjectUtils.Destroy resolves to Object.DestroyImmediate,
+            // which Unity forbids during OnEnable. Defer the destroy to the next editor tick
+            // so the duplicate is still removed outside the OnEnable callback.
+            if (!Application.isPlaying)
+            {
+                var gameObjectToDestroy = layer.gameObject;
+                UnityEditor.EditorApplication.delayCall += () =>
+                {
+                    if (gameObjectToDestroy != null)
+                        UnityObjectUtils.Destroy(gameObjectToDestroy);
+                };
+                return false;
+            }
+#endif
+            // In Play mode Object.Destroy is already deferred to end of frame, so this is safe here.
             UnityObjectUtils.Destroy(layer.gameObject);
             return false;
         }

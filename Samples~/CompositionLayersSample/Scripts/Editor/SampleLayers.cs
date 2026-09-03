@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+#if UNITY_6000_5_OR_NEWER
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 /// <summary>
 /// This script is used to ensure that the correct Projection Eye Rig layers are created and assigned to the objects in the sample scene.
@@ -16,12 +19,21 @@ public static class SampleLayers
 {
     const string k_ScenePath = "Sample Composition Layers Scene/Scenes/SampleCompositionLayersScene.unity";
 
+#if UNITY_6000_5_OR_NEWER
+    [NoAutoStaticsCleanup]
+#endif
     static (string, int)[] s_CreatedLayers =
     {
         ("Midground Objects Layer", 8)
     };
 
+#if UNITY_6000_5_OR_NEWER
+    [NoAutoStaticsCleanup]
+#endif
     static SerializedObject s_TagManager;
+#if UNITY_6000_5_OR_NEWER
+    [NoAutoStaticsCleanup]
+#endif
     static SerializedProperty s_Layers;
 
     static SampleLayers()

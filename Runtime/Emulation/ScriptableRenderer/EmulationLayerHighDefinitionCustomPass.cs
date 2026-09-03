@@ -2,6 +2,9 @@
 using UnityEngine.Rendering.HighDefinition;
 using System.Collections.Generic;
 using UnityEngine;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
@@ -38,8 +41,11 @@ namespace Unity.XR.CompositionLayers.Emulation
     }
 
     [ExecuteInEditMode]
-    internal class EmulationLayerHighDefinitionVolumeManager : MonoBehaviour
+    internal partial class EmulationLayerHighDefinitionVolumeManager : MonoBehaviour
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static EmulationLayerHighDefinitionVolumeManager _instance = null;
 
         static void InternalDestroy(Object obj)

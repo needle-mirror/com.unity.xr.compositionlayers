@@ -7,6 +7,9 @@ using Unity.XR.CompositionLayers.Emulation.Implementations;
 using System.Linq;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Services;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 #if UNITY_EDITOR
 using UnityEditor.Build;
@@ -23,11 +26,14 @@ namespace Unity.XR.CompositionLayers.Emulation
     /// This class used to emulate a Projection Rig CompositionLayer inside of all scene view windows.
     /// </summary>
     [ExecuteInEditMode]
-    internal class SceneEmulatedProjectionRig : MonoBehaviour
+    internal partial class SceneEmulatedProjectionRig : MonoBehaviour
     {
         public int callbackOrder => 0;
 
         public CommandBuffer CommandBufffer => m_sceneViewProjector?.CommandBuffer;
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static Dictionary<Camera, Dictionary<int, SceneEmulatedProjectionRig>> cameraToRigs = new Dictionary<Camera, Dictionary<int, SceneEmulatedProjectionRig>>();
         Camera m_SceneViewCamera;
         SceneViewProjector m_sceneViewProjector;
@@ -85,7 +91,7 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         public void ClearAndAddCommand() => m_sceneViewProjector?.ClearAndAddCommand();
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
         public void ClearAndAddCommand(RasterCommandBuffer rcb) => m_sceneViewProjector?.ClearAndAddCommand(rcb);
         public void ClearAndAddCommand(CommandBuffer cb) => m_sceneViewProjector?.ClearAndAddCommand(cb);
 
@@ -289,7 +295,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                 m_commandBuffer.DrawMesh(m_sourceProjectionMesh, Matrix4x4.identity, m_sourceRenderMaterial);
             }
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
             public void ClearAndAddCommand(RasterCommandBuffer rcb)
             {
                 rcb?.DrawMesh(m_sourceProjectionMesh, Matrix4x4.identity, m_sourceRenderMaterial);

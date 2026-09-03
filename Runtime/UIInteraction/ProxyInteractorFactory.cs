@@ -4,21 +4,33 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem.XR;
 using UnityEngine.XR.Interaction.Toolkit;
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+#endif
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
 #endif
 namespace Unity.XR.CompositionLayers.UIInteraction
 {
     /// <summary>
     /// Handles creation and deletion of "ProxyInteractors", proxy controllers used for interaction with a composition layer's Canvas
     /// </summary>
-    internal class ProxyInteractorFactory
+    partial class ProxyInteractorFactory
     {
         // Name to give instantiated interactors
         const string ProxyInteractorName = "ProxyInteractor";
 
         // Dictionary of normal interactors to their proxy canvas interactors
-        private static Dictionary<IXRRayProvider, GameObject> interactorsToProxys = new Dictionary<IXRRayProvider, GameObject>();
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
+        static Dictionary<IXRRayProvider, GameObject> s_InteractorToProxy = new();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void CleanupStatics()
+        {
+            s_InteractorToProxy.Clear();
+        }
 
         /// <summary>
         /// Gets a proxy interactor based on passed proxy
@@ -27,10 +39,10 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <returns>A proxy interactor based on passed proxy</returns>
         public GameObject GetProxy(IXRRayProvider interactor)
         {
-            interactorsToProxys.TryGetValue(interactor, out var proxy);
+            s_InteractorToProxy.TryGetValue(interactor, out var proxy);
             return proxy;
         }
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0
+#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
         public bool TryCreateOrFind(IXRRayProvider interactor, Vector3 position, out IXRRayProvider proxyInteractor)
         {
             proxyInteractor = null;
@@ -41,7 +53,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             if (baseInteractor.name == ProxyInteractorName)
                 return false;
 
-            if (!interactorsToProxys.ContainsKey(interactor))
+            if (!s_InteractorToProxy.ContainsKey(interactor))
             {
                 GameObject proxyGameObject = null;
 
@@ -58,15 +70,15 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 if (proxyGameObject == null)
                     return false;
 
-                interactorsToProxys.Add(interactor, proxyGameObject);
+                s_InteractorToProxy.Add(interactor, proxyGameObject);
             }
 
-            proxyInteractor = interactorsToProxys[interactor].GetComponent<XRBaseInputInteractor>() as IXRRayProvider;
+            proxyInteractor = s_InteractorToProxy[interactor].GetComponent<XRBaseInputInteractor>() as IXRRayProvider;
             return true;
         }
 
 
-        private GameObject CreateProxy(XRRayInteractor xrRayInteractor, Vector3 position)
+        GameObject CreateProxy(XRRayInteractor xrRayInteractor, Vector3 position)
         {
             var interactorGameObject = new GameObject(ProxyInteractorName);
             interactorGameObject.transform.position = position;
@@ -87,7 +99,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         }
 
 
-        private GameObject CreateProxy(NearFarInteractor nearFarInteractor, Vector3 position)
+        GameObject CreateProxy(NearFarInteractor nearFarInteractor, Vector3 position)
         {
             var interactorGameObject = new GameObject(ProxyInteractorName);
             interactorGameObject.transform.position = position;
@@ -124,13 +136,13 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 return false;
 
 
-            if (!interactorsToProxys.ContainsKey(interactor) && rayInteractor.xrController is ActionBasedController)
+            if (!s_InteractorToProxy.ContainsKey(interactor) && rayInteractor.xrController is ActionBasedController)
             {
                 var proxyGameObject = CreateProxy(rayInteractor.xrController as ActionBasedController, position);
-                interactorsToProxys.Add(interactor, proxyGameObject);
+                s_InteractorToProxy.Add(interactor, proxyGameObject);
             }
 
-            proxyInteractor = interactorsToProxys[interactor].GetComponent<XRRayInteractor>() as IXRRayProvider;
+            proxyInteractor = s_InteractorToProxy[interactor].GetComponent<XRRayInteractor>() as IXRRayProvider;
             return true;
         }
 
@@ -140,7 +152,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <param name="actionBasedController">Interactor to base the proxy from</param>
         /// <param name="position">Position to create the proxy controller</param>
         /// <returns>The created Proxy Interactor GameObject</returns>
-        private GameObject CreateProxy(ActionBasedController actionBasedController, Vector3 position)
+        GameObject CreateProxy(ActionBasedController actionBasedController, Vector3 position)
         {
             var interactorGameObject = new GameObject(ProxyInteractorName);
             interactorGameObject.transform.position = position;

@@ -8,11 +8,14 @@ using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CompositionLayers.Services.Editor;
 using Unity.XR.CompositionLayers.Layers.Internal.Editor;
 using Button = UnityEngine.UIElements.Button;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
     [CustomEditor(typeof(CompositionLayer))]
-    class CompositionLayerEditor : UnityEditor.Editor
+    partial class CompositionLayerEditor : UnityEditor.Editor
     {
         SerializedProperty m_OrderProperty;
         SerializedProperty m_LayerDataProperty;
@@ -33,6 +36,9 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         List<PlatformLayerDataDrawer> m_PlatformLayerDataDrawers;
 
         SerializedObject m_LayerDataObject;
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static readonly List<Type> k_ExtensionTypes = new();
 
         void OnEnable()
@@ -63,10 +69,10 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             m_HelpBoxElement.style.marginRight = 0;
             m_RootElement.Add(m_HelpBoxElement);
 
-            var m_layerOrderRow = new VisualElement();
-            m_layerOrderRow.style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
+            var layerOrderRow = new VisualElement();
+            layerOrderRow.style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
 
-            m_RootElement.Add(m_layerOrderRow);
+            m_RootElement.Add(layerOrderRow);
 
             m_OrderProperty = serializedObject.FindProperty("m_Order");
             var orderElement = new IntegerField("Layer Order");
@@ -78,7 +84,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             orderElement.bindingPath = m_OrderProperty.propertyPath;
             orderElement.isDelayed = true;
             orderElement.RegisterValueChangedCallback(OnOrderChanged);
-            m_layerOrderRow.Add(orderElement);
+            layerOrderRow.Add(orderElement);
             m_RootElement.TrackPropertyValue(m_OrderProperty, OnLayerOrderChange);
 
             // Warning message for unsupported underlay on specific platforms.
@@ -89,7 +95,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             var managerButtonLabel = new Label("Manage");
             managerButtonElement.Add(managerButtonLabel);
             managerButtonElement.style.marginRight = 0;
-            m_layerOrderRow.Add(managerButtonElement);
+            layerOrderRow.Add(managerButtonElement);
 
             m_LayerDataProperty = serializedObject.FindProperty("m_LayerData");
 
@@ -343,13 +349,13 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 // Show the help Box
                 m_HelpBoxElement.style.display = DisplayStyle.Flex;
 
-                var msg = "Please select a layer type to continue.";
+                var message = "Please select a layer type to continue.";
                 if (!string.IsNullOrEmpty(fullName))
                 {
-                    msg = "Currently selected layer type is unknown. Make a new selection to override the current type.";
+                    message = "Currently selected layer type is unknown. Make a new selection to override the current type.";
                 }
 
-                m_HelpBoxElement.text = msg;
+                m_HelpBoxElement.text = message;
                 m_HelpBoxElement.messageType = HelpBoxMessageType.Info;
 
             }
@@ -396,15 +402,15 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             if (k_ExtensionTypes.Count < 1)
                 return;
 
-            var msg = "The selected layer type would like to add the following suggested component extensions to this " +
+            var message = "The selected layer type would like to add the following suggested component extensions to this " +
                 "Game Object. Would you like them to be added now?\n\n";
 
             foreach (var missingType in k_ExtensionTypes)
             {
-                msg += $"{missingType.Name}\n";
+                message += $"{missingType.Name}\n";
             }
 
-            if (EditorUtility.DisplayDialog("Suggested Layer Extensions", msg, "Yes", "No"))
+            if (EditorUtility.DisplayDialog("Suggested Layer Extensions", message, "Yes", "No"))
             {
                 Undo.IncrementCurrentGroup();
                 Undo.RecordObject(layerComponent.gameObject, "Add Suggested Layer Extensions");

@@ -31,7 +31,7 @@ How the GameObject Transform affects the final rendering of a layer depends on b
 
 
 [Composition Layer component]: xref:xr-layers-base-component
-[Color Bias and Scale extension]: xref:xr-layers-color-bias-scale
+[Color Scale and Bias extension]: xref:xr-layers-color-bias-scale
 [Source Textures extension]: xref:xr-layers-source-textures
 [Adding a composition layer]: xref:xr-layers-add-layer
 [Adding a composition layer extension]: xref:xr-layers-add-extensions

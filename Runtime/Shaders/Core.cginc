@@ -127,37 +127,27 @@
 #define COMPOSITION_LAYERS_TRANSFORM_MATRIX_TYPE_MODEL_VIEW (1)
 
 //----------------------------------------------------------------------------------------------------------------------------------
-//Original Equirect Shader code.
-//The swapchain image is mapped to the full sphere,such that the partial sphere shows only a window into the equirectangular subimage.
-inline float4 EquirectCoords(float3 pose)
-{
-    const float seam_width = 0.01;
-
-    float3 normalized = normalize(pose);
-    float theta = acos(-normalized.y);
-    float phi = atan2(pose.x, pose.z);
-
-    float seam = max(0, 1 - abs(normalized.x) / seam_width) * clamp(1 + (normalized.z) / seam_width, 0, 1);
-    float mip = -2.0 * log2(1.0 + -normalized.y * -normalized.y) - COMPOSITION_LAYERS_FOUR_PI * seam;
-
-    return float4(0.5 + phi / COMPOSITION_LAYERS_TWO_PI, theta / COMPOSITION_LAYERS_PI, 0.0, mip);
-}
-
 //Remapped Equirect Shader Code
 //The corners of the swapchain subimage are remapped so the equirectangular subimage fills entire partial sphere.
 inline float4 RemappedEquirectCoords(float3 pose, float centralHorizontalAngle, float upperVerticalAngle, float lowerVerticalAngle)
 {
     float3 p = pose;
     p = normalize(p);
-    float2 uv = float2(atan2(p.x, p.z), acos(-p.y));
+    float2 uv = float2(atan2(p.x, p.z), asin(p.y));
 
     centralHorizontalAngle *= COMPOSITION_LAYERS_FOUR_PI;
     uv.x = (uv.x + (centralHorizontalAngle * 0.5)) / centralHorizontalAngle;
 
-    lowerVerticalAngle += 0.25;
-    upperVerticalAngle += 0.25;
-    uv.y /= COMPOSITION_LAYERS_PI;
-    uv.y = (uv.y + (lowerVerticalAngle - 0.5)) / (upperVerticalAngle + lowerVerticalAngle);
+    // Reconstruct the vertical angles in radians (the C# side divided by 2π) and remap latitude linearly.
+    upperVerticalAngle *= COMPOSITION_LAYERS_TWO_PI;
+    lowerVerticalAngle *= COMPOSITION_LAYERS_TWO_PI;
+    float verticalRange = upperVerticalAngle - lowerVerticalAngle;
+
+    // upper <= lower is an empty or inverted band (undefined per spec): push coords out of range to clip it.
+    if (verticalRange <= 0.0)
+        return float4(-1.0, -1.0, 0.0, 0.0);
+
+    uv.y = (uv.y - lowerVerticalAngle) / verticalRange;
 
     return float4(uv.x, uv.y, 0.0, 0.0);
 }
@@ -240,19 +230,16 @@ inline float4 CheckCoordsRange(float4 color, float2 coords)
 #define CHECK_COORDS_RANGE(COLOR_, COORDS_) COLOR_ = CheckCoordsRange(COLOR_, COORDS_)
 
 // Check coords range for Equirect.
-inline float4 CheckCoordsRangeEquirect(float4 color, float4 coords, float centralHorizontalAngle, float lowerVerticalAngle, float upperVerticalAngle)
+// After the remap the visible window spans [0, 1] on both axes; anything outside it is discarded.
+inline float4 CheckCoordsRangeEquirect(float4 color, float4 coords)
 {
-    if (coords.x < 0.5 - centralHorizontalAngle || coords.x > 0.5 + centralHorizontalAngle
-        || coords.y < 0.25 - lowerVerticalAngle || coords.y > 0.75 + upperVerticalAngle)
+    if (coords.x < 0.0 || coords.x > 1.0 || coords.y < 0.0 || coords.y > 1.0)
         return float4(0.0, 0.0, 0.0, 0.0);
     else
         return color;
 }
 
-#define CHECK_COORDS_RANGE_EQUIRECT(COLOR_, COORDS_) COLOR_ = CheckCoordsRangeEquirect(COLOR_, COORDS_, \
-    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _centralHorizontalAngle), \
-    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lowerVerticalAngle), \
-    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _upperVerticalAngle))
+#define CHECK_COORDS_RANGE_EQUIRECT(COLOR_, COORDS_) COLOR_ = CheckCoordsRangeEquirect(COLOR_, COORDS_)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

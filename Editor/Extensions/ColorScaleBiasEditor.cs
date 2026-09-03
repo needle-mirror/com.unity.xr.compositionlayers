@@ -14,9 +14,9 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
     {
         static class Content
         {
-            internal static GUIContent scaleLabel = new("Scale");
-            internal static GUIContent biasLabel = new("Bias");
-            internal static GUIContent resetLabel = new("Reset");
+            internal static readonly GUIContent scaleLabel = new("Scale");
+            internal static readonly GUIContent biasLabel = new("Bias");
+            internal static readonly GUIContent resetLabel = new("Reset");
         }
 
         SerializedProperty m_ColorScale;

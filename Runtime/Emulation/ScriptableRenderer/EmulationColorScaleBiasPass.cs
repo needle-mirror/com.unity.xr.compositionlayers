@@ -1,3 +1,6 @@
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
 using System;
 using UnityEngine;
@@ -6,7 +9,7 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.XR.CompositionLayers.Rendering.Internals;
 using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CompositionLayers.Extensions;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.RenderGraphModule.Util;
 #endif
@@ -16,7 +19,7 @@ namespace Unity.XR.CompositionLayers.Emulation
     /// <summary>
     /// The custom render pass that applies the Color Scale and Bias effect.
     /// </summary>
-    internal class EmulationColorScaleBiasPass : ScriptableRenderPass
+    internal partial class EmulationColorScaleBiasPass : ScriptableRenderPass
     {
         const string k_PassName = "EmulatedColorScaleBiasPass";
         const string k_ShaderName = "Hidden/XRCompositionLayers/ColorScaleBias";
@@ -24,12 +27,18 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         static readonly int k_ScaleParameterName = Shader.PropertyToID("_ColorScale");
         static readonly int k_BiasParameterName = Shader.PropertyToID("_ColorBias");
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static bool s_InjectPassRegistered;
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static EmulationColorScaleBiasPass s_ColorScaleBiasPass;
 
         Material m_EmulationMaterial;
 
-#if !UNITY_6000_4_OR_NEWER && !UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if !UNITY_6000_4_OR_NEWER && !UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
         ProfilingSampler m_ProfilingSampler = new ProfilingSampler(k_PassName);
         RTHandle m_CameraColorTargetHandle;
         RTHandle m_TempRTHandle;
@@ -42,7 +51,7 @@ namespace Unity.XR.CompositionLayers.Emulation
         {
             this.renderPassEvent = renderPassEvent;
             CreateEmulationMaterial();
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
             requiresIntermediateTexture = true;
 #endif
         }
@@ -105,7 +114,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             return true;
         }
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
         /// <summary>
         /// Handles the execution of the render pass in RenderGraph mode (Unity 6.0+).
         /// </summary>
@@ -149,7 +158,7 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// <summary>
         /// Executes the render pass, applying the color scale and bias for Unity 2022.3 and earlier.
         /// </summary>
-#if !UNITY_6000_4_OR_NEWER && !UNITY_RENDER_PIPELINES_UNIVERSAL_RENDERGRAPH
+#if !UNITY_6000_4_OR_NEWER && !UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
 #pragma warning disable 0809
         [Obsolete("Execute is deprecated as of XR Composition Layers 2.2, and will be removed in Unity 6.4. At your own risk, you can set URP_COMPATIBILITY_MODE in your project's scripting defines if you require this API.")]
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)

@@ -4,6 +4,8 @@ uid: xr-layers-provider-guide
 
 # Provider implementation guide
 
+Implement Composition Layers support for a specific hardware API.
+
 This document outlines how to implement Composition Layers for a specific hardware API. You should also familiarize yourself with the topics in [Using Composition Layers] to better understand user expectations.
 
 The Composition Layer API provides a fair amount of leeway in how you implement Composition Layers for your device. You can add your own layer types and extensions as needed. When implementing the standard, Unity-defined layers and extensions, you should conform to the documented behavior to the extent possible to allow application developers to port their applications to your device with minimal effort.
@@ -150,7 +152,7 @@ using UnityEngine.XR.CompositionLayers.Provider;
 [ILayerProvider]: xref:Unity.XR.CompositionLayers.Provider.ILayerProvider
 [Inspector]: xref:UsingTheInspector
 [LateUpdate]: xref:Unity.XR.CompositionLayers.Provider.ILayerProvider.LateUpdate*
-[Layer Order window]: xref:xr-layers-using#sort-order
+[Layer Order window]: xref:xr-layers-order#sort-order
 [LayerData]: xref:Unity.XR.CompositionLayers.Layers.LayerData
 [layerProvider]: xref:Unity.XR.CompositionLayers.Services.CompositionLayerManager.LayerProvider
 [Order of execution for event functions]: xref:ExecutionOrder

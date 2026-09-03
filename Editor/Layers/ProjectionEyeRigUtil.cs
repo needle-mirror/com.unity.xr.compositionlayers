@@ -4,15 +4,21 @@ using System.IO;
 using Unity.XR.CompositionLayers;
 using Unity.XR.CompositionLayers.Extensions;
 using Unity.XR.CompositionLayers.Services;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
     /// <summary>
     /// Supports workflow for creating projection eye rig.
     /// </summary>
-    public class ProjectionEyeRigUtil : EditorWindow
+    public partial class ProjectionEyeRigUtil : EditorWindow
     {
         private string newLayerName = ""; // Stores the new layer name
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         private static GameObject projectionObj;
 
         /// <summary>

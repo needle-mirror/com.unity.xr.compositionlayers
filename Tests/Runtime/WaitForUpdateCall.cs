@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.XR.CompositionLayers.Provider;
@@ -7,10 +6,15 @@ using LayerInfo = Unity.XR.CompositionLayers.Services.CompositionLayerManager.La
 
 namespace Unity.XR.CompositionLayers.Tests
 {
-    sealed class WaitForUpdateCall : CustomYieldInstruction, ILayerProvider
+    // Awaited in [Test] async Task methods as `await new WaitForUpdateCall(this);`. Swaps itself in as
+    // the manager's ILayerProvider for exactly one update cycle, forwards that cycle's report to the
+    // wrapped context, then restores the previous provider and completes the await. Uses
+    // AwaitableCompletionSource (the Unity 6 Awaitable-based equivalent of TaskCompletionSource) so
+    // completion is signalled from the manager's LateUpdate and resumes on the main thread.
+    sealed class WaitForUpdateCall : ILayerProvider
     {
+        readonly AwaitableCompletionSource<bool> m_Completion = new();
         bool m_UpdateCalled;
-        bool m_WaitingComplete;
         ILayerProvider m_ReplacedProvider;
         ILayerProvider m_WrappedContext;
 
@@ -21,13 +25,9 @@ namespace Unity.XR.CompositionLayers.Tests
             CompositionLayerManager.Instance.LayerProvider = this;
         }
 
-        public override bool keepWaiting => !m_WaitingComplete;
+        public Awaitable<bool>.Awaiter GetAwaiter() => m_Completion.Awaitable.GetAwaiter();
 
-        public void SetInitialState(List<LayerInfo> layers)
-        {
-            m_UpdateCalled = false;
-            m_WaitingComplete = false;
-        }
+        public void SetInitialState(List<LayerInfo> layers) => m_UpdateCalled = false;
 
         public void CleanupState() { }
 
@@ -46,7 +46,7 @@ namespace Unity.XR.CompositionLayers.Tests
             if (m_UpdateCalled)
             {
                 CompositionLayerManager.Instance.LayerProvider = m_ReplacedProvider;
-                m_WaitingComplete = true;
+                m_Completion.TrySetResult(true);
             }
         }
 

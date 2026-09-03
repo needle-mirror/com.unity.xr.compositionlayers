@@ -1,13 +1,16 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Rendering.Editor
 {
     /// <summary>
     /// Helper methods for working with the graphics settings.
     /// </summary>
-    public static class GraphicsSettingsHelpers
+    public static partial class GraphicsSettingsHelpers
     {
         /// <summary>
         /// Enumerates the types of shaders used in the graphics settings.
@@ -50,6 +53,9 @@ namespace Unity.XR.CompositionLayers.Rendering.Editor
             return AddAlwaysIncludedShader(s_ShaderNames[(int)shaderType]);
         }
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static GraphicsSettings s_GraphicsSettings;
 
         static bool AddAlwaysIncludedShader(string shaderName)

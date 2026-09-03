@@ -12,6 +12,9 @@ using UnityEngine.InputSystem.XR;
 using UnityEngine.InputSystem;
 using Unity.XR.CoreUtils;
 using Unity.XR.CompositionLayers.Services.Editor;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
@@ -27,10 +30,19 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         internal const string k_UnsupportedUnderlayMessage = "Underlay isn't supported on {0}.";
         internal const string k_UnsupportedLayerTypeMessage = "This layer type isn't supported on {0}.";
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static List<string> UILayerNames = new();
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static List<string> LayerNames = new();
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static List<CompositionLayer> SortedLayers = new List<CompositionLayer>();
 
         static CompositionLayerEditorUtils()

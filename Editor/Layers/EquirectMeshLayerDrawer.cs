@@ -1,11 +1,14 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
     [CustomPropertyDrawer(typeof(EquirectMeshLayerData))]
-    class EquirectMeshLayerDrawer : LayerDataDrawer
+    partial class EquirectMeshLayerDrawer : LayerDataDrawer
     {
         class Styles
         {
@@ -38,6 +41,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         const string k_UpperVerticalAnglePropertyName = "m_UpperVerticalAngle";
         const string k_LowerVerticalAnglePropertyName = "m_LowerVerticalAngle";
         const string k_RadiusPropertyName = "m_Radius";
+        const string k_SerializedVersionPropertyName = "m_SerializedVersion";
 
         const string k_CentralHorizontalAngleName = "Central Hori. Angle";
         const string k_CentralHorizontalAngleNameRadians = k_CentralHorizontalAngleName + k_AngleRadians;
@@ -50,19 +54,28 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         const string k_UpperVerticalAngleName = "Upper Vert. Angle";
         const string k_UpperVerticalAngleNameRadians = k_UpperVerticalAngleName + k_AngleRadians;
         const string k_UpperVerticalAngleNameDegrees = k_UpperVerticalAngleName + k_AngleDegrees;
+        const string k_VerticalAngleSignToolTip = "Positive values are above the equator (toward the north pole); " +
+            "negative values are below it (toward the south pole). ";
+
         const string k_UpperVerticalAngleRadiansToolTip = "The upper vertical angle of the visible portion of the " +
-            "sphere, in the range of [-Pi/2, Pi/2]. " + DisplayAnglePreferenceToolTip;
+            "sphere, in the range of [-Pi/2, Pi/2]. " + k_VerticalAngleSignToolTip + DisplayAnglePreferenceToolTip;
         const string k_UpperVerticalAngleDegreesToolTip = "The upper vertical angle of the visible portion of the " +
-            "sphere, in the range of [-90, 90]. " + DisplayAnglePreferenceToolTip;
+            "sphere, in the range of [-90, 90]. " + k_VerticalAngleSignToolTip + DisplayAnglePreferenceToolTip;
 
         const string k_LowerVerticalAngleName = "Lower Vert. Angle";
         const string k_LowerVerticalAngleNameRadians = k_LowerVerticalAngleName + k_AngleRadians;
         const string k_LowerVerticalAngleNameDegrees = k_LowerVerticalAngleName + k_AngleDegrees;
         const string k_LowerVerticalAngleRadiansToolTip = "The lower vertical angle of the visible portion of the " +
-            "sphere, in the range of [-Pi/2, Pi/2]. " + DisplayAnglePreferenceToolTip;
+            "sphere, in the range of [-Pi/2, Pi/2]. " + k_VerticalAngleSignToolTip + DisplayAnglePreferenceToolTip;
         const string k_LowerVerticalAngleDegreesToolTip = "The lower vertical angle of the visible portion of the " +
-            "sphere, in the range of [-90, 90]. " + DisplayAnglePreferenceToolTip;
+            "sphere, in the range of [-90, 90]. " + k_VerticalAngleSignToolTip + DisplayAnglePreferenceToolTip;
 
+        const string k_UpperLowerOverlapWarning =
+            "Upper Vert. Angle should be greater than Lower Vert. Angle. The layer may not display correctly otherwise.";
+
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static Styles s_Styles;
         static Styles styles
         {
@@ -95,6 +108,10 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 {
                     var currentProperty = enumerator.Current as SerializedProperty;
                     if (currentProperty == null)
+                        continue;
+
+                    // Internal versioning field, not shown in the inspector.
+                    if (currentProperty.name == k_SerializedVersionPropertyName)
                         continue;
 
                     if (currentProperty.name is k_CentralHorizontalAnglePropertyName or k_UpperVerticalAnglePropertyName or k_LowerVerticalAnglePropertyName)
@@ -176,6 +193,9 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                         EditorGUILayout.PropertyField(currentProperty);
                     }
                 }
+
+                if (equirectMeshLayerData.UpperVerticalAngle <= equirectMeshLayerData.LowerVerticalAngle)
+                    EditorGUILayout.HelpBox(k_UpperLowerOverlapWarning, MessageType.Warning);
 
                 if (change.changed)
                     ApplyChangesWithReportStateChange(property);

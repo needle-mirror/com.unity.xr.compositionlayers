@@ -7,6 +7,9 @@ using UnityEngine.Rendering;
 using Unity.Profiling;
 using Unity.XR.CompositionLayers.Rendering;
 using Unity.XR.CompositionLayers.Emulation.Implementations;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
 using UnityEngine.Rendering.Universal;
 #endif
@@ -30,7 +33,13 @@ namespace Unity.XR.CompositionLayers.Emulation
         static readonly CameraEvent[] k_DeferredUnderlayCameraEvents = { CameraEvent.BeforeGBuffer };
         static readonly CameraEvent[] k_DeferredOverlayCameraEvents = { CameraEvent.AfterImageEffects };
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static EmulatedLayerProvider s_Instance;
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static bool s_WarnUnsupportedEmulation;
 
         Dictionary<int, EmulatedCompositionLayer> m_AllCompositionLayers = new();

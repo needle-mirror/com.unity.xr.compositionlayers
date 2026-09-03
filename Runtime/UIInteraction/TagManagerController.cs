@@ -1,3 +1,6 @@
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 #if UNITY_EDITOR
 using UnityEditor;
 
@@ -12,9 +15,15 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         const int ArrayStartIndex = 8;
 
         // TagManager asset (ProjectSettings/TagManager.asset)
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static SerializedObject s_TagManager;
 
         // Layer property in tagManager
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static SerializedProperty s_LayersProp;
 
         /// <summary>

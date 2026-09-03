@@ -16,7 +16,7 @@
         {
             "name": "com.unity.xr.openxr",
             "expression": "1.12.0-exp.1",
-            "define": "UNITY_XR_OPENXR_COMPLAYER"
+            "define": "XR_OPENXR_1_12_0_EXP_1_OR_NEWER"
         }
     ],
     "noEngineReferences": false

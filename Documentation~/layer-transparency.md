@@ -8,7 +8,7 @@ Composition layers are drawn in order from most negative to most positive. A com
 
 * [Configure the camera for transparency](#camera-transparency)
 * [Configure HDR settings](#hdr-transparency)
-* [Configure Post-processing settings](#post-processing-transparency)
+* [Configure post-processing settings](#post-processing-transparency)
 * [Disable alpha-to-coverage](#alpha-to-coverage)
 
 If you do not configure these settings correctly, the following types of layers might not render correctly:
@@ -22,6 +22,9 @@ If you do not configure these settings correctly, the following types of layers 
 
 > [!NOTE]
 > Compositing in the Editor is emulated by shaders and can produce different results than the hardware compositor on an XR device. Always verify your layer setup on device.
+
+> [!TIP]
+> To fade an entire layer, use the [Color Scale and Bias component](xref:xr-layers-color-bias-scale) and scale the RGB and alpha channels together. If you scale only the alpha channel, the layer appears too bright instead of transparent because the compositor uses premultiplied alpha.
 
 ## Configure the camera for transparency {#camera-transparency}
 
@@ -42,7 +45,7 @@ The same considerations apply when you render objects to a render texture and us
 > [!NOTE]
 > The cameras of the **Projection Eye Rig** use a transparent background by default.
 
-## Configure High Dynamic Range (HDR) settings {#hdr-transparency}
+## Configure high dynamic range (HDR) settings {#hdr-transparency}
 
 In order to store information to the alpha channel, the format of the render texture the scene is rendered to must contain an alpha channel. Some HDR rendering formats drop alpha channels for improved performance, but this can prevent layers underneath the default scene layer from being visible.
 
@@ -96,7 +99,7 @@ To change HDR settings when using the Built-In Render Pipeline:
 
 Refer to [Graphics settings](xref:um-class-graphics-settings) for the version of Unity that you are using for more information about changing graphics settings.
 
-## Configure Post-processing settings {#post-processing-transparency}
+## Configure post-processing settings {#post-processing-transparency}
 
 Post-processing effects in URP may discard alpha channel data. To preserve the composition layer alpha channel, enable **Alpha Processing** or disable Post-processing entirely.
 
@@ -126,7 +129,7 @@ To enable **Alpha Processing**:
 >
 > Disabling **Alpha Processing** can improve performance.
 
-### Disable Post-processing
+### Disable post-processing
 
 To disable Post-processing:
 

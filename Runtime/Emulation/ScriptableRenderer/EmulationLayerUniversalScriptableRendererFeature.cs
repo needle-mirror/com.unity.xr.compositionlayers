@@ -1,11 +1,17 @@
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
 using UnityEngine.Rendering.Universal;
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
     [System.Obsolete("EmulationLayerUniversalScriptableRendererFeature is not supported now. Please delete this feature manually.", false)]
-    public class EmulationLayerUniversalScriptableRendererFeature : ScriptableRendererFeature
+    public partial class EmulationLayerUniversalScriptableRendererFeature : ScriptableRendererFeature
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         static bool s_logged;
 
         public override void Create()

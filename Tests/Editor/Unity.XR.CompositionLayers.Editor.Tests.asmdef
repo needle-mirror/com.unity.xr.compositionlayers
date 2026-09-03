@@ -21,6 +21,12 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "6000.5.0a9",
+            "define": "LIFECYCLE_APIS_AVAILABLE"
+        }
+    ],
     "noEngineReferences": false
 }

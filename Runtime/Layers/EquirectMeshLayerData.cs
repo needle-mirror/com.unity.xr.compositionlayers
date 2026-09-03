@@ -20,11 +20,15 @@ namespace Unity.XR.CompositionLayers.Layers
         Description = "Equirect mesh layer",
         SuggestedExtenstionTypes = new[] { typeof(TexturesExtension) }
      )]
-    public class EquirectMeshLayerData : LayerData
+    public class EquirectMeshLayerData : LayerData, ISerializationCallbackReceiver
     {
         const float k_HalfPi = Mathf.PI * 0.5f;
         const float k_NegativeHalfPi = -k_HalfPi;
+        const float k_QuarterPi = Mathf.PI * 0.25f;
         const float k_TwoPi = Mathf.PI * 2f;
+
+        // Bumped when the meaning of a serialized field changes, so older assets can be migrated on load.
+        const int k_CurrentSerializedVersion = 1;
 
         [SerializeField]
         [Tooltip("The non-negative radius of the sphere onto which the image data is mapped.")]
@@ -43,7 +47,11 @@ namespace Unity.XR.CompositionLayers.Layers
         [SerializeField]
         [Range(k_NegativeHalfPi, k_HalfPi)]
         [Tooltip("The lower vertical angle of the visible portion of the sphere, in the range of [-π/2, π/2].")]
-        float m_LowerVerticalAngle = k_HalfPi;
+        float m_LowerVerticalAngle = k_NegativeHalfPi;
+
+        [SerializeField]
+        [HideInInspector]
+        int m_SerializedVersion;
 
         /// <summary>
         /// Defines radius of the sphere onto which the equirect image data is mapped.
@@ -115,6 +123,26 @@ namespace Unity.XR.CompositionLayers.Layers
         {
             get => m_LowerVerticalAngle * Mathf.Rad2Deg;
             set => LowerVerticalAngle = value * Mathf.Deg2Rad;
+        }
+
+
+        /// <summary>
+        /// Sets the serialized version to the current version before serialization.
+        /// </summary>
+        public void OnBeforeSerialize() => m_SerializedVersion = k_CurrentSerializedVersion;
+
+        /// <summary>
+        /// Converts legacy equirect layer data to the current format.
+        /// </summary>
+        public void OnAfterDeserialize()
+        {
+            if (m_SerializedVersion >= k_CurrentSerializedVersion)
+                return;
+
+            m_UpperVerticalAngle = m_UpperVerticalAngle * 0.5f + k_QuarterPi;
+            m_LowerVerticalAngle = -m_LowerVerticalAngle * 0.5f - k_QuarterPi;
+
+            m_SerializedVersion = k_CurrentSerializedVersion;
         }
     }
 }

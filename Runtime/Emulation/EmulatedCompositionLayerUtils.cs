@@ -4,15 +4,30 @@ using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
     static class EmulatedCompositionLayerUtils
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         static readonly Dictionary<Type, Type> k_EmulatedLayerDataTypes = new();
 
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static Func<bool> GetEmulationInScene;
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static Func<bool> GetEmulationInPlayMode;
+#if LIFECYCLE_APIS_AVAILABLE
+        [NoAutoStaticsCleanup]
+#endif
         internal static Func<bool> GetEmulationInStandalone;
         internal static bool EmulationInScene => GetEmulationInScene != null && GetEmulationInScene();
         internal static bool EmulationInPlayMode => GetEmulationInPlayMode != null && GetEmulationInPlayMode();

@@ -3,6 +3,9 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
+#if LIFECYCLE_APIS_AVAILABLE
+using Unity.Scripting.LifecycleManagement;
+#endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction.Editor
 {
@@ -11,9 +14,15 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
     /// Directs Users to install the XR Interaction Toolkit.
     /// </summary>
     [CustomEditor(typeof(InteractableUIMirror))]
-    public class InteractiveUIMirrorEditor : UnityEditor.Editor
+    public partial class InteractiveUIMirrorEditor : UnityEditor.Editor
     {
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         private static AddRequest addPackageRequest;
+#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+#endif
         private static bool isInstalling = false;
 
         void Awake()
@@ -83,6 +92,44 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
             {
                InstallXRIPackage();
             }
+        }
+    }
+}
+#endif
+
+#if UNITY_XR_INTERACTION_TOOLKIT && UNITY_EDITOR
+using UnityEditor;
+using UnityEngine;
+
+namespace Unity.XR.CompositionLayers.UIInteraction.Editor
+{
+    /// <summary>
+    /// Draws the Interactable UI Mirror inspector and shows the current render texture
+    /// resolution, which is driven by the Canvas width and height.
+    /// </summary>
+    [CustomEditor(typeof(InteractableUIMirror))]
+    public class InteractableUIMirrorResolutionEditor : UnityEditor.Editor
+    {
+        public override bool RequiresConstantRepaint() => true;
+
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
+
+            if (serializedObject.isEditingMultipleObjects)
+                return;
+
+            var resolution = ((InteractableUIMirror)target).CurrentResolution;
+            var resolutionLabel = resolution == Vector2Int.zero
+                ? "Not generated yet"
+                : $"{resolution.x} x {resolution.y}";
+
+            using (new EditorGUI.DisabledScope(true))
+                EditorGUILayout.LabelField("Render Texture Resolution", resolutionLabel);
+
+            EditorGUILayout.HelpBox(
+                "Canvas Width & Height control resolution, not physical size. Increase them for a sharper texture. Size is set by the layer shape.",
+                MessageType.Info);
         }
     }
 }

@@ -130,9 +130,7 @@ inline float4 ForwardPassFragmentColor(in v2f i)
 #else
     color = ColorGradientEquirect(coords);
 #endif
-    //Recaluclating coords due to the RemappedEquirectCoords (UV Mapping) function causing
-    //unexpected behavior in CHECK_COORDS_RANGE_EQUIRECT (Clipping) function.
-    coords = EquirectCoords(i.uv);
+    // The remapped coords are already normalized to the visible window, so clip against them directly.
     CHECK_COORDS_RANGE_EQUIRECT(color, coords);
 
 #elif COMPOSITION_LAYERTYPE_CUBEMAP // for Cubemap
