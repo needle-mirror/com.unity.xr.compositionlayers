@@ -35,20 +35,32 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         }
 
         /// <summary>
-        /// Checks whether or not there is a change in the Canvas which would require a new render texture
+        /// Updates the camera framing when the Canvas rect or scale changes, and recreates the render texture
+        /// only when the rect changes, since the texture size depends on the rect alone.
         /// </summary>
-        /// <returns>True if the rect or scale has changed, false if neither have changed</returns>
+        /// <returns>True if the render texture was recreated, false otherwise</returns>
         public bool Sync()
         {
-            if (canvasRectTransform.rect != cachedCanvasRect || cachedCanvasLossyScale != canvasRectTransform.lossyScale)
+            var rect = canvasRectTransform.rect;
+            var lossyScale = canvasRectTransform.lossyScale;
+            var rectChanged = rect != cachedCanvasRect;
+            var scaleChanged = lossyScale != cachedCanvasLossyScale;
+            if (!rectChanged && !scaleChanged)
             {
-                SyncCameraViewWithCanvasSize();
-                SyncRenderTextureWithCanvasSize();
-                cachedCanvasRect = canvasRectTransform.rect;
-                cachedCanvasLossyScale = canvasRectTransform.lossyScale;
-                return true;
+                return false;
             }
-            return false;
+
+            SyncCameraViewWithCanvasSize();
+            cachedCanvasLossyScale = lossyScale;
+
+            if (!rectChanged)
+            {
+                return false;
+            }
+
+            SyncRenderTextureWithCanvasSize();
+            cachedCanvasRect = rect;
+            return true;
         }
 
         /// <summary>

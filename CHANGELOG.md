@@ -8,6 +8,21 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-10-16
+
+### Removed
+* Removed the **Window > XR > Composition Layers > Project Validation** menu item. It opened the same Project Validation page that XR Plug-in Management provides under **Project Settings > XR Plug-in Management > Project Validation**.
+
+### Fixed
+* Fixed the Composition Layer component's Reset (inspector menu) which cleared the layer's `LayerData`, and left the layer with no type/data and collapsed the Composition Layer and Source Textures inspectors. ([UUM-147687](https://issuetracker.unity3d.com/product/unity/issues/guid/UUM-147687))
+
+* Fixed a `NullReferenceException` ("SerializedObject of SerializedProperty has been Disposed") that was thrown when undoing a layer type change in the Composition Layer inspector. ([UUM-147688](https://issuetracker.unity3d.com/product/unity/issues/guid/UUM-147688))
+
+* Fixed `InteractableUIMirror` so that a UI Panel layer created before installing the XR Interaction Toolkit finishes its setup and renders once the XR Interaction Toolkit is installed. ([UUM-144204](https://issuetracker.unity3d.com/product/unity/issues/guid/UUM-144204))
+
+* Fixed `InteractableUIMirror` rendering blank and not responding to input when its scene was created by a script or in batch mode.
+* Fixed an obsolete API warning (CS0618) for `EditorUtility.InstanceIDToObject` from the Composition Layer Hierarchy window icon in Unity 6.3.
+
 ## [2.6.0] - 2026-09-03
 
 ### Added

@@ -99,6 +99,11 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         CanvasAndCameraSynchronizer canvasAndCameraSynchronizer;
         CameraTargetTextureFactory cameraTargetTextureFactory;
         CanvasLayerCameraController canvasLayerCameraController;
+#if !UNITY_EDITOR
+        bool m_ComponentsAddedAtRuntime;
+#endif
+        bool m_IsLayerAndCameraInitialized;
+        bool m_AreHoverListenersRegistered;
 
         /// <summary>
         /// Data for each RectTransform in the hierarchy, used to add components if they don't exist
@@ -137,13 +142,36 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
         void Start()
         {
+            InitializeLayerAndCamera();
+
+            // Registered separately because entering Play mode without a domain reload keeps the edit mode setup.
+            if (Application.isPlaying)
+                RegisterHoverListeners();
+        }
+
+        void RegisterHoverListeners()
+        {
+            if (m_AreHoverListenersRegistered)
+                return;
+
+            m_AreHoverListenersRegistered = true;
+            xrSimpleInteractable.hoverEntered.AddListener(OnHoverEnter);
+            xrSimpleInteractable.hoverExited.AddListener(OnHoverExit);
+        }
+
+        void InitializeLayerAndCamera()
+        {
+            if (m_IsLayerAndCameraInitialized)
+                return;
+
+            m_IsLayerAndCameraInitialized = true;
             compositionLayer = GetComponent<CompositionLayer>();
             proxyInteractorFactory = new ProxyInteractorFactory();
             canvasHitCalculator = new CanvasHitCalculator(canvas, gameObject);
+            texturesExtension = GetComponent<TexturesExtension>();
 
 #if UNITY_EDITOR
             // Hide textures extension component
-            texturesExtension = GetComponent<TexturesExtension>();
             texturesExtension.hideFlags = HideFlags.HideInInspector;
 
             EditorApplication.quitting += OnEditorApplicationQuitting;
@@ -158,13 +186,13 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             {
                 AddComponents();
             }
-            else
+            else if (xrSimpleInteractable == null)
             {
-                // Subscribe to hover events for when application is actually running.
-                xrSimpleInteractable.hoverEntered.AddListener(OnHoverEnter);
-                xrSimpleInteractable.hoverExited.AddListener(OnHoverExit);
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
-                xrSimpleInteractable.selectFilters.Add(new XRSelectFilterDelegate((_, _) => false));
+                // A scene authored without the edit-time ExecuteAlways pass (e.g. batch builds)
+                // never serializes these components, so create them before wiring events.
+                AddComponents();
+#if !UNITY_EDITOR
+                m_ComponentsAddedAtRuntime = true;
 #endif
             }
 
@@ -182,23 +210,21 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
         void CreateAndSetCanvas()
         {
+            // Kept off the undo stack because scattered structure-undo records crash the Editor on undo.
             var canvasGameObject = new GameObject("Canvas");
-# if UNITY_EDITOR
-            Undo.RegisterCreatedObjectUndo(canvasGameObject, "Create Canvas GameObject");
-            Undo.SetTransformParent(canvasGameObject.transform, transform, "Set canvas parent");
-#else
             canvasGameObject.transform.SetParent(transform);
-#endif
             canvasGameObject.layer = LayerMask.NameToLayer("UI");
             canvas = GetOrAddComponent<Canvas>(canvasGameObject);
         }
 
         void InitializeCanvas()
         {
-            canvas = GetComponentInChildren<Canvas>();
+            canvas = GetComponentInChildren<Canvas>(true);
 
             if (canvas == null)
+            {
                 CreateAndSetCanvas();
+            }
 
             canvasRectTransform = canvas.GetComponent<RectTransform>();
 
@@ -217,7 +243,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 panelGameObject.GetComponent<UnityEngine.UI.Image>().color = Color.white;
                 panelGameObject.layer = canvas.gameObject.layer;
                 panelGameObject.transform.SetParent(canvas.transform, false);
-                Undo.RegisterCreatedObjectUndo(panelGameObject, "Created ui panel");
             }
 #endif
         }
@@ -228,7 +253,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// </summary>
         void SyncTexturesExtensionWithCameraTarget()
         {
-#if UNITY_EDITOR
             if (canvasAndCameraSynchronizer != null)
             {
                 if (canvasAndCameraSynchronizer.Sync())
@@ -241,16 +265,16 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             {
                 canvasAndCameraSynchronizer = new CanvasAndCameraSynchronizer(canvas, canvasCamera);
             }
-#endif
         }
 
         void Update()
         {
-#if UNITY_EDITOR
-            // Keep everything in sync if developer edits the canvas or comp layer sizes.
+            // Keep the render texture and camera framing in sync when the canvas or comp layer size changes.
+            // Runs in builds too, otherwise a headlessly authored panel never gets framed.
             SyncTexturesExtensionWithCameraTarget();
             HandleCanvasSize();
 
+#if UNITY_EDITOR
             if (compositionLayer != null && canvasCamera != null)
             {
                 var currentPrefabStage = PrefabStageUtility.GetCurrentPrefabStage();
@@ -291,9 +315,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             if (canvasCamera == null)
             {
                 var newCanvasCameraGameObject = new GameObject("CanvasCamera");
-#if UNITY_EDITOR
-                Undo.RegisterCreatedObjectUndo(newCanvasCameraGameObject, "Create canvas camera");
-#endif
                 canvasCamera = GetOrAddComponent<Camera>(newCanvasCameraGameObject);
             }
 
@@ -318,11 +339,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// </summary>
         void AddComponents()
         {
-            xrSimpleInteractable = GetOrAddComponent<XRSimpleInteractable>(gameObject);
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
-            xrSimpleInteractable.selectFilters.Add(new XRSelectFilterDelegate((_, _) => false));
-#endif
             meshCollider = GetOrAddComponent<MeshCollider>(gameObject);
+            xrSimpleInteractable = GetOrAddComponent<XRSimpleInteractable>(gameObject);
             trackedDeviceGraphicRaycaster = GetOrAddComponent<TrackedDeviceGraphicRaycaster>(canvas.gameObject);
             compositionLayerRectTransformData = new RectTransformData
             {
@@ -334,8 +352,9 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
             // Create canvas group
             if (!canvas.TryGetComponent<CanvasGroup>(out canvasGroup))
+            {
                 canvasGroup = GetOrAddComponent<CanvasGroup>(canvas.gameObject);
-
+            }
 
             canvasGroup.blocksRaycasts = false;
         }
@@ -344,10 +363,12 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// Adds and removes LayerUIScale components based on their type
         /// </summary>
         /// <remarks>(i.e. a changing from a Cylinder to a Quad layer will remove CylinderUIScale and add QuadUIScale)</remarks>
-        void SyncLayerUIScaleWithLayerType()
+        internal void SyncLayerUIScaleWithLayerType(bool recordUndo = false)
         {
             if (compositionLayer == null || compositionLayer.LayerData == null)
+            {
                 return;
+            }
 
             var layerType = compositionLayer.LayerData.GetType();
             var isChangedFromQuad = layerType == typeof(QuadLayerData) && layerUIScale is not QuadUIScale;
@@ -359,30 +380,48 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             if (layerUIScale != null)
             {
 #if UNITY_EDITOR
-                if (!Application.isPlaying)
+                if (recordUndo && !Application.isPlaying)
+                {
                     Undo.DestroyObjectImmediate(layerUIScale);
+                }
                 else
-#endif
+                {
                     UtilDestroy(layerUIScale);
+                }
+#else
+                UtilDestroy(layerUIScale);
+#endif
             }
 
             if (layerType == typeof(QuadLayerData))
             {
 #if UNITY_EDITOR
-                if (!Application.isPlaying)
+                if (recordUndo && !Application.isPlaying)
+                {
                     layerUIScale = Undo.AddComponent<QuadUIScale>(gameObject);
+                }
                 else
-#endif
+                {
                     layerUIScale = gameObject.AddComponent<QuadUIScale>();
+                }
+#else
+                layerUIScale = gameObject.AddComponent<QuadUIScale>();
+#endif
             }
             else if (layerType == typeof(CylinderLayerData))
             {
 #if UNITY_EDITOR
-                if (!Application.isPlaying)
+                if (recordUndo && !Application.isPlaying)
+                {
                     layerUIScale = Undo.AddComponent<CylinderUIScale>(gameObject);
+                }
                 else
-#endif
+                {
                     layerUIScale = gameObject.AddComponent<CylinderUIScale>();
+                }
+#else
+                layerUIScale = gameObject.AddComponent<CylinderUIScale>();
+#endif
             }
         }
 
@@ -417,8 +456,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 }
             }
 
-            // Remove components from UI elements
-            if (canvas.gameObject.activeInHierarchy)
+            if (canvas != null && canvas.gameObject.activeInHierarchy)
             {
                 foreach (var rectTransformData in rectTransformData)
                 {
@@ -427,10 +465,21 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 }
             }
 
-            cameraTargetTextureFactory?.ReleaseTargetTexture(canvasCamera);
-            texturesExtension.LeftTexture = null;
-            texturesExtension.RightTexture = null;
-            UtilDestroy(canvasCamera.gameObject);
+            if (canvasCamera != null)
+            {
+                cameraTargetTextureFactory?.ReleaseTargetTexture(canvasCamera);
+            }
+
+            if (texturesExtension != null)
+            {
+                texturesExtension.LeftTexture = null;
+                texturesExtension.RightTexture = null;
+            }
+
+            if (canvasCamera != null)
+            {
+                UtilDestroy(canvasCamera.gameObject);
+            }
             UtilDestroy(trackedDeviceGraphicRaycaster);
         }
 
@@ -443,11 +492,9 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         {
             var component = gameObj.GetComponent<T>();
             if (component == null)
-#if UNITY_EDITOR
-                component = Undo.AddComponent<T>(gameObj);
-#else
+            {
                 component = gameObj.AddComponent<T>();
-#endif
+            }
             return component;
         }
 
@@ -652,22 +699,37 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             CanvasLayerController.SetCanvasLayerToDefault(canvas);
 
             if (canvasLayerCameraController != null)
+            {
                 canvasLayerCameraController.Dispose();
-#if UNITY_EDITOR
-            EditorApplication.quitting -= OnEditorApplicationQuitting;
-
+            }
             if (xrSimpleInteractable != null)
             {
                 xrSimpleInteractable.hoverEntered.RemoveListener(OnHoverEnter);
                 xrSimpleInteractable.hoverExited.RemoveListener(OnHoverExit);
             }
 
+#if UNITY_EDITOR
+            EditorApplication.quitting -= OnEditorApplicationQuitting;
+
             if (texturesExtension != null)
+            {
                 texturesExtension.hideFlags = HideFlags.None;
-            DestroyComponents();
+            }
+
+            if (!Undo.isProcessing)
+            {
+                DestroyComponents();
+            }
 #else
             if (canvas != null)
+            {
                 CompositionLayerUtils.UserLayers.UnOccupyBlankLayer(canvas.gameObject);
+            }
+
+            if (m_ComponentsAddedAtRuntime)
+            {
+                DestroyComponents();
+            }
 #endif
         }
 
@@ -703,6 +765,14 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         void OnEnable()
         {
             EditorApplication.hierarchyChanged += OnHierarchyChanged;
+
+            // Awake and Start do not run again after a domain reload. When the mirror was added before XRI was
+            // installed, the reload that installs XRI leaves it with none of their setup.
+            if (canvas == null && !Application.isPlaying)
+            {
+                InitializeCanvas();
+                InitializeLayerAndCamera();
+            }
         }
 #endif
 

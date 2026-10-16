@@ -26,6 +26,9 @@ Click the __Manage__ button to open the __Layer Order__ window, which lets you s
 
 The Default Scene Layer is an implicit Projection Layer to which the Unity scene is rendered. It always has an order of 0. Layers with a negative order are behind the Default Scene Layer.
 
+> [!NOTE]
+> On devices that render passthrough as a composition layer (such as Meta Quest), Unity places the passthrough layer at the first free negative order closest to 0. If an underlay disappears when passthrough is on, move the underlay to order -1 so it renders in front of passthrough.
+
 ## Change the layer order at runtime
 
 You can change the sorting order of layers at runtime in the following ways:

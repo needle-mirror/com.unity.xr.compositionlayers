@@ -49,6 +49,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         void OnDisable()
         {
             Undo.undoRedoPerformed -= UndoRedoPerformed;
+            EditorApplication.delayCall -= SyncLayerDataToPopupField;
         }
 
         void OnDestroy()
@@ -254,7 +255,15 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
         void UpdateLayerDataDrawer(string layerId)
         {
+            Undo.IncrementCurrentGroup();
+            int undoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Change Layer Type");
+
             ChangeLayerType(layerId);
+
+#if UNITY_XR_INTERACTION_TOOLKIT
+            (target as CompositionLayer)?.GetComponent<UIInteraction.InteractableUIMirror>()?.SyncLayerUIScaleWithLayerType(true);
+#endif
 
             UpdateHelpBox();
             UpdateHelpBoxForCoordinateSystem();
@@ -270,10 +279,14 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             }
 
             CheckSuggestedComponents();
+
+            Undo.CollapseUndoOperations(undoGroup);
         }
 
         void ChangeLayerType(string layerId)
         {
+            Undo.RegisterCompleteObjectUndo(serializedObject.targetObjects, "Change Layer Type");
+
             LayerData layerData = LayerIdToLayerData(layerId);
 
             m_LayerDataTypeName.value = layerId;
@@ -412,7 +425,6 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
             if (EditorUtility.DisplayDialog("Suggested Layer Extensions", message, "Yes", "No"))
             {
-                Undo.IncrementCurrentGroup();
                 Undo.RecordObject(layerComponent.gameObject, "Add Suggested Layer Extensions");
                 foreach (var extensionType in k_ExtensionTypes)
                 {
@@ -472,8 +484,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             if (string.IsNullOrEmpty(typeFullName))
             {
                 m_LayerDataProperty.managedReferenceValue = null;
-                m_LayerDataTypeName.index = -1;
-                m_LayerDataTypeName.value = string.Empty;
+                m_LayerDataTypeName.SetValueWithoutNotify(string.Empty);
                 serializedObject.Update();
                 return;
             }
@@ -482,10 +493,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 || m_LayerDataProperty.managedReferenceValue.GetType().FullName != typeFullName)
                 ChangeLayerType(typeFullName);
 
-            var index = CompositionLayerEditorUtils.LayerNames.IndexOf(typeFullName);
-
-            m_LayerDataTypeName.index = index;
-            m_LayerDataTypeName.value = typeFullName;
+            m_LayerDataTypeName.SetValueWithoutNotify(typeFullName);
         }
 
         void SyncLayerDataToPopupField()
@@ -506,8 +514,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
         void UndoRedoPerformed()
         {
-            // Redo actions are not tripping the value changed in the element
-            // and don't seem to be applied till the end of an editor frame
+            EditorApplication.delayCall -= SyncLayerDataToPopupField;
             EditorApplication.delayCall += SyncLayerDataToPopupField;
 
             if (m_PlatformLayerDataDrawers != null)

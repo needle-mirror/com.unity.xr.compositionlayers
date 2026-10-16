@@ -65,6 +65,13 @@ namespace Unity.XR.CompositionLayers
         [SerializeField]
         internal int[] m_PlatformLayerDataBinary;
 
+#if UNITY_EDITOR
+        // These are not serialized, so they survive the inspector reset.
+        [NonSerialized] Type m_ResetLayerDataType;
+        [NonSerialized] int m_ResetOrder;
+        [NonSerialized] bool m_HasResetState;
+#endif
+
 #pragma warning disable 0414
         // Using a NonSerialized field to make sure the value is default after domain reload.
         [NonSerialized]
@@ -104,6 +111,9 @@ namespace Unity.XR.CompositionLayers
         {
             m_Order = UpdateValue(m_Order, value);
             m_OrderInitialized = true;
+#if UNITY_EDITOR
+            CacheResetState();
+#endif
         }
 
         /// <summary>
@@ -118,6 +128,9 @@ namespace Unity.XR.CompositionLayers
                 m_LayerData = UpdateValue(m_LayerData, value);
                 if (LayerData != null)
                     LayerData.ReportStateChange = ReportStateChange;
+#if UNITY_EDITOR
+                CacheResetState();
+#endif
             }
         }
 
@@ -131,6 +144,10 @@ namespace Unity.XR.CompositionLayers
             }
             if ((LayerData?.GetType() == typeof(ProjectionLayerData)) || (LayerData?.GetType() == typeof(ProjectionLayerRigData)))
                 ReportStateChange();
+
+#if UNITY_EDITOR
+            CacheResetState();
+#endif
         }
 
         /// <summary>
@@ -337,8 +354,39 @@ namespace Unity.XR.CompositionLayers
             {
                 LayerData.ReportStateChange = ReportStateChange;
             }
+
+            CacheResetState();
 #endif
         }
+
+#if UNITY_EDITOR
+        void CacheResetState()
+        {
+            if (m_LayerData != null)
+            {
+                m_ResetLayerDataType = m_LayerData.GetType();
+                m_ResetOrder = m_Order;
+                m_HasResetState = true;
+            }
+        }
+#endif
+
+#if UNITY_EDITOR
+        void Reset()
+        {
+            // Unity's Reset clears the [SerializeReference] LayerData and the order before this runs.
+            // Preserve the layer type and order, and reset the layer data itself to fresh defaults.
+            var resetType = m_HasResetState && m_ResetLayerDataType != null ? m_ResetLayerDataType : typeof(QuadLayerData);
+            var hasResetState = m_HasResetState;
+            var resetOrder = m_ResetOrder;
+
+            ChangeLayerDataType(resetType);
+            if (hasResetState)
+            {
+                SetLayerOrderInternal(resetOrder);
+            }
+        }
+#endif
 
         ///<summary>
         /// Checks for changes in children to see if the user has childed or unchilded a canvas.

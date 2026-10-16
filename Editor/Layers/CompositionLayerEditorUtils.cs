@@ -76,21 +76,31 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             var lastSceneView = SceneView.lastActiveSceneView;
             var position = lastSceneView == null ? Vector3.zero : lastSceneView.pivot;
 
-            var go = new GameObject();
-            go.transform.position = position;
-
-            if (rotateFacing)
-                go.transform.rotation = Quaternion.LookRotation(Vector3.back);
-
-            CreateCompositionLayerComponents(go, dataType, false);
             var descriptor = CompositionLayerUtils.GetLayerDescriptor(dataType);
             var name = descriptor.Name;
             if (!name.Contains("Layer", StringComparison.CurrentCultureIgnoreCase))
+            {
                 name = $"{name} Layer";
+            }
 
-            go.name = name;
+            Undo.IncrementCurrentGroup();
+            var undoGroup = Undo.GetCurrentGroup();
+
+            var go = new GameObject(name);
+            go.transform.position = position;
+
+            if (rotateFacing)
+            {
+                go.transform.rotation = Quaternion.LookRotation(Vector3.back);
+            }
 
             Undo.RegisterCreatedObjectUndo(go, $"Created {name}");
+
+            CreateCompositionLayerComponents(go, dataType, true);
+
+            Undo.SetCurrentGroupName($"Created {name}");
+            Undo.CollapseUndoOperations(undoGroup);
+
             Selection.activeGameObject = go;
         }
 

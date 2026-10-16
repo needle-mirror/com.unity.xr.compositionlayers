@@ -36,7 +36,11 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 #else
         static void OnHierarchyItemGUI(int instanceID, Rect selectionRect)
         {
+#if UNITY_6000_3_OR_NEWER
+            DrawIcon(EditorUtility.EntityIdToObject(instanceID) as GameObject, selectionRect);
+#else
             DrawIcon(EditorUtility.InstanceIDToObject(instanceID) as GameObject, selectionRect);
+#endif
         }
 #endif
 

@@ -49,14 +49,16 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <seealso cref="CreateAndSetCanvasLayer"/>
         public static void SetCanvasLayerToDefault(Canvas canvas)
         {
+            if (canvas == null)
+            {
+                return;
+            }
+
 #if UNITY_EDITOR
             TagManagerController.RemoveLayer(LayerMask.LayerToName(canvas.gameObject.layer));
 #endif
             // Remove layer and set canvas to default layer
-            if (canvas != null)
-            {
-                CompositionLayerUtils.UserLayers.UnOccupyBlankLayer(canvas.gameObject);
-            }
+            CompositionLayerUtils.UserLayers.UnOccupyBlankLayer(canvas.gameObject);
         }
 
         /// <summary>

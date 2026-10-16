@@ -109,12 +109,6 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
             }
         }
 
-        [MenuItem("Window/XR/Composition Layers/Project Validation")]
-        private static void MenuItem()
-        {
-            ShowWindow();
-        }
-
         /// <summary>
         /// Opens Project Validation Window
         /// </summary>
