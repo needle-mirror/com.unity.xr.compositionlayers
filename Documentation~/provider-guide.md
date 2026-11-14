@@ -97,8 +97,7 @@ To create a new type of layer, you must:
 A [LayerData] implementation does not have any required members and can be as simple as:
 
 ``` csharp
-using UnityEngine.XR.CompositionLayers.Extensions;
-using UnityEngine.XR.CompositionLayers.Provider;
+using Unity.XR.CompositionLayers.Layers;
 
 [CompositionLayerData(...)]
 public class ProvidedLayerData : LayerData {}
@@ -126,7 +125,8 @@ For complete examples, you can refer to the Unity-defined layer types, [Projecti
 To implement a layer extension, subclass [CompositionLayerExtension] and define the fields and properties for your extension:
 
 ``` csharp
-using UnityEngine.XR.CompositionLayers.Provider;
+using Unity.XR.CompositionLayers;
+using UnityEngine;
 
  [AddComponentMenu("XR/Composition Layers/Extensions/Custom")]
  public class CustomExtension : CompositionLayerExtension

@@ -6,9 +6,7 @@ using UnityEditor.Build;
 using UnityEditor.XR.Management;
 using UnityEngine.XR.Management;
 using Unity.XR.CompositionLayers.Provider;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Services.Editor
 {
@@ -130,9 +128,7 @@ namespace Unity.XR.CompositionLayers.Services.Editor
             return managerSettings?.activeLoaders?.ToArray();
         }
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static string s_XRGeneralSettingsAssetPath;
         const string k_XRGeneralSettingsDefaultAssetPath = "Assets/XR/XRGeneralSettings.asset";
 

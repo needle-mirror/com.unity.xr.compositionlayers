@@ -9,37 +9,63 @@ namespace Unity.XR.CompositionLayers.UIInteraction
     /// Base class for handling quad / cylinder collider generation and maintaining aspect ratio with Canvas changes
     /// </summary>
     [ExecuteInEditMode]
-    public class LayerUIScale : MonoBehaviour
+    public partial class LayerUIScale : MonoBehaviour
     {
+#pragma warning disable CS0618
         /// <summary>
         /// Reference to TexturesExtension for cropping and stretching
         /// </summary>
-        protected TexturesExtension texturesExtension;
+        protected TexturesExtension TexturesExtension
+        {
+            get => texturesExtension;
+            set => texturesExtension = value;
+        }
 
         /// <summary>
         /// Reference to RectTransform to check for size or scale changes
         /// </summary>
-        protected RectTransform canvasRect;
+        protected RectTransform CanvasRect
+        {
+            get => canvasRect;
+            set => canvasRect = value;
+        }
 
         /// <summary>
         /// Cached RectTransform's sizeDelta.x
         /// </summary>
-        protected float canvasSizeX = -1;
+        protected float CanvasSizeX
+        {
+            get => canvasSizeX;
+            set => canvasSizeX = value;
+        }
 
         /// <summary>
         /// Cached RectTransform's sizeDelta.y
         /// </summary>
-        protected float canvasSizeY = -1;
+        protected float CanvasSizeY
+        {
+            get => canvasSizeY;
+            set => canvasSizeY = value;
+        }
 
         /// <summary>
         /// Cached RectTransform's localScale.x
         /// </summary>
-        protected float canvasScaleX = -1;
+        protected float CanvasScaleX
+        {
+            get => canvasScaleX;
+            set => canvasScaleX = value;
+        }
 
         /// <summary>
         /// Cached RectTransform's localScale.y
         /// </summary>
-        protected float canvasScaleY = -1;
+        protected float CanvasScaleY
+        {
+            get => canvasScaleY;
+            set => canvasScaleY = value;
+        }
+#pragma warning restore CS0618
 
         /// <summary>
         /// Scalar of height for transform recalculations
@@ -47,7 +73,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         public float HeightScale;
 
         /// <summary>
-        /// Scalar of width  for transform recalculations
+        /// Scalar of width for transform recalculations
         /// </summary>
         public float WidthScale;
 
@@ -57,13 +83,21 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <param name="aspect">Aspect ratio of Layer</param>
         public void UpdateDestinationRectScale(float aspect)
         {
-            if (texturesExtension == null && !TryGetComponent<TexturesExtension>(out texturesExtension)) return;
+            if (TexturesExtension == null)
+            {
+                if (!TryGetComponent<TexturesExtension>(out var extension))
+                {
+                    return;
+                }
 
-            texturesExtension.CustomRects = true;
+                TexturesExtension = extension;
+            }
+
+            TexturesExtension.CustomRects = true;
 
             // Canvas Aspect Ratio
-            float canvasScaleAspect = canvasScaleX / canvasScaleY;
-            float canvasAspect = (canvasSizeX / canvasSizeY) * canvasScaleAspect;
+            var canvasScaleAspect = CanvasScaleX / CanvasScaleY;
+            var canvasAspect = (CanvasSizeX / CanvasSizeY) * canvasScaleAspect;
 
             // Set destination rect values based on the canvas vs cylinder aspect ratio
             bool canvasAspectLarger = canvasAspect > aspect;
@@ -77,7 +111,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             float X = !canvasAspectLarger ? (1.0f - W) / 2.0f : 0.0f;
 
             // Apply Width, Height, X, and Y to source and destination rects
-            texturesExtension.LeftEyeDestinationRect = new Rect(X, Y, W, H);
+            TexturesExtension.LeftEyeDestinationRect = new Rect(X, Y, W, H);
 
             HeightScale = H;
             WidthScale = W;
@@ -89,15 +123,23 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <returns>Whether or not the canvas rect has been changed (size or scale)</returns>
         protected bool CanvasAdjusted()
         {
-            if (canvasRect == null && !transform.GetChild(0).TryGetComponent<RectTransform>(out canvasRect)) return false;
-
-            if (canvasSizeX != canvasRect.sizeDelta.x || canvasSizeY != canvasRect.sizeDelta.y
-                || canvasScaleX != canvasRect.localScale.x || canvasScaleY != canvasRect.localScale.y)
+            if (CanvasRect == null)
             {
-                canvasSizeX = canvasRect.sizeDelta.x;
-                canvasSizeY = canvasRect.sizeDelta.y;
-                canvasScaleX = canvasRect.localScale.x;
-                canvasScaleY = canvasRect.localScale.y;
+                if (!transform.GetChild(0).TryGetComponent<RectTransform>(out var rect))
+                {
+                    return false;
+                }
+
+                CanvasRect = rect;
+            }
+
+            if (CanvasSizeX != CanvasRect.sizeDelta.x || CanvasSizeY != CanvasRect.sizeDelta.y
+                || CanvasScaleX != CanvasRect.localScale.x || CanvasScaleY != CanvasRect.localScale.y)
+            {
+                CanvasSizeX = CanvasRect.sizeDelta.x;
+                CanvasSizeY = CanvasRect.sizeDelta.y;
+                CanvasScaleX = CanvasRect.localScale.x;
+                CanvasScaleY = CanvasRect.localScale.y;
 
                 return true;
             }

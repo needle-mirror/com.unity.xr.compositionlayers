@@ -1,15 +1,14 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Rendering.Editor
 {
     /// <summary>
     /// Helper methods for working with the graphics settings.
     /// </summary>
+    [System.Obsolete("GraphicsSettingsHelpers is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
     public static partial class GraphicsSettingsHelpers
     {
         /// <summary>
@@ -28,16 +27,17 @@ namespace Unity.XR.CompositionLayers.Rendering.Editor
             Uber,
 
             /// <summary>
-            /// The Uber shader type.
+            /// The Color Scale Bias shader type.
             /// </summary>
             ColorScaleBias,
         }
 
+        // Indexed by ShaderType, so this must stay in the same order as that enum.
         static readonly string[] s_ShaderNames = new string[]
         {
-            "Unlit/XRCompositionLayers/BlitCopyHDR",
-            "Unlit/XRCompositionLayers/Uber",
-            "Hidden/XRCompositionLayers/ColorScaleBias",
+            CompositionLayerConstants.BlitCopyHDRShaderName,
+            CompositionLayerConstants.UberShaderName,
+            CompositionLayerConstants.ColorScaleBiasShaderName,
         };
 
         /// <summary>
@@ -53,9 +53,7 @@ namespace Unity.XR.CompositionLayers.Rendering.Editor
             return AddAlwaysIncludedShader(s_ShaderNames[(int)shaderType]);
         }
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static GraphicsSettings s_GraphicsSettings;
 
         static bool AddAlwaysIncludedShader(string shaderName)

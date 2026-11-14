@@ -20,7 +20,7 @@ namespace Unity.XR.CompositionLayers.Layers
         InspectorIcon = "",
         ListViewIcon = "",
         Description = "Represents the default base composition layer. This is an implicit layer which separates the overlay layers from the underlays.",
-        SuggestedExtenstionTypes = new Type[] { }
+        SuggestedExtensionTypes = new Type[] { }
      )]
     [Serializable]
     [CompositionLayersHelpURL(typeof(DefaultLayerData))]

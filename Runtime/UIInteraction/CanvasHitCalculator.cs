@@ -1,11 +1,9 @@
-#if UNITY_XR_INTERACTION_TOOLKIT
+#if UNITY_XR_INTERACTION_TOOLKIT_3_6_1_OR_NEWER
 using Unity.XR.CompositionLayers.Layers;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.XR.Interaction.Toolkit;
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
-#endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction
 {

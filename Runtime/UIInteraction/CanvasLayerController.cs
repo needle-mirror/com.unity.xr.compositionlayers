@@ -20,11 +20,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         {
 #if UNITY_EDITOR
             // Ensure a unique name for a blank layer
-#if UNITY_6000_4_OR_NEWER
             var canvasLayerId = canvas.GetEntityId();
-#else
-            var canvasLayerId = canvas.GetInstanceID();
-#endif
             string canvasLayerTag = CanvasLayerTagPrefix + canvasLayerId.ToString();
             if (!TagManagerController.TryAddLayer(canvasLayerTag))
             {

@@ -8,9 +8,7 @@ using Unity.XR.CompositionLayers.Services.Editor;
 using Unity.XR.CompositionLayers.Layers.Internal.Editor;
 using System.Text;
 using Unity.XR.CompositionLayers.Provider;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Extensions.Editor
 {
@@ -34,18 +32,14 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
         string m_ErrorMessage;
         string m_WarningMessage;
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static GraphicsFormat[] s_Formats_SRGB = new GraphicsFormat[]
         {
             GraphicsFormat.R8G8B8A8_UNorm,
             GraphicsFormat.R8G8B8A8_SRGB,
         };
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static GraphicsFormat[] s_Formats_GenericHDR = new GraphicsFormat[]
         {
             GraphicsFormat.R32G32B32A32_SFloat,
@@ -77,9 +71,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             }
         };
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static Dictionary<ColorGamut, ColorGamutDesc> s_ColorGamutDescDictionary;
 
         static void AppendMessage(ref string messageBuf, string message)
@@ -241,6 +233,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             var renderTexture = new RenderTexture(renderTextureDesc);
             renderTexture.Create();
 
+#pragma warning disable CS0618
             var blitParams = new ImageFilters.BlitParams(tempTexture);
 
             var targetParams = new ImageFilters.TargetParams(renderTexture);
@@ -250,6 +243,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             targetParams.hdrParams.maxDisplayNits = maxDisplayNits;
 
             ImageFilters.Blit(blitParams, targetParams);
+#pragma warning restore CS0618
 
             Texture2D.DestroyImmediate(tempTexture);
 

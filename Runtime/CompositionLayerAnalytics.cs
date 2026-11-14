@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using Unity.XR.CompositionLayers.Services;
 using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -26,12 +24,6 @@ namespace Unity.XR.CompositionLayers
         private const string kVendorKey = "unity.compositionlayers";
         private const string kEventUsageMetrics = "compositionlayers_usage";
 
-#if ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
-#if LIFECYCLE_APIS_AVAILABLE
-        [AutoStaticsCleanup]
-#endif
-        private static bool s_Initialized = false;
-#endif
         [Serializable]
         public struct LayerTypeUsage
         {
@@ -40,9 +32,9 @@ namespace Unity.XR.CompositionLayers
         }
         [Serializable]
         private struct UsageMetricsEvent
-#if UNITY_2023_2_OR_NEWER && ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
+#if ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
             : IAnalytic.IData
-#endif //UNITY_2023_2_OR_NEWER && ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
+#endif //ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
         {
             public List<LayerTypeUsage> layerTypesUsage;
             public int compositionLayersCreated;
@@ -50,7 +42,7 @@ namespace Unity.XR.CompositionLayers
             public bool splashScreenCreated;
             public DateTime timestamp;
         }
-#if UNITY_2023_2_OR_NEWER && ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
+#if ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
         [AnalyticInfo(eventName: kEventUsageMetrics, vendorKey: kVendorKey, maxEventsPerHour: kMaxEventsPerHour, maxNumberOfElements: kMaxNumberOfElements)]
         private class CompositionLayersUsageAnalytic : IAnalytic
         {
@@ -73,26 +65,17 @@ namespace Unity.XR.CompositionLayers
         {
 #if ENABLE_TEST_SUPPORT || !ENABLE_CLOUD_SERVICES_ANALYTICS || !UNITY_ANALYTICS
             return false;
-#elif UNITY_EDITOR && UNITY_2023_2_OR_NEWER
+#elif UNITY_EDITOR
             return EditorAnalytics.enabled;
 #else
-
-#if UNITY_EDITOR
-            if (!EditorAnalytics.enabled)
-                return false;
-
-            if (AnalyticsResult.Ok != EditorAnalytics.RegisterEventWithLimit(kEventUsageMetrics, kMaxEventsPerHour, kMaxNumberOfElements, kVendorKey))
-                return false;
-            s_Initialized = true;
-#endif //UNITY_EDITOR
-            return s_Initialized;
+            return false;
 #endif //ENABLE_TEST_SUPPORT || !ENABLE_CLOUD_SERVICES_ANALYTICS || !UNITY_ANALYTICS
         }
 
         public static void SendUsageMetricsEvent()
         {
 #if UNITY_EDITOR && UNITY_ANALYTICS && ENABLE_CLOUD_SERVICES_ANALYTICS
-            if (!s_Initialized && !Initialize())
+            if (!Initialize())
                 return;
 
             var data = GatherUsageMetrics();
@@ -121,16 +104,13 @@ namespace Unity.XR.CompositionLayers
 
 #if UNITY_EDITOR && ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
         private static void SendEditorAnalytics(UsageMetricsEvent data) {
-#if UNITY_2023_2_OR_NEWER
             EditorAnalytics.SendAnalytic(new CompositionLayersUsageAnalytic(data));
-#else
-            EditorAnalytics.SendEventWithLimit(kEventUsageMetrics, data);
-#endif //UNITY_2023_2_OR_NEWER
         }
 #endif //UNITY_EDITOR && ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
     }
 
 #if UNITY_EDITOR && ENABLE_CLOUD_SERVICES_ANALYTICS && UNITY_ANALYTICS
+    [System.Obsolete("CompositionLayerAnalyticsBuildProcessor is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
     public class CompositionLayerAnalyticsBuildProcessor : IPostprocessBuildWithReport
 
     {

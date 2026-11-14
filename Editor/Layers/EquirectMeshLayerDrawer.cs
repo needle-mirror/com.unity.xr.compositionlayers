@@ -1,9 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
@@ -12,30 +10,19 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
     {
         class Styles
         {
-            internal GUIContent centralHorizontalAngleRadiansContent;
             internal GUIContent centralHorizontalAngleDegreesContent;
-            internal GUIContent upperVerticalAngleRadiansContent;
             internal GUIContent upperVerticalAngleDegreesContent;
-            internal GUIContent lowerVerticalAngleRadiansContent;
             internal GUIContent lowerVerticalAngleDegreesContent;
 
             internal Styles()
             {
-                centralHorizontalAngleRadiansContent = new GUIContent(k_CentralHorizontalAngleNameRadians, k_CentralHorizontalAngleRadiansToolTip);
                 centralHorizontalAngleDegreesContent = new GUIContent(k_CentralHorizontalAngleNameDegrees, k_CentralHorizontalAngleDegreesToolTip);
-                upperVerticalAngleRadiansContent = new GUIContent(k_UpperVerticalAngleNameRadians, k_UpperVerticalAngleRadiansToolTip);
                 upperVerticalAngleDegreesContent = new GUIContent(k_UpperVerticalAngleNameDegrees, k_UpperVerticalAngleDegreesToolTip);
-                lowerVerticalAngleRadiansContent = new GUIContent(k_LowerVerticalAngleNameRadians, k_LowerVerticalAngleRadiansToolTip);
                 lowerVerticalAngleDegreesContent = new GUIContent(k_LowerVerticalAngleNameDegrees, k_LowerVerticalAngleDegreesToolTip);
             }
         }
 
-        const string k_AngleRadians = " (rad)";
         const string k_AngleDegrees = " (deg)";
-
-        const float k_HalfPi = Mathf.PI * 0.5f;
-        const float k_NegativeHalfPi = -k_HalfPi;
-        const float k_TwoPi = Mathf.PI * 2f;
 
         const string k_CentralHorizontalAnglePropertyName = "m_CentralHorizontalAngle";
         const string k_UpperVerticalAnglePropertyName = "m_UpperVerticalAngle";
@@ -44,38 +31,27 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         const string k_SerializedVersionPropertyName = "m_SerializedVersion";
 
         const string k_CentralHorizontalAngleName = "Central Hori. Angle";
-        const string k_CentralHorizontalAngleNameRadians = k_CentralHorizontalAngleName + k_AngleRadians;
         const string k_CentralHorizontalAngleNameDegrees = k_CentralHorizontalAngleName + k_AngleDegrees;
-        const string k_CentralHorizontalAngleRadiansToolTip = "The visible horizontal angle of the sphere, based at 0 " +
-            "radians, in the range of [0, 2Pi]. It grows symmetrically around the 0 radian angle. " + DisplayAnglePreferenceToolTip;
         const string k_CentralHorizontalAngleDegreesToolTip = "The visible horizontal angle of the sphere, based at 0 " +
-            "degrees, in the range of [0, 360]. It grows symmetrically around the 0 degree angle. " + DisplayAnglePreferenceToolTip;
+            "degrees, in the range of [0, 360]. It grows symmetrically around the 0 degree angle.";
 
         const string k_UpperVerticalAngleName = "Upper Vert. Angle";
-        const string k_UpperVerticalAngleNameRadians = k_UpperVerticalAngleName + k_AngleRadians;
         const string k_UpperVerticalAngleNameDegrees = k_UpperVerticalAngleName + k_AngleDegrees;
         const string k_VerticalAngleSignToolTip = "Positive values are above the equator (toward the north pole); " +
-            "negative values are below it (toward the south pole). ";
+            "negative values are below it (toward the south pole).";
 
-        const string k_UpperVerticalAngleRadiansToolTip = "The upper vertical angle of the visible portion of the " +
-            "sphere, in the range of [-Pi/2, Pi/2]. " + k_VerticalAngleSignToolTip + DisplayAnglePreferenceToolTip;
         const string k_UpperVerticalAngleDegreesToolTip = "The upper vertical angle of the visible portion of the " +
-            "sphere, in the range of [-90, 90]. " + k_VerticalAngleSignToolTip + DisplayAnglePreferenceToolTip;
+            "sphere, in the range of [-90, 90]. " + k_VerticalAngleSignToolTip;
 
         const string k_LowerVerticalAngleName = "Lower Vert. Angle";
-        const string k_LowerVerticalAngleNameRadians = k_LowerVerticalAngleName + k_AngleRadians;
         const string k_LowerVerticalAngleNameDegrees = k_LowerVerticalAngleName + k_AngleDegrees;
-        const string k_LowerVerticalAngleRadiansToolTip = "The lower vertical angle of the visible portion of the " +
-            "sphere, in the range of [-Pi/2, Pi/2]. " + k_VerticalAngleSignToolTip + DisplayAnglePreferenceToolTip;
         const string k_LowerVerticalAngleDegreesToolTip = "The lower vertical angle of the visible portion of the " +
-            "sphere, in the range of [-90, 90]. " + k_VerticalAngleSignToolTip + DisplayAnglePreferenceToolTip;
+            "sphere, in the range of [-90, 90]. " + k_VerticalAngleSignToolTip;
 
         const string k_UpperLowerOverlapWarning =
             "Upper Vert. Angle should be greater than Lower Vert. Angle. The layer may not display correctly otherwise.";
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static Styles s_Styles;
         static Styles styles
         {
@@ -116,64 +92,29 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
                     if (currentProperty.name is k_CentralHorizontalAnglePropertyName or k_UpperVerticalAnglePropertyName or k_LowerVerticalAnglePropertyName)
                     {
-                        switch (CompositionLayersPreferences.Instance.DisplayAnglesAs)
+                        if (currentProperty.name == k_CentralHorizontalAnglePropertyName)
                         {
-                            case AngleDisplayType.Degrees:
-                                {
-                                    if (currentProperty.name == k_CentralHorizontalAnglePropertyName)
-                                    {
-                                        currentProperty.floatValue = EditorGUILayout.Slider(
-                                            styles.centralHorizontalAngleDegreesContent,
-                                            equirectMeshLayerData.CentralHorizontalAngleInDegrees,
-                                            0f,
-                                            360f) * Mathf.Deg2Rad;
-                                    }
-                                    else if (currentProperty.name == k_UpperVerticalAnglePropertyName)
-                                    {
-                                        currentProperty.floatValue = EditorGUILayout.Slider(
-                                            styles.upperVerticalAngleDegreesContent,
-                                            equirectMeshLayerData.UpperVerticalAngleInDegrees,
-                                            -90f,
-                                            90f) * Mathf.Deg2Rad;
-                                    }
-                                    else
-                                    {
-                                        currentProperty.floatValue = EditorGUILayout.Slider(
-                                            styles.lowerVerticalAngleDegreesContent,
-                                            equirectMeshLayerData.LowerVerticalAngleInDegrees,
-                                            -90f,
-                                            90f) * Mathf.Deg2Rad;
-                                    }
-                                    break;
-                                }
-                            case AngleDisplayType.Radians:
-                                {
-                                    if (currentProperty.name == k_CentralHorizontalAnglePropertyName)
-                                    {
-                                        currentProperty.floatValue = EditorGUILayout.Slider(
-                                            styles.centralHorizontalAngleRadiansContent,
-                                            equirectMeshLayerData.CentralHorizontalAngle,
-                                            0f,
-                                            k_TwoPi);
-                                    }
-                                    else if (currentProperty.name == k_UpperVerticalAnglePropertyName)
-                                    {
-                                        currentProperty.floatValue = EditorGUILayout.Slider(
-                                            styles.upperVerticalAngleRadiansContent,
-                                            equirectMeshLayerData.UpperVerticalAngle,
-                                            k_NegativeHalfPi,
-                                            k_HalfPi);
-                                    }
-                                    else
-                                    {
-                                        currentProperty.floatValue = EditorGUILayout.Slider(
-                                            styles.lowerVerticalAngleRadiansContent,
-                                            equirectMeshLayerData.LowerVerticalAngle,
-                                            k_NegativeHalfPi,
-                                            k_HalfPi);
-                                    }
-                                    break;
-                                }
+                            currentProperty.floatValue = EditorGUILayout.Slider(
+                                styles.centralHorizontalAngleDegreesContent,
+                                equirectMeshLayerData.CentralHorizontalAngleInDegrees,
+                                0f,
+                                360f) * Mathf.Deg2Rad;
+                        }
+                        else if (currentProperty.name == k_UpperVerticalAnglePropertyName)
+                        {
+                            currentProperty.floatValue = EditorGUILayout.Slider(
+                                styles.upperVerticalAngleDegreesContent,
+                                equirectMeshLayerData.UpperVerticalAngleInDegrees,
+                                -90f,
+                                90f) * Mathf.Deg2Rad;
+                        }
+                        else
+                        {
+                            currentProperty.floatValue = EditorGUILayout.Slider(
+                                styles.lowerVerticalAngleDegreesContent,
+                                equirectMeshLayerData.LowerVerticalAngleInDegrees,
+                                -90f,
+                                90f) * Mathf.Deg2Rad;
                         }
                     }
                     else if (currentProperty.name is k_RadiusPropertyName)

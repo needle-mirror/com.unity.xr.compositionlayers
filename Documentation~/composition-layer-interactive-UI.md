@@ -15,7 +15,7 @@ Composition Layers can render textures with great fidelity, which makes them ide
 ![A UI dialog prompts you to install XR Interaction Toolkit, if not already installed.](images/UI-dialog.png)<br />
 
 > [!NOTE]
->  Composition Layer UI components are dependent on XR Interaction Toolkit. You will be prompt to install XRI into your project when you create a Composition Layer UI component if XRI is not already present.
+>  Composition Layer UI components are dependent on XR Interaction Toolkit version 3.6.1 or newer. You will be prompted to install XRI into your project when you create a Composition Layer UI component if XRI is not already present. If an older version of XRI is installed, UI interaction is unavailable until you upgrade it.
 
 ## Create Composition Layer UI
 

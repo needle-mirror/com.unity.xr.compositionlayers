@@ -1,4 +1,4 @@
-#if UNITY_EDITOR && UNITY_2021_1_OR_NEWER
+#if UNITY_EDITOR
 #define CAN_USE_CUSTOM_HELP_URL
 #endif
 
@@ -18,15 +18,15 @@ namespace Unity.XR.CompositionLayers
         const string k_BaseURL = "https://docs.unity3d.com";
         const string k_MidURL = "/Packages/com.unity.xr.compositionlayers@";
         const string k_ApiURL = "/api/";
-        const string k_FallbackVersion = "0.6";
+        internal const string k_FallbackVersion = "7.0";
+        const string k_PackageName = "com.unity.xr.compositionlayers";
         const string k_EndURL = ".html";
 
         static readonly string k_PackageVersion;
 
         static CompositionLayersHelpURLAttribute()
         {
-            var assembly = typeof(CompositionLayer).Assembly;
-            var packageInfo = PackageInfo.FindForAssembly(assembly);
+            var packageInfo = PackageInfo.FindForPackageName(k_PackageName);
 
 #if UNITY_EDITOR
             if (packageInfo == null)
@@ -50,7 +50,7 @@ namespace Unity.XR.CompositionLayers
             return $"{k_BaseURL}{k_MidURL}{k_PackageVersion}{k_ApiURL}{type.FullName}{k_EndURL}";
         }
     }
-#else //HelpURL attribute is `sealed` in previous Unity versions
+#else // PackageInfo is editor-only, so players get an inert attribute
     [Conditional("UNITY_EDITOR")]
     class CompositionLayersHelpURLAttribute : Attribute
     {

@@ -2,9 +2,9 @@
 using UnityEngine.Rendering.HighDefinition;
 using System.Collections.Generic;
 using UnityEngine;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
+
+#pragma warning disable CS0618
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
@@ -12,11 +12,19 @@ namespace Unity.XR.CompositionLayers.Emulation
     {
         internal static void Execute(CustomPassContext ctx, List<EmulatedLayerData> emulationLayers)
         {
-            var commandArgs = new EmulatedLayerData.CommandArgs(ctx.hdCamera.camera);
+            var camera = ctx.hdCamera.camera;
+            var commandArgs = new EmulatedLayerData.CommandArgs(camera);
             ctx.cmd.DisableShaderKeyword("COMPOSITION_LAYERS_OVERRIDE_SHADER_VARIABLES_GLOBAL");
+
+            // The custom pass volumes are global, so this runs for every camera, including UI, capture, and
+            // projection rig cameras. Only the cameras the provider selected may draw emulated layers, which is the
+            // same pairing the Universal pass applies.
+            if (!EmulatedLayerProvider.IsSupported(camera))
+                return;
+
             foreach (var layerData in emulationLayers)
             {
-                if (layerData.IsSupported(ctx.hdCamera.camera))
+                if (layerData.IsSupported(camera))
                 {
                     layerData.AddToCommandBuffer(ctx.cmd, commandArgs);
                 }
@@ -24,6 +32,10 @@ namespace Unity.XR.CompositionLayers.Emulation
         }
     }
 
+    /// <summary>
+    /// Obsolete. High Definition Render Pipeline support for layer emulation and the Mirror View Renderer is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release. Use the Universal Render Pipeline.
+    /// </summary>
+    [System.Obsolete("High Definition Render Pipeline support for layer emulation and the Mirror View Renderer is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release. Use the Universal Render Pipeline.")]
     public class EmulationLayerHighDefinitionUnderlayCustomPass : CustomPass
     {
         protected override void Execute(CustomPassContext ctx)
@@ -32,6 +44,10 @@ namespace Unity.XR.CompositionLayers.Emulation
         }
     }
 
+    /// <summary>
+    /// Obsolete. High Definition Render Pipeline support for layer emulation and the Mirror View Renderer is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release. Use the Universal Render Pipeline.
+    /// </summary>
+    [System.Obsolete("High Definition Render Pipeline support for layer emulation and the Mirror View Renderer is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release. Use the Universal Render Pipeline.")]
     public class EmulationLayerHighDefinitionOverlayCustomPass : CustomPass
     {
         protected override void Execute(CustomPassContext ctx)
@@ -43,9 +59,7 @@ namespace Unity.XR.CompositionLayers.Emulation
     [ExecuteInEditMode]
     internal partial class EmulationLayerHighDefinitionVolumeManager : MonoBehaviour
     {
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static EmulationLayerHighDefinitionVolumeManager _instance = null;
 
         static void InternalDestroy(Object obj)
@@ -144,4 +158,6 @@ namespace Unity.XR.CompositionLayers.Emulation
         }
     }
 }
+
+#pragma warning restore CS0618
 #endif

@@ -14,9 +14,6 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
     [CustomPropertyDrawer(typeof(LayerData), true)]
     internal class LayerDataDrawer : PropertyDrawer
     {
-        internal const string DisplayAnglePreferenceToolTip = "You can change the way angles are displayed in 'Preferences > " +
-            "Composition Layer Preferences > Display Angles As' dropdown.";
-
         internal const string k_UnsupportedBlendTypeMessage = "This blend type isn't supported on {0}.";
 
         internal const string k_BlendTypeDisplayName = "Blend Type";

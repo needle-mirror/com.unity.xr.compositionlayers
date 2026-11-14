@@ -6,19 +6,16 @@ using Unity.XR.CompositionLayers.Extensions;
 #if !UNITY_EDITOR
 using Unity.XR.CompositionLayers.Services;
 #endif
-#if UNITY_XR_INTERACTION_TOOLKIT
+#if UNITY_XR_INTERACTION_TOOLKIT_3_6_1_OR_NEWER
 using System;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 using Unity.XR.CoreUtils;
 
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
 using UnityEngine.XR.Interaction.Toolkit.Filtering;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
-using UnityEngine.XR.Interaction.Toolkit.Interactors.Casters;
-#endif
 #endif
 
 #if UNITY_EDITOR
@@ -38,7 +35,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         // Minimum size for the canvas to prevent it from being too small
         const float MINIMUM_CANVAS_SIZE = 0.001f;
 
-#if UNITY_XR_INTERACTION_TOOLKIT
+#if UNITY_XR_INTERACTION_TOOLKIT_3_6_1_OR_NEWER
         struct ProxyHoverBinding
         {
             public IUIHoverInteractor proxyHoverInteractor;
@@ -159,7 +156,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             xrSimpleInteractable.hoverExited.AddListener(OnHoverExit);
         }
 
-        void InitializeLayerAndCamera()
+        internal void InitializeLayerAndCamera()
         {
             if (m_IsLayerAndCameraInitialized)
                 return;
@@ -196,10 +193,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 #endif
             }
 
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
             if (xrSimpleInteractable != null)
                 xrSimpleInteractable.selectFilters.Add(new XRSelectFilterDelegate((_, _) => false));
-#endif
 
             EnsureCameraWithRenderTexture();
 
@@ -518,9 +513,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
             switch(interactor)
             {
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
                 case NearFarInteractor:
-#if UNITY_XR_INTERACTION_TOOLKIT_3_6_0_OR_NEWER
                     var realNearFar = (NearFarInteractor)interactor;
                     var realFarCaster = realNearFar.farInteractionCaster;
                     if (realFarCaster != null)
@@ -530,17 +523,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                     var proxyFarCaster = proxyNearFar.farInteractionCaster;
                     if (proxyFarCaster != null)
                         proxyFarCaster.raycastMask = 1 << layerBit;
-#else
-                    var realCaster = ((Component)interactor).GetComponent<CurveInteractionCaster>();
-                    if (realCaster != null)
-                        realCaster.raycastMask &= ~(1 << layerBit);
-
-                    var proxyCaster = ((Component)proxyInteractor).GetComponent<CurveInteractionCaster>();
-                    if (proxyCaster != null)
-                        proxyCaster.raycastMask = 1 << layerBit;
-#endif
                     break;
-#endif
                 case XRRayInteractor:
                     // Remove the layer from the real interactor mask
                     (interactor as XRRayInteractor).raycastMask &= ~(1 << layerBit);
@@ -657,9 +640,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
                 interactorObject = realHoverInteractor,
                 deviceModel = proxyArgs.deviceModel,
                 uiObject = proxyArgs.uiObject,
-#if UNITY_XR_INTERACTION_TOOLKIT_3_5_0_PRE_1_OR_NEWER
                 uiSystem = proxyArgs.uiSystem,
-#endif
             };
         }
 
@@ -811,6 +792,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         }
 
 #endif //UNITY_EDITOR
-#endif //UNITY_XR_INTERACTION_TOOLKIT
+#endif //UNITY_XR_INTERACTION_TOOLKIT_3_6_1_OR_NEWER
     }
 }

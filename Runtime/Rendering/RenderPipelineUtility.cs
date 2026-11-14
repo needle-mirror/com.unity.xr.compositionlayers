@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.Rendering;
 
 namespace Unity.XR.CompositionLayers.Rendering
@@ -18,11 +19,8 @@ namespace Unity.XR.CompositionLayers.Rendering
         {
             if (GraphicsSettings.currentRenderPipeline == null)
                 return false;
-#if UNITY_2023_2_OR_NEWER
+
             return typeof(UnityEngine.Rendering.Universal.UniversalRenderPipeline).IsAssignableFrom(GraphicsSettings.currentRenderPipeline.pipelineType);
-#else
-            return GraphicsSettings.currentRenderPipeline.renderPipelineShaderTag == "UniversalPipeline";
-#endif
         }
 #endif
 
@@ -33,15 +31,13 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// <returns>
         /// <see langword="true"/> if the current render pipeline is HDRP. Otherwise, <see langword="false"/>.
         /// </returns>
+        [Obsolete("High Definition Render Pipeline support for layer emulation and the Mirror View Renderer is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release. Use the Universal Render Pipeline.")]
         public static bool IsHDRenderPipeline()
         {
             if (GraphicsSettings.currentRenderPipeline == null)
                 return false;
-#if UNITY_2023_2_OR_NEWER
+
             return typeof(UnityEngine.Rendering.HighDefinition.HDRenderPipeline).IsAssignableFrom(GraphicsSettings.currentRenderPipeline.pipelineType);
-#else
-            return GraphicsSettings.currentRenderPipeline.renderPipelineShaderTag == "HDRenderPipeline";
-#endif
         }
 #endif
     }

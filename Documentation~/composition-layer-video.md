@@ -26,7 +26,7 @@ Refer to [Composition layer component](xref:xr-layers-base-component) for more i
 ### Add video to a composition layer
 
 To add a video to a composition layer, you must first:
-* [Import your video file](https://docs.unity3d.com/6000.0/Documentation/Manual/video-clips-use.html) into your Unity project.
+* [Import your video file](https://docs.unity3d.com/7000.0/Documentation/Manual/video-clips-use.html) into your Unity project.
 * [Create a composition layer](xref:xr-layers-add-layer) of appropriate display. Refer to [Video types](#video-types) to choose an appropriate composition layer for your video type.
 
 Follow these steps to display your video on the composition layer:

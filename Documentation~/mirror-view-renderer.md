@@ -21,16 +21,10 @@ The `MirrorViewRenderer` supports mirror view rendering for Main Display on XR m
 
 In some case, the mirror view rendering with composition layers isn't supported by default.
 - Some XR Plug-ins
-- Built-in Render Pipeline
 
-Unity provides this function to assist them.
-
-> [!IMPORTANT]
-> In Unity 6.5 and newer, the Built-In Render Pipeline is deprecated and will be made obsolete in a future release. For more information, refer to [Migrating from the Built-In Render Pipeline to URP](https://docs.unity3d.com/6000.5/Documentation/Manual/urp/upgrading-from-birp.html) and [Render pipeline feature comparison](https://docs.unity3d.com/6000.5/Documentation/Manual/render-pipelines-feature-comparison.html).
+Unity provides this function to assist them. The Mirror View Renderer requires the Universal Render Pipeline (URP). High Definition Render Pipeline (HDRP) support has been deprecated and will be removed in a future release.
 
 
 ## Supplement
 
-Unity adds these shaders to the **Always Include Shaders list** when adding the MirrorViewRenderer:
-- Unlit/XRCompositionLayers/Uber
-- Unlit/XRCompositionLayers/BlitCopyHDR
+The MirrorViewRenderer uses the `Unlit/XRCompositionLayers/Uber` and `Unlit/XRCompositionLayers/BlitCopyHDR` shaders. XR Composition Layers includes them in builds automatically. For more information, refer to [Shader inclusion](xref:xr-layers-graphics-settings#shader-inclusion).

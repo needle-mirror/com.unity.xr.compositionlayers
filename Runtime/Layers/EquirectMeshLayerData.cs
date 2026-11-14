@@ -18,7 +18,7 @@ namespace Unity.XR.CompositionLayers.Layers
         PreferOverlay = false,
         SupportTransform = true,
         Description = "Equirect mesh layer",
-        SuggestedExtenstionTypes = new[] { typeof(TexturesExtension) }
+        SuggestedExtensionTypes = new[] { typeof(TexturesExtension) }
      )]
     public class EquirectMeshLayerData : LayerData, ISerializationCallbackReceiver
     {

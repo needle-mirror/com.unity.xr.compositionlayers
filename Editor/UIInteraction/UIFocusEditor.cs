@@ -10,6 +10,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
     /// Overrides the SceneView's default behavior to focus on the composition layer when the user presses the 'F' key.
     /// </summary>
     [CustomEditor(typeof(UIFocus))]
+    [System.Obsolete("UIFocusEditor is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
     public class UIFocusEditor : UnityEditor.Editor
     {
         void OnEnable()

@@ -36,8 +36,6 @@ To configure the main scene camera in an XR scene to render with a transparent b
 2. Adjust settings based on your render pipeline:
     - **Universal Render Pipeline (URP)**:
      In the **Environment** section, set **Background Type** to **Solid Color**.
-    - **Built-In Render Pipeline**:
-     Set **Clear Flags** to **Solid Color**.
 3. Open the **Background** color picker and set **A (Alpha)** to `0`.
 
 The same considerations apply when you render objects to a render texture and use that texture as the source of a composition layer. If you want layers underneath to be visible in the background areas, you must set the rendering camera's background color to be transparent.
@@ -77,27 +75,6 @@ To change HDR settings when using URP:
 > 1. Open the Unity [Preferences](xref:um-preferences) window.
 > 2. Select the **Graphics** section.
 > 3. Set the **Advanced Properties** setting to **All Visible**.
-
-### Built-In Render Pipeline
-
-> [!IMPORTANT]
-> In Unity 6.5 and newer, the Built-In Render Pipeline is deprecated and will be made obsolete in a future release. For more information, refer to [Migrating from the Built-In Render Pipeline to URP](https://docs.unity3d.com/6000.5/Documentation/Manual/urp/upgrading-from-birp.html) and [Render pipeline feature comparison](https://docs.unity3d.com/6000.5/Documentation/Manual/render-pipelines-feature-comparison.html).
-
-To change HDR settings when using the Built-In Render Pipeline:
-
-1. Open the **Project Settings** window.
-2. Select the **Graphics** section.
-3. Locate the **Tier Settings** for **Built-In**.
-4. Click the **Open Editor** button to open the **Tier Settings** editor.
-5. Change the HDR settings to the desired value for each tier that your project uses:
-
-   a. Deselect the **Use Defaults** option.
-   b. Enable or disable the **Use HDR** option.
-   c. If you enable HDR, set **HDR Mode** to **FP16**.
-
-![HDR Tier Settings](images/Graphics_HDR_Tier_Settings.png)<br />*FP16 mode in Graphics Tier Settings*
-
-Refer to [Graphics settings](xref:um-class-graphics-settings) for the version of Unity that you are using for more information about changing graphics settings.
 
 ## Configure post-processing settings {#post-processing-transparency}
 

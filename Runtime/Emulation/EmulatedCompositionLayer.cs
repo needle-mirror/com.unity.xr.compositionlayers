@@ -2,10 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.XR.CompositionLayers;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
@@ -15,21 +12,7 @@ namespace Unity.XR.CompositionLayers.Emulation
     /// </summary>
     internal class EmulatedCompositionLayer : IDisposable
     {
-        struct CameraCommandBufferData
-        {
-            internal CommandBuffer CommandBuffer;
-            internal CameraEvent[] CameraEvents;
-
-            internal CameraCommandBufferData(CommandBuffer commandBuffer, CameraEvent[] cameraEvents)
-            {
-                CommandBuffer = commandBuffer;
-                CameraEvents = cameraEvents;
-            }
-        }
-
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static readonly Type k_EmulatedLayerDataType = typeof(EmulatedLayerData);
 
         [NonSerialized]
@@ -44,7 +27,6 @@ namespace Unity.XR.CompositionLayers.Emulation
         [NonSerialized]
         EmulatedLayerData m_EmulatedLayerData;
 
-        Dictionary<Camera, CameraCommandBufferData> m_LayerCommandBuffers = new();
         List<CompositionLayerExtension> m_LayerExtensions = new();
 
         /// <summary>
@@ -131,48 +113,6 @@ namespace Unity.XR.CompositionLayers.Emulation
             EmulatedLayerData?.Dispose();
             CompositionLayer = null;
             EmulatedLayerData = null;
-        }
-
-        internal virtual void AddCommandBuffer(List<Camera> cameras)
-        {
-            foreach (var camera in cameras)
-            {
-                if (EmulatedLayerData.IsSupported(camera))
-                {
-                    var commandArgs = new EmulatedLayerData.CommandArgs(camera);
-                    var commandBuffer = EmulatedLayerData.UpdateCommandBuffer(commandArgs);
-                    var cameraEvents = Order >= 0 ?
-                        EmulatedLayerProvider.GetOverlayCameraEvents(camera) :
-                        EmulatedLayerProvider.GetUnderlayCameraEvents(camera);
-
-                    foreach (var cameraEvent in cameraEvents)
-                    {
-                        camera.AddCommandBuffer(cameraEvent, commandBuffer);
-                    }
-
-                    m_LayerCommandBuffers.Add(camera, new CameraCommandBufferData(commandBuffer, cameraEvents));
-                }
-                else
-                {
-                    EmulatedLayerProvider.WarnUnsupportedEmulation(camera, CompositionLayer);
-                }
-            }
-        }
-
-        internal virtual void RemoveCommandBuffer(List<Camera> cameras)
-        {
-            foreach (var camera in cameras)
-            {
-                if (camera != null && m_LayerCommandBuffers.TryGetValue(camera, out var cameraCommandBufferData)) // camera will be null when camera has been destroyed.
-                {
-                    foreach (var cameraEvent in cameraCommandBufferData.CameraEvents)
-                    {
-                        camera.RemoveCommandBuffer(cameraEvent, cameraCommandBufferData.CommandBuffer);
-                    }
-                }
-            }
-
-            m_LayerCommandBuffers.Clear();
         }
     }
 }

@@ -5,16 +5,14 @@ using Unity.XR.CompositionLayers.Extensions;
 using Unity.XR.CompositionLayers.Services;
 using UnityEditor;
 using UnityEngine;
-#if UNITY_XR_INTERACTION_TOOLKIT
+#if UNITY_XR_INTERACTION_TOOLKIT_3_6_1_OR_NEWER
 using UnityEngine.UI;
 #endif
 using UnityEngine.InputSystem.XR;
 using UnityEngine.InputSystem;
 using Unity.XR.CoreUtils;
 using Unity.XR.CompositionLayers.Services.Editor;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
@@ -30,19 +28,13 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         internal const string k_UnsupportedUnderlayMessage = "Underlay isn't supported on {0}.";
         internal const string k_UnsupportedLayerTypeMessage = "This layer type isn't supported on {0}.";
 
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         internal static List<string> UILayerNames = new();
 
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         internal static List<string> LayerNames = new();
 
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         internal static List<CompositionLayer> SortedLayers = new List<CompositionLayer>();
 
         static CompositionLayerEditorUtils()
@@ -163,6 +155,11 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             leftCamGo.transform.SetLocalPose(Pose.identity);
             rightCamGo.transform.SetLocalPose(Pose.identity);
 
+            var layer = gameObj.GetComponent<CompositionLayer>();
+            Undo.RecordObject(layer, Undo.GetCurrentGroupName());
+            ((ProjectionLayerRigData)layer.LayerData).SetCameras(
+                leftCamGo.GetComponent<Camera>(), rightCamGo.GetComponent<Camera>());
+
             leftCamGo.AddComponent<TrackedPoseDriver>();
             rightCamGo.AddComponent<TrackedPoseDriver>();
 
@@ -188,7 +185,9 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             if (texExt == null) texExt = gameObj.AddComponent<TexturesExtension>();
             texExt.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
 
+#pragma warning disable CS0618
             ProjectionEyeRigUtil.ShowWindow(gameObj);
+#pragma warning restore CS0618
         }
 
         public static void CreateLayerComponentMenuItem(Type dataType)
@@ -338,11 +337,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             if (EditorApplication.isPlayingOrWillChangePlaymode)
                 return;
 
-#if UNITY_6000_4_OR_NEWER
             var compositionLayers = UnityEngine.Object.FindObjectsByType<CompositionLayer>(FindObjectsInactive.Include);
-#else
-            var compositionLayers = UnityEngine.Object.FindObjectsByType<CompositionLayer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-#endif
 
             foreach (var compositionLayer in compositionLayers)
             {

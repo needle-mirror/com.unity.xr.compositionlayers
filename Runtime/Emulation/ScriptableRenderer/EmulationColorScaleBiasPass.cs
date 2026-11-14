@@ -1,18 +1,12 @@
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
-using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.XR.CompositionLayers.Rendering.Internals;
+using Unity.XR.CompositionLayers.Rendering.Internals;
 using Unity.XR.CompositionLayers.Services;
-using Unity.XR.CompositionLayers.Extensions;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.RenderGraphModule.Util;
-#endif
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
@@ -27,22 +21,13 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         static readonly int k_ScaleParameterName = Shader.PropertyToID("_ColorScale");
         static readonly int k_BiasParameterName = Shader.PropertyToID("_ColorBias");
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static bool s_InjectPassRegistered;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static EmulationColorScaleBiasPass s_ColorScaleBiasPass;
 
         Material m_EmulationMaterial;
 
-#if !UNITY_6000_4_OR_NEWER && !UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
-        ProfilingSampler m_ProfilingSampler = new ProfilingSampler(k_PassName);
-        RTHandle m_CameraColorTargetHandle;
-        RTHandle m_TempRTHandle;
-#endif
 
         /// <summary>
         /// Constructor to initialize the render pass with the appropriate render event.
@@ -51,9 +36,7 @@ namespace Unity.XR.CompositionLayers.Emulation
         {
             this.renderPassEvent = renderPassEvent;
             CreateEmulationMaterial();
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
             requiresIntermediateTexture = true;
-#endif
         }
 
         /// <summary>
@@ -77,7 +60,7 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// Checks if the ColorScaleBias extension exists in the current scene.
         /// </summary>
         /// <returns> Returns ture if compoenet is attached to Default Layer else false.</returns>
-        bool IsExtensionInScene()
+        bool IsExtensionInScene(Camera camera)
         {
             if (m_EmulationMaterial == null)
             {
@@ -90,19 +73,10 @@ namespace Unity.XR.CompositionLayers.Emulation
                 return false;
             }
 
-            CompositionLayer defaultLayer = compositionLayerManager.DefaultSceneCompositionLayer;
-            if (defaultLayer == null)
-            {
-                return false;
-            }
-            // If an XR device is connected and in use, do not apply the effect
-            if(XRHelper.GetDeviceConnected())
-            {
-                return false;
-            }
-
-            ColorScaleBiasExtension colorScaleBiasExtension = defaultLayer.GetComponent<ColorScaleBiasExtension>();
-            if (colorScaleBiasExtension == null || !colorScaleBiasExtension.isActiveAndEnabled)
+            var defaultLayer = compositionLayerManager.DefaultSceneCompositionLayer;
+            var colorScaleBiasExtension =
+                EmulatedCompositionLayerUtils.GetEmulatedColorScaleBias(defaultLayer, camera.cameraType);
+            if (colorScaleBiasExtension == null)
             {
                 return false;
             }
@@ -114,16 +88,16 @@ namespace Unity.XR.CompositionLayers.Emulation
             return true;
         }
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
         /// <summary>
-        /// Handles the execution of the render pass in RenderGraph mode (Unity 6.0+).
+        /// Handles the execution of the render pass in RenderGraph mode.
         /// </summary>
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
 
-            if (resourceData.isActiveTargetBackBuffer || !IsSupported(cameraData.camera) || !IsExtensionInScene())
+            var camera = cameraData.camera;
+            if (resourceData.isActiveTargetBackBuffer || !IsSupported(camera) || !IsExtensionInScene(camera))
                 return;
 
             TextureHandle source = resourceData.activeColorTexture;
@@ -139,52 +113,6 @@ namespace Unity.XR.CompositionLayers.Emulation
             resourceData.cameraColor = destination;
 
         }
-#else
-        /// <summary>
-        /// Configures the render pass and allocates a temporary render target.
-        /// </summary>
-        public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
-        {
-            RenderTextureDescriptor desc = cameraTextureDescriptor;
-            desc.depthBufferBits = 0;
-            RenderingUtils.ReAllocateIfNeeded(ref m_TempRTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp,
-                false, 1, 0, "_TempRT");
-            ConfigureTarget(m_TempRTHandle);
-            ConfigureClear(ClearFlag.Color, Color.clear);
-
-        }
-#endif
-
-        /// <summary>
-        /// Executes the render pass, applying the color scale and bias for Unity 2022.3 and earlier.
-        /// </summary>
-#if !UNITY_6000_4_OR_NEWER && !UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
-#pragma warning disable 0809
-        [Obsolete("Execute is deprecated as of XR Composition Layers 2.2, and will be removed in Unity 6.4. At your own risk, you can set URP_COMPATIBILITY_MODE in your project's scripting defines if you require this API.")]
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-#pragma warning restore 0809
-        {
-            if (m_EmulationMaterial == null || !IsSupported(renderingData.cameraData.camera) || !IsExtensionInScene())
-                return;
-
-            CommandBuffer cmd = CommandBufferPool.Get(k_PassName);
-
-            using (new ProfilingScope(cmd, m_ProfilingSampler))
-            {
-                RTHandle cameraColorTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
-                Blitter.BlitCameraTexture(cmd, cameraColorTarget, m_TempRTHandle, m_EmulationMaterial, 0);
-                Blitter.BlitCameraTexture(cmd, m_TempRTHandle, cameraColorTarget);
-            }
-
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-        }
-#else
-#pragma warning disable CS0114
-        [Obsolete("URP Compatibility Mode is removed in Unity 6.4. You must upgrade your project to Render Graph.", true)]
-        public void Execute(ScriptableRenderContext context, ref RenderingData renderingData) { }
-#pragma warning restore CS0114
-#endif
 
         /// <summary>
         /// Determines whether the given camera supports the effect.

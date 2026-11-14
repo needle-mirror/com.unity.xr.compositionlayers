@@ -10,6 +10,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
     /// </summary>
     /// <seealso cref="UIHandle"/>
     [CustomEditor(typeof(UIHandle)), CanEditMultipleObjects]
+    [System.Obsolete("UIHandleEditor is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
     public class UIHandleEditor : UnityEditor.Editor
     {
         private UIHandle handle;

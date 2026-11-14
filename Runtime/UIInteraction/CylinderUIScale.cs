@@ -89,8 +89,8 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         /// <returns>Returns a Vector3 scalar to transform a point on a Canvas to a point on the Layer</returns>
         public override Vector3 GetUIScale()
         {
-            return new Vector3(1f / canvasSizeX * height * (WidthScale * cylinderAspect),
-                                1f / canvasSizeY * height * HeightScale,
+            return new Vector3(1f / CanvasSizeX * height * (WidthScale * cylinderAspect),
+                                1f / CanvasSizeY * height * HeightScale,
                                 0);
         }
 

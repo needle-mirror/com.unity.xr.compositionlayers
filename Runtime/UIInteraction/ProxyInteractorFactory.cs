@@ -1,15 +1,11 @@
-#if UNITY_XR_INTERACTION_TOOLKIT
+#if UNITY_XR_INTERACTION_TOOLKIT_3_6_1_OR_NEWER
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem.XR;
 using UnityEngine.XR.Interaction.Toolkit;
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
-#endif
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 namespace Unity.XR.CompositionLayers.UIInteraction
 {
     /// <summary>
@@ -21,9 +17,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         const string ProxyInteractorName = "ProxyInteractor";
 
         // Dictionary of normal interactors to their proxy canvas interactors
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static Dictionary<IXRRayProvider, GameObject> s_InteractorToProxy = new();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -42,7 +36,14 @@ namespace Unity.XR.CompositionLayers.UIInteraction
             s_InteractorToProxy.TryGetValue(interactor, out var proxy);
             return proxy;
         }
-#if UNITY_XR_INTERACTION_TOOLKIT_3_0_0
+
+        /// <summary>
+        /// Creates or finds a proxy interactor from a supplied interactor
+        /// </summary>
+        /// <param name="interactor">The interactor</param>
+        /// <param name="position">The position to put the proxy interactor</param>
+        /// <param name="proxyInteractor">The created or found interactor</param>
+        /// <returns>Whether or not it has been created or found</returns>
         public bool TryCreateOrFind(IXRRayProvider interactor, Vector3 position, out IXRRayProvider proxyInteractor)
         {
             proxyInteractor = null;
@@ -116,61 +117,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
             return interactorGameObject;
         }
-#else
-        /// <summary>
-        /// Creates or finds a proxy interactor from a supplied interactor
-        /// </summary>
-        /// <param name="interactor">The interactor</param>
-        /// <param name="position">The position to put the proxy interactor</param>
-        /// <param name="proxyInteractor">The created or found interactor</param>
-        /// <returns>Whether or not it has been created or found</returns>
-        public bool TryCreateOrFind(IXRRayProvider interactor, Vector3 position, out IXRRayProvider proxyInteractor)
-        {
-            proxyInteractor = null;
-
-            if (interactor is not XRRayInteractor rayInteractor)
-                return false;
-
-
-            if (rayInteractor.name == ProxyInteractorName)
-                return false;
-
-
-            if (!s_InteractorToProxy.ContainsKey(interactor) && rayInteractor.xrController is ActionBasedController)
-            {
-                var proxyGameObject = CreateProxy(rayInteractor.xrController as ActionBasedController, position);
-                s_InteractorToProxy.Add(interactor, proxyGameObject);
-            }
-
-            proxyInteractor = s_InteractorToProxy[interactor].GetComponent<XRRayInteractor>() as IXRRayProvider;
-            return true;
-        }
-
-        /// <summary>
-        /// Helper for creating Proxy Interactors
-        /// </summary>
-        /// <param name="actionBasedController">Interactor to base the proxy from</param>
-        /// <param name="position">Position to create the proxy controller</param>
-        /// <returns>The created Proxy Interactor GameObject</returns>
-        GameObject CreateProxy(ActionBasedController actionBasedController, Vector3 position)
-        {
-            var interactorGameObject = new GameObject(ProxyInteractorName);
-            interactorGameObject.transform.position = position;
-            interactorGameObject.hideFlags = HideFlags.HideInHierarchy;
-
-            var xrController = interactorGameObject.AddComponent<ActionBasedController>();
-            xrController.selectAction = actionBasedController.selectAction;
-            xrController.activateAction = actionBasedController.activateAction;
-            xrController.uiPressAction = actionBasedController.uiPressAction;
-
-            var xrRayInteractor = interactorGameObject.AddComponent<XRRayInteractor>();
-            xrRayInteractor.rayOriginTransform = interactorGameObject.transform;
-            xrRayInteractor.maxRaycastDistance = 500;
-            xrRayInteractor.raycastMask = 0;
-
-            return interactorGameObject;
-        }
-#endif
     }
 }
 #endif

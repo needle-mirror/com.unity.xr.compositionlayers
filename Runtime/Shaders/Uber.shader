@@ -3,6 +3,7 @@ Shader "Unlit/XRCompositionLayers/Uber"
     Properties
     {
         [NoScaleOffset] _MainTex ("Texture", 2D) = "white" {}
+        [NoScaleOffset] _RightEyeTex ("Right Eye Texture", 2D) = "white" {}
         [NoScaleOffset] _Cubemap ("Cubemap", Cube) = "grey" {}
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
@@ -61,7 +62,7 @@ Shader "Unlit/XRCompositionLayers/Uber"
             #pragma multi_compile_local _ CUSTOM_RECTS_ON
             #pragma multi_compile_local_fragment _ SOURCE_TEXTURE_ON
             #pragma multi_compile_local_fragment _ COLOR_SCALE_BIAS_ON
-            #pragma multi_compile_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma multi_compile_local_vertex DEPTH_FARTHEST DEPTH_NEAREST
             #pragma multi_compile_vertex _ COMPOSITION_LAYERS_OVERRIDE_SHADER_VARIABLES_GLOBAL
 
@@ -106,49 +107,12 @@ Shader "Unlit/XRCompositionLayers/Uber"
             #pragma multi_compile_local _ CUSTOM_RECTS_ON
             #pragma multi_compile_local_fragment _ SOURCE_TEXTURE_ON
             #pragma multi_compile_local_fragment _ COLOR_SCALE_BIAS_ON
-            #pragma multi_compile_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma multi_compile_local_vertex DEPTH_FARTHEST DEPTH_NEAREST
 
             #define COMPOSITION_LAYERS_UNIVERSAL 1
             #include "Packages/com.unity.xr.compositionlayers/Runtime/Shaders/ForwardPass.hlsl"
             ENDHLSL
-        }
-    }
-
-    SubShader
-    {
-        Tags
-        {
-            "Queue" = "Overlay"
-            "RenderType" = "Transparent"
-            "ForceNoShadowCasting" = "True"
-            "IgnoreProjector" = "True"
-        }
-        LOD 100
-        Lighting Off
-        Fog { Mode Off }
-        Blend [_SrcBlend] [_DstBlend], [_AlphaSrcBlend] [_AlphaDstBlend]
-        ZTest Always
-        ZWrite [_ZWrite]
-        Cull[_Cull]
-
-        Pass
-        {
-            Name "FORWARD"
-            Tags { "LightMode" = "ForwardBase" }
-
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-            #pragma multi_compile_local COMPOSITION_LAYERTYPE_LAYER COMPOSITION_LAYERTYPE_CUBEMAP COMPOSITION_LAYERTYPE_PROJECTION COMPOSITION_LAYERTYPE_EQUIRECT
-            #pragma multi_compile_local _ CUSTOM_RECTS_ON
-            #pragma multi_compile_local_fragment _ SOURCE_TEXTURE_ON
-            #pragma multi_compile_local_fragment _ COLOR_SCALE_BIAS_ON
-            #pragma multi_compile_local_fragment _ALPHATEST_ON
-            #pragma multi_compile_local_vertex DEPTH_FARTHEST DEPTH_NEAREST
-
-            #include "Packages/com.unity.xr.compositionlayers/Runtime/Shaders/ForwardPass.cginc"
-            ENDCG
         }
     }
 

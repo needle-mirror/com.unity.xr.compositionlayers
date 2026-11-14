@@ -5,9 +5,7 @@ using Unity.Profiling;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Provider;
 using Unity.XR.CoreUtils;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -112,9 +110,7 @@ namespace Unity.XR.CompositionLayers.Services
             }
         }
 
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static CompositionLayerManager s_Instance = null;
 
         /// <summary>
@@ -172,7 +168,7 @@ namespace Unity.XR.CompositionLayers.Services
         /// <summary>
         /// Main camera cache accessor
         /// </summary>
-        public static Camera mainCameraCache
+        public static Camera MainCameraCache
         {
             get
             {
@@ -192,56 +188,32 @@ namespace Unity.XR.CompositionLayers.Services
             set => s_PassthroughLayerType = value;
         }
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static Type s_PassthroughLayerType;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static Camera s_MainCameraCache;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static ILayerProvider s_LayerProvider;
-#if LIFECYCLE_APIS_AVAILABLE
+        [AutoStaticsCleanup]
+        static bool s_LayerProviderEverSet;
         [NoAutoStaticsCleanup]
-#endif
         static ILayerProvider s_EmulationLayerProvider;
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static List<ILayerProvider> s_InternalLayerProviders;
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static CallbackComponent s_ComponentInstance;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static CompositionLayer s_DefaultSceneCompositionLayer;
-#if UNITY_6000_4_OR_NEWER
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static IdRegistry s_IdRegistry = new IdRegistry();
-#endif
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static bool s_ManagerStopped;
 
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         internal static Action OccupiedLayersUpdated;
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         internal static Action ManagerStarted;
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         internal static Action ManagerStopped;
 
         /// <summary>
@@ -278,6 +250,9 @@ namespace Unity.XR.CompositionLayers.Services
         readonly List<LayerInfo> m_ModifiedLayers = new List<LayerInfo>();
         readonly List<LayerInfo> m_ActiveLayers = new List<LayerInfo>();
         readonly List<LayerInfo> m_EmptyList = new List<LayerInfo>();
+        readonly Dictionary<CompositionLayer, Type> m_EvaluatedLayerDataTypes = new();
+        readonly HashSet<CompositionLayer> m_LayersWithoutData = new HashSet<CompositionLayer>();
+        readonly List<CompositionLayer> m_LayersToWarn = new List<CompositionLayer>();
         internal readonly Dictionary<int, CompositionLayer> OccupiedLayers = new Dictionary<int, CompositionLayer>();
         internal bool OccupiedLayersDirty;
         ProjectionRigOffsetSynchronizer m_ProjectionRigOffsetSynchronizer;
@@ -297,9 +272,21 @@ namespace Unity.XR.CompositionLayers.Services
 
                     s_LayerProvider = value;
 
+                    // A cleared provider is detached, as on application pause, so layers keep their render path.
+                    if (value != null)
+                    {
+                        s_LayerProviderEverSet = true;
+                        EvaluateAllRenderPaths();
+                    }
+
                     s_LayerProvider?.SetInitialState(new List<LayerInfo>(m_KnownLayers.Values));
                 }
             }
+        }
+
+        internal static void ResetLayerProviderHistory()
+        {
+            s_LayerProviderEverSet = false;
         }
 
         /// <summary>
@@ -462,7 +449,30 @@ namespace Unity.XR.CompositionLayers.Services
             m_RemovedLayers.Clear();
             m_ModifiedLayers.Clear();
             m_ActiveLayers.Clear();
+            m_LayersWithoutData.Clear();
+            m_LayersToWarn.Clear();
             OccupiedLayers.Clear();
+        }
+
+        void ClearStateBeforeRescan()
+        {
+            // Known layers that are gone or have lost their LayerData are reported as removed.
+            foreach (var knownLayer in m_KnownLayers)
+            {
+                if (knownLayer.Key != null && knownLayer.Key.LayerData != null)
+                    continue;
+
+                m_RemovedLayers.Add(knownLayer.Value.Id);
+                m_ProjectionRigOffsetSynchronizer?.RemoveProjectionRig(knownLayer.Value.Id);
+            }
+
+            // Queued removals and layers without LayerData are kept, unlike in ClearAllState.
+            m_KnownLayers.Clear();
+            m_CreatedLayers.Clear();
+            m_ModifiedLayers.Clear();
+            m_ActiveLayers.Clear();
+            OccupiedLayers.Clear();
+            m_EvaluatedLayerDataTypes.Clear();
         }
 
         internal void ClearSingleShotState()
@@ -496,6 +506,10 @@ namespace Unity.XR.CompositionLayers.Services
             s_LayerCreatedMarker.Begin();
 
             var layerKnown = m_KnownLayers.ContainsKey(layer);
+            // Changing the Order below can run OnValidate in the Editor, which must not register this layer again.
+            if (!layerKnown && layer.LayerData != null)
+                m_LayersWithoutData.Remove(layer);
+
             if (!OccupiedLayers.TryGetValue(layer.Order, out var occupiedLayer))
             {
                 if(OccupiedLayers.TryAdd(layer.Order, layer))
@@ -514,21 +528,26 @@ namespace Unity.XR.CompositionLayers.Services
                     Debug.Log($"{layer.gameObject.name} is set to next available Layer Order: {order.ToString()}.");
             }
 
-            if (layerKnown)
+            if (layerKnown || m_KnownLayers.ContainsKey(layer))
             {
                 s_LayerCreatedMarker.End();
                 return;
             }
 
-#if UNITY_6000_4_OR_NEWER
+            // Layers without LayerData are not managed, so providers never receive them.
+            if (layer.LayerData == null)
+            {
+                AddLayerWithoutData(layer);
+                s_LayerCreatedMarker.End();
+                return;
+            }
+
             var layerId = s_IdRegistry.GetId();
-#else
-            var layerId = layer.GetInstanceID();
-#endif
             var layerInfo = new LayerInfo() { Layer = layer, Id = layerId };
 
             m_KnownLayers.Add(layer, layerInfo);
             m_CreatedLayers.Add(layerInfo);
+            EvaluateRenderPath(layer);
 
             EnsureFallbackSceneCompositionLayer();
 
@@ -556,13 +575,19 @@ namespace Unity.XR.CompositionLayers.Services
             if (!m_KnownLayers.ContainsKey(layer))
                 CompositionLayerCreated(layer);
 
-            var layerInfo = m_KnownLayers[layer];
+            if (!m_KnownLayers.TryGetValue(layer, out var layerInfo))
+            {
+                s_LayerEnabledMarker.End();
+                return;
+            }
 
             if (!m_CreatedLayers.Contains(layerInfo) && !m_ModifiedLayers.Contains(layerInfo))
                 m_ModifiedLayers.Add(layerInfo);
 
             if (!m_ActiveLayers.Contains(layerInfo))
                 m_ActiveLayers.Add(layerInfo);
+
+            EvaluateRenderPath(layer);
 
             if (!OccupiedLayers.TryGetValue(layer.Order, out _))
             {
@@ -602,6 +627,8 @@ namespace Unity.XR.CompositionLayers.Services
             if (!m_ModifiedLayers.Contains(layerInfo))
                 m_ModifiedLayers.Add(layerInfo);
 
+            EvaluateRenderPath(layer);
+
             s_LayerDisabledMarker.End();
         }
 
@@ -622,21 +649,10 @@ namespace Unity.XR.CompositionLayers.Services
         {
             s_LayerDestroyedMarker.Begin();
 
-            if (m_KnownLayers.ContainsKey(layer))
-            {
-                var layerInfo = m_KnownLayers[layer];
-                m_KnownLayers.Remove(layer);
-                if (m_CreatedLayers.Contains(layerInfo))
-                    m_CreatedLayers.Remove(layerInfo);
-                if (m_ActiveLayers.Contains(layerInfo))
-                    m_ActiveLayers.Remove(layerInfo);
-                if (m_ModifiedLayers.Contains(layerInfo))
-                    m_ModifiedLayers.Remove(layerInfo);
-                m_RemovedLayers.Add(layerInfo.Id);
+            if (m_KnownLayers.TryGetValue(layer, out var layerInfo))
+                RemoveKnownLayer(layer, layerInfo);
 
-                if (layer.LayerData?.GetType() == typeof(ProjectionLayerRigData))
-                    m_ProjectionRigOffsetSynchronizer.RemoveProjectionRig(layerInfo.Id);
-            }
+            m_LayersWithoutData.Remove(layer);
 
             if (OccupiedLayers.TryGetValue(layer.Order, out var occupiedLayer) && occupiedLayer == layer)
             {
@@ -650,6 +666,68 @@ namespace Unity.XR.CompositionLayers.Services
             }
 
             s_LayerDestroyedMarker.End();
+        }
+
+        void RemoveKnownLayer(CompositionLayer layer, LayerInfo layerInfo)
+        {
+            m_KnownLayers.Remove(layer);
+            m_EvaluatedLayerDataTypes.Remove(layer);
+            m_CreatedLayers.Remove(layerInfo);
+            m_ActiveLayers.Remove(layerInfo);
+            m_ModifiedLayers.Remove(layerInfo);
+            m_RemovedLayers.Add(layerInfo.Id);
+            m_ProjectionRigOffsetSynchronizer?.RemoveProjectionRig(layerInfo.Id);
+        }
+
+        internal void CompositionLayerDataChanged(CompositionLayer layer)
+        {
+            if (layer == null)
+                return;
+
+            if (layer.LayerData == null)
+            {
+                if (m_KnownLayers.TryGetValue(layer, out var layerInfo))
+                {
+                    RemoveKnownLayer(layer, layerInfo);
+                    AddLayerWithoutData(layer);
+                }
+
+                return;
+            }
+
+            if (m_LayersWithoutData.Remove(layer) && layer.isActiveAndEnabled)
+                CompositionLayerEnabled(layer);
+        }
+
+        void AddLayerWithoutData(CompositionLayer layer)
+        {
+            if (m_LayersWithoutData.Add(layer))
+                m_LayersToWarn.Add(layer);
+        }
+
+        void WarnLayersWithoutData()
+        {
+            if (m_LayersToWarn.Count == 0)
+                return;
+
+            // Deferred a frame so a layer typed right after AddComponent is not reported.
+            foreach (var layer in m_LayersToWarn)
+            {
+                if (layer == null || layer.LayerData != null)
+                    continue;
+
+                // Forget a layer disabled before it was warned so it is reported if enabled again.
+                if (!layer.isActiveAndEnabled)
+                {
+                    m_LayersWithoutData.Remove(layer);
+                    continue;
+                }
+
+                Debug.LogWarning($"The Composition Layer on '{layer.gameObject.name}' has no Layer Type and is " +
+                    "ignored until one is assigned.", layer);
+            }
+
+            m_LayersToWarn.Clear();
         }
 
         /// <summary>
@@ -667,6 +745,11 @@ namespace Unity.XR.CompositionLayers.Services
                 return;
             }
 
+            // This fires every frame a transform moves, and every frame for projection layers. Only a data type
+            // change can alter the render path.
+            if (HasLayerDataTypeChanged(layer))
+                EvaluateRenderPath(layer);
+
             var layerInfo = m_KnownLayers[layer];
 
             if (!m_CreatedLayers.Contains(layerInfo) && !m_RemovedLayers.Contains(layerInfo.Id) && !m_ModifiedLayers.Contains(layerInfo))
@@ -683,19 +766,38 @@ namespace Unity.XR.CompositionLayers.Services
             s_LayerStateChangedMarker.End();
         }
 
+        void EvaluateRenderPath(CompositionLayer layer)
+        {
+            layer.RenderPath = s_LayerProviderEverSet
+                ? CompositionLayerRenderPath.Native
+                : CompositionLayerRenderPath.Emulated;
+
+            m_EvaluatedLayerDataTypes[layer] = layer.LayerData?.GetType();
+        }
+
+        void EvaluateAllRenderPaths()
+        {
+            foreach (var layer in m_KnownLayers.Keys)
+            {
+                EvaluateRenderPath(layer);
+            }
+        }
+
+        bool HasLayerDataTypeChanged(CompositionLayer layer)
+        {
+            return !m_EvaluatedLayerDataTypes.TryGetValue(layer, out var evaluatedType)
+                || evaluatedType != layer.LayerData?.GetType();
+        }
+
         internal void FindAllLayersInScene()
         {
             var isPlaying = Application.isPlaying;
             if (!isPlaying)
-                ClearAllState();
+                ClearStateBeforeRescan();
             else
                 OccupiedLayers.Clear();
 
-#if UNITY_6000_4_OR_NEWER
             var foundLayers = UnityEngine.Object.FindObjectsByType<CompositionLayer>(isPlaying ? FindObjectsInactive.Exclude : FindObjectsInactive.Include);
-#else
-            var foundLayers = UnityEngine.Object.FindObjectsByType<CompositionLayer>(isPlaying ? FindObjectsInactive.Exclude : FindObjectsInactive.Include, FindObjectsSortMode.None);
-#endif
 #if UNITY_EDITOR
             var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
             if (prefabStage != null)
@@ -807,12 +909,11 @@ namespace Unity.XR.CompositionLayers.Services
                 OccupiedLayersDirty = false;
             }
 
+            WarnLayersWithoutData();
             UpdateProviders(m_CreatedLayers, m_RemovedLayers, m_ModifiedLayers, m_ActiveLayers);
 
-#if UNITY_6000_4_OR_NEWER
             foreach (var layerId in s_Instance.m_RemovedLayers)
                 s_IdRegistry.FreeId(layerId);
-#endif
 
             EnsureFallbackSceneCompositionLayer();
 
@@ -936,13 +1037,23 @@ namespace Unity.XR.CompositionLayers.Services
 
             foreach (var layer in s_Instance.m_KnownLayers.Keys)
             {
-                if (layer == null || layer.gameObject == null || layer.gameObject.scene == null)
-                    continue;
-
-                if (layer.gameObject.scene.IsValid())
+                if (IsLayerInScene(layer))
                     return true;
             }
+
+            // Layers without LayerData keep the manager running until they are given one.
+            foreach (var layer in s_Instance.m_LayersWithoutData)
+            {
+                if (IsLayerInScene(layer))
+                    return true;
+            }
+
             return false;
+        }
+
+        static bool IsLayerInScene(CompositionLayer layer)
+        {
+            return layer != null && layer.gameObject != null && layer.gameObject.scene.IsValid();
         }
 
         bool IsActiveLayersDestroyed
@@ -970,7 +1081,7 @@ namespace Unity.XR.CompositionLayers.Services
 
             public ProjectionRigOffsetSynchronizer()
             {
-                m_MainCameraTransform = mainCameraCache?.transform;
+                m_MainCameraTransform = MainCameraCache?.transform;
             }
 
             public void AddProjectionRig(CompositionLayer projectionRig)
@@ -1014,7 +1125,7 @@ namespace Unity.XR.CompositionLayers.Services
             bool ParentsHaveChanged()
             {
                 if (m_MainCameraTransform == null)
-                    m_MainCameraTransform = mainCameraCache?.transform;
+                    m_MainCameraTransform = MainCameraCache?.transform;
 
                 bool parentsHaveChanged = false;
                 var currentParent = m_MainCameraTransform?.parent;
@@ -1036,7 +1147,7 @@ namespace Unity.XR.CompositionLayers.Services
             Pose GetTotalLocalPoseOffsetOfMainCameraParents()
             {
                 if (m_MainCameraTransform == null)
-                    m_MainCameraTransform = mainCameraCache?.transform;
+                    m_MainCameraTransform = MainCameraCache?.transform;
 
                 var totalLocalPoseOffset = Pose.identity;
                 Transform currentParent = m_MainCameraTransform?.parent;
@@ -1053,7 +1164,6 @@ namespace Unity.XR.CompositionLayers.Services
             }
         }
 
-#if UNITY_6000_4_OR_NEWER
         class IdRegistry
         {
             Stack<int> m_FreeIds = new Stack<int>();
@@ -1075,7 +1185,6 @@ namespace Unity.XR.CompositionLayers.Services
                 m_FreeIds.Push(id);
             }
         }
-#endif
 
     }
 }

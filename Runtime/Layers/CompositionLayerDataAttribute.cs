@@ -7,7 +7,7 @@ namespace Unity.XR.CompositionLayers.Layers
     /// An attribute for <see cref="LayerData"/> used to populate the <see cref="LayerDataDescriptor"/>.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public sealed class CompositionLayerDataAttribute : Attribute
+    public sealed partial class CompositionLayerDataAttribute : Attribute
     {
         /// <summary>The source that is providing the <see cref="LayerData"/> type.</summary>
         public string Provider = "";
@@ -34,6 +34,12 @@ namespace Unity.XR.CompositionLayers.Layers
         public bool SupportTransform = false;
 
         /// <summary>Suggested extension types to use with the <see cref="LayerData"/> on the <see cref="CompositionLayer"/>.</summary>
-        public Type[] SuggestedExtenstionTypes = Type.EmptyTypes;
+#pragma warning disable CS0618
+        public Type[] SuggestedExtensionTypes
+        {
+            get => SuggestedExtenstionTypes;
+            set => SuggestedExtenstionTypes = value;
+        }
+#pragma warning restore CS0618
     }
 }

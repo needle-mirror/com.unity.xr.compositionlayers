@@ -2,9 +2,7 @@ using System;
 using NUnit.Framework;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Services;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Tests.Layers
 {
@@ -14,10 +12,10 @@ namespace Unity.XR.CompositionLayers.Tests.Layers
     /// </summary>
     class LayerDataDescriptorTests
     {
+        const string k_UnknownTypeFullName = "Not.A.Real.LayerData";
+
         // The user-facing concrete layer types (DefaultLayerData is intentionally excluded).
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static readonly Type[] s_UserLayerTypes =
         {
             typeof(QuadLayerData),
@@ -52,9 +50,17 @@ namespace Unity.XR.CompositionLayers.Tests.Layers
         [Test]
         public void GetLayerDescriptor_UnknownType_ReturnsEmpty()
         {
-            var descriptor = CompositionLayerUtils.GetLayerDescriptor("Not.A.Real.LayerData");
+            var descriptor = CompositionLayerUtils.GetLayerDescriptor(k_UnknownTypeFullName);
 
             Assert.AreEqual(LayerDataDescriptor.Empty, descriptor);
+        }
+
+        [Test]
+        public void CreateLayerData_UnknownType_ReturnsNull()
+        {
+            Assert.IsNull(CompositionLayerUtils.CreateLayerData(k_UnknownTypeFullName));
+            Assert.IsNull(CompositionLayerUtils.CreateLayerData(typeof(string)));
+            Assert.IsNull(CompositionLayerUtils.CreateLayerData(LayerDataDescriptor.Empty.DataType));
         }
 
         [Test]

@@ -6,10 +6,5 @@ uid: xr-layer-known-issues
 
 Review known limitations and issues in this package.
 
-* Equirect layer type - When running your application on an Android head-mounted display (HMD) with the Equirect layer, you may encounter clipping at the top and bottom edges of the displayed content. This can result in parts of the shape being cut off.
-* Equirect layer type - When deploying your application to an Android-based head-mounted display (HMD) with the Equirect layer, when both the Upper and Lower Vertical Angles fall into negative values, unexpected behaviors may manifest. These behaviors include image flipping, opacity anomalies affecting surrounding objects, layer displaying incorrectly in size or the layer failing to display altogether.
 * Equirect layer type - When running your application on an Android head-mounted display (HMD) with the Equirect layer set to a 360 Central Angle, you may see a vertical 1px seam in the sphere.
-* Equirect layer type - Upon entering play mode while the Equirect layer is present in the scene, the Equirect layer will extend to occupy the entire field of view within the HMD, completely filling the visual space.
-* Equirect layer type - Upon entering play mode while connected to Android head-mounted display (HMD), the Equirect layer will not properly display any transparency when using a transparent materials.
-* Projection Eye Rig type - When using Projection Eye Rig in HDR, emulation in the scene view for this layer does not display.
-* Layer textures have "fade in" effects from a certain distance. To work around it, try to set the texture format to RGBA 32bit.
+* Unsupported layer types - When a provider plug-in composites layers on a device that doesn't support a layer's type, such as Cylinder, Equirect, or Cube, that layer doesn't render. The layer doesn't render through emulation instead, and other layers in the scene still render. For the layer types a device supports, refer to the documentation for your provider plug-in and device.

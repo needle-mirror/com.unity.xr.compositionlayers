@@ -7,9 +7,7 @@ using Unity.XR.CompositionLayers.Emulation.Implementations;
 using System.Linq;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Services;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 #if UNITY_EDITOR
 using UnityEditor.Build;
@@ -26,17 +24,15 @@ namespace Unity.XR.CompositionLayers.Emulation
     /// This class used to emulate a Projection Rig CompositionLayer inside of all scene view windows.
     /// </summary>
     [ExecuteInEditMode]
-    internal partial class SceneEmulatedProjectionRig : MonoBehaviour
+    partial class SceneEmulatedProjectionRig : MonoBehaviour
     {
-        public int callbackOrder => 0;
+        internal int callbackOrder => 0;
 
-        public CommandBuffer CommandBufffer => m_sceneViewProjector?.CommandBuffer;
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
-        static Dictionary<Camera, Dictionary<int, SceneEmulatedProjectionRig>> cameraToRigs = new Dictionary<Camera, Dictionary<int, SceneEmulatedProjectionRig>>();
+        static Dictionary<Camera, Dictionary<int, SceneEmulatedProjectionRig>> s_CameraToRigs = new();
+
         Camera m_SceneViewCamera;
-        SceneViewProjector m_sceneViewProjector;
+        SceneViewProjector m_SceneViewProjector;
         CompositionLayer m_CompositionLayer;
         int m_CompositionLayerId;
 
@@ -55,58 +51,53 @@ namespace Unity.XR.CompositionLayers.Emulation
                 return null;
             }
 
-            if (!cameraToRigs.ContainsKey(sceneViewCamera))
-                cameraToRigs.Add(sceneViewCamera, new Dictionary<int, SceneEmulatedProjectionRig>());
+            if (!s_CameraToRigs.ContainsKey(sceneViewCamera))
+                s_CameraToRigs.Add(sceneViewCamera, new Dictionary<int, SceneEmulatedProjectionRig>());
 
-            if (cameraToRigs[sceneViewCamera].ContainsKey(compositionLayerId))
+            if (s_CameraToRigs[sceneViewCamera].ContainsKey(compositionLayerId))
             {
                 // Update the Culling Mask of the camera to match the layer of it's target Composition Layer.
                 // Used mainly when a new Projection Layer is created and the target layer is updated.
-                var currentRig = cameraToRigs[sceneViewCamera][compositionLayerId];
-                var currentRigCamera = currentRig.m_sceneViewProjector.SourceCamera;
+                var currentRig = s_CameraToRigs[sceneViewCamera][compositionLayerId];
+                var currentRigCamera = currentRig.m_SceneViewProjector.SourceCamera;
 
-                int mask = 1 << compositionLayer.gameObject.layer;
+                var mask = 1 << compositionLayer.gameObject.layer;
                 if (currentRigCamera != null && currentRigCamera.cullingMask != mask)
-                {
                     currentRigCamera.cullingMask = mask;
-                }
 
-                return cameraToRigs[sceneViewCamera][compositionLayerId];
+                return s_CameraToRigs[sceneViewCamera][compositionLayerId];
             }
 
             var name = sceneViewCamera.name + "_" + compositionLayerId;
             var gameObject = new GameObject(name);
             gameObject.hideFlags = HideFlags.DontSave | HideFlags.HideInHierarchy;
+
             var rig = gameObject.AddComponent<SceneEmulatedProjectionRig>();
             rig.m_SceneViewCamera = sceneViewCamera;
             rig.m_CompositionLayerId = compositionLayerId;
             rig.m_CompositionLayer = compositionLayer;
-            var rigCamera = rig.CreateRigCamera(gameObject, LayerMask.LayerToName(compositionLayer.gameObject.layer));
-            rig.m_sceneViewProjector = new SceneViewProjector(rigCamera, sceneViewCamera);
 
-            cameraToRigs[sceneViewCamera].Add(compositionLayerId, rig);
+            var rigCamera = CreateRigCamera(gameObject, LayerMask.LayerToName(compositionLayer.gameObject.layer));
+            rig.m_SceneViewProjector = new SceneViewProjector(rigCamera, sceneViewCamera);
+
+            s_CameraToRigs[sceneViewCamera].Add(compositionLayerId, rig);
 
             return rig;
         }
 
-        public void ClearAndAddCommand() => m_sceneViewProjector?.ClearAndAddCommand();
-
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
-        public void ClearAndAddCommand(RasterCommandBuffer rcb) => m_sceneViewProjector?.ClearAndAddCommand(rcb);
-        public void ClearAndAddCommand(CommandBuffer cb) => m_sceneViewProjector?.ClearAndAddCommand(cb);
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+        internal void ClearAndAddCommand(RasterCommandBuffer rcb) => m_SceneViewProjector?.ClearAndAddCommand(rcb);
+        internal void ClearAndAddCommand(CommandBuffer cb) => m_SceneViewProjector?.ClearAndAddCommand(cb);
 
 #endif
 
-        public static void DestroyAllEmulatedRigsForLayerId(int layerId)
+        internal static void DestroyAllEmulatedRigsForLayerId(int layerId)
         {
-            for (int i = 0; i < cameraToRigs.Keys.Count; ++i)
+            for (var i = 0; i < s_CameraToRigs.Keys.Count; ++i)
             {
-                var idToRigs = cameraToRigs.ElementAt(i).Value;
-                if (idToRigs.ContainsKey(layerId))
-                {
-                    var rig = idToRigs[layerId];
+                var idToRigs = s_CameraToRigs.ElementAt(i).Value;
+                if (idToRigs.TryGetValue(layerId, out var rig))
                     DestroyImmediate(rig.gameObject);
-                }
             }
         }
 
@@ -124,10 +115,10 @@ namespace Unity.XR.CompositionLayers.Emulation
                 return;
             }
 
-            m_sceneViewProjector?.UpdateResources();
+            m_SceneViewProjector?.UpdateResources();
         }
 
-        Camera CreateRigCamera(GameObject gameObject, string layerToRender)
+        static Camera CreateRigCamera(GameObject gameObject, string layerToRender)
         {
             var rigCamera = gameObject.AddComponent<Camera>();
 #if !UNITY_RENDER_PIPELINES_UNIVERSAL
@@ -142,14 +133,14 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         void RemoveRigFromSceneCamera(Camera camera)
         {
-            if (cameraToRigs.ContainsKey(camera))
+            if (s_CameraToRigs.ContainsKey(camera))
             {
-                if (cameraToRigs[camera].ContainsKey(m_CompositionLayerId))
-                    cameraToRigs[camera].Remove(m_CompositionLayerId);
+                if (s_CameraToRigs[camera].ContainsKey(m_CompositionLayerId))
+                    s_CameraToRigs[camera].Remove(m_CompositionLayerId);
             }
 
-            if (cameraToRigs.Count == 0)
-                cameraToRigs.Remove(camera);
+            if (s_CameraToRigs.Count == 0)
+                s_CameraToRigs.Remove(camera);
         }
 
         /// <summary>
@@ -184,25 +175,26 @@ namespace Unity.XR.CompositionLayers.Emulation
         {
             EditorSceneManager.sceneClosing -= OnSceneClosing;
 
-            if (m_sceneViewProjector != null)
-            {
-                m_sceneViewProjector.Dispose();
-            }
+            m_SceneViewProjector?.Dispose();
         }
 
-        private void OnSceneClosing(Scene scene, bool removingScene)
+        static void OnSceneClosing(Scene scene, bool removingScene)
         {
-            DiposeAllSceneViewProjectors();
+            DisposeAllSceneViewProjectors();
         }
 
         /// <summary>
         /// Disposes of all SceneViewProjectors
         /// </summary>
-        private void DiposeAllSceneViewProjectors()
+        static void DisposeAllSceneViewProjectors()
         {
-            foreach (var cameraToRig in cameraToRigs)
+            foreach (var cameraToRig in s_CameraToRigs)
+            {
                 foreach (var rig in cameraToRig.Value)
-                    rig.Value.m_sceneViewProjector.Dispose();
+                {
+                    rig.Value.m_SceneViewProjector.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -210,19 +202,19 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// </summary>
         class SceneViewProjector : ProjectionEmulator
         {
-            public SceneViewProjector(Camera sourceCamera, Camera sceneViewCamera) : base(sourceCamera, sceneViewCamera)
+            internal SceneViewProjector(Camera sourceCamera, Camera sceneViewCamera) : base(sourceCamera, sceneViewCamera)
             {
                 SceneView.duringSceneGui += OnDuringSceneGui;
 
                 // During the first frame of play mode, the scene camera is set to the origin.
                 // Disable the camera for that first frame.
-                m_sourceCamera.enabled = false;
+                m_SourceCamera.enabled = false;
 
                 // Re-enable the camera after the first frame.
                 EditorApplication.delayCall += () =>
                 {
-                    if (m_sourceCamera != null)
-                        m_sourceCamera.enabled = true;
+                    if (m_SourceCamera != null)
+                        m_SourceCamera.enabled = true;
                 };
             }
 
@@ -230,25 +222,25 @@ namespace Unity.XR.CompositionLayers.Emulation
 
             void SyncWithSceneCamera()
             {
-                if (m_sourceCamera.orthographic != m_destinationCamera.orthographic)
-                    m_sourceCamera.orthographic = m_destinationCamera.orthographic;
+                if (m_SourceCamera.orthographic != m_DestinationCamera.orthographic)
+                    m_SourceCamera.orthographic = m_DestinationCamera.orthographic;
 
-                m_sourceCamera.transform.position = m_destinationCamera.transform.position;
-                m_sourceCamera.transform.rotation = m_destinationCamera.transform.rotation;
-                m_sourceCamera.orthographicSize = m_destinationCamera.orthographicSize;
-                m_sourceCamera.fieldOfView = m_destinationCamera.fieldOfView;
+                m_SourceCamera.transform.position = m_DestinationCamera.transform.position;
+                m_SourceCamera.transform.rotation = m_DestinationCamera.transform.rotation;
+                m_SourceCamera.orthographicSize = m_DestinationCamera.orthographicSize;
+                m_SourceCamera.fieldOfView = m_DestinationCamera.fieldOfView;
             }
 
             void OnDuringSceneGui(SceneView sceneView)
             {
-                if (m_sourceCamera == null || m_destinationCamera == null)
+                if (m_SourceCamera == null || m_DestinationCamera == null)
                 {
                     Dispose();
                     SceneView.duringSceneGui -= OnDuringSceneGui;
                     return;
                 }
 
-                if (sceneView.camera == m_destinationCamera)
+                if (sceneView.camera == m_DestinationCamera)
                     SyncWithSceneCamera();
             }
         }
@@ -261,116 +253,106 @@ namespace Unity.XR.CompositionLayers.Emulation
             const float k_ProjectionMeshScale = 1.0f;
             const int k_DepthBufferBits = 24;
 
-            public CommandBuffer CommandBuffer => m_commandBuffer;
-            public Camera SourceCamera => m_sourceCamera;
+            internal Camera SourceCamera => m_SourceCamera;
 
-            protected Camera m_sourceCamera;
-            protected Camera m_destinationCamera;
-            protected CommandBuffer m_commandBuffer;
-            protected RenderTexture m_sourceRenderTexture;
-            protected Material m_sourceRenderMaterial;
-            protected Mesh m_sourceProjectionMesh;
-            bool m_disposed;
+            protected Camera m_SourceCamera;
+            protected Camera m_DestinationCamera;
+            protected RenderTexture m_SourceRenderTexture;
+            protected Material m_SourceRenderMaterial;
+            protected Mesh m_SourceProjectionMesh;
+            bool m_Disposed;
 
-            public ProjectionEmulator(Camera sourceCamera, Camera destinationCamera, int nnum = 0)
+            internal ProjectionEmulator(Camera sourceCamera, Camera destinationCamera, int nnum = 0)
             {
-                m_destinationCamera = destinationCamera;
-                m_sourceCamera = sourceCamera;
+                m_DestinationCamera = destinationCamera;
+                m_SourceCamera = sourceCamera;
                 CreateMaterial();
                 UpdateRenderTextureScale();
-                CreateCommandBuffer();
+                CreateProjectionMesh();
             }
 
-            public virtual void UpdateResources()
+            internal virtual void UpdateResources()
             {
-                if (m_sourceCamera == null || m_destinationCamera == null)
+                if (m_SourceCamera == null || m_DestinationCamera == null)
                     return;
 
                 UpdateRenderTextureScale();
             }
 
-            public void ClearAndAddCommand()
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
+            internal void ClearAndAddCommand(RasterCommandBuffer rcb)
             {
-                m_commandBuffer.Clear();
-                m_commandBuffer.DrawMesh(m_sourceProjectionMesh, Matrix4x4.identity, m_sourceRenderMaterial);
+                rcb?.DrawMesh(m_SourceProjectionMesh, Matrix4x4.identity, m_SourceRenderMaterial);
             }
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
-            public void ClearAndAddCommand(RasterCommandBuffer rcb)
-            {
-                rcb?.DrawMesh(m_sourceProjectionMesh, Matrix4x4.identity, m_sourceRenderMaterial);
-            }
-
-            public void ClearAndAddCommand(CommandBuffer cb)
+            internal void ClearAndAddCommand(CommandBuffer cb)
             {
                 cb?.Clear();
-                cb?.DrawMesh(m_sourceProjectionMesh, Matrix4x4.identity, m_sourceRenderMaterial);
+                cb?.DrawMesh(m_SourceProjectionMesh, Matrix4x4.identity, m_SourceRenderMaterial);
             }
 #endif
 
             public void Dispose()
             {
-                if (m_disposed)
+                if (m_Disposed)
                     return;
 
-                if (m_sourceCamera != null)
+                if (m_SourceCamera != null)
                 {
-                    m_sourceCamera.targetTexture = null;
-                    if (m_sourceCamera.gameObject.activeInHierarchy)
-                        CompositionLayerHelper.DestroyCamera(m_sourceCamera);
+                    m_SourceCamera.targetTexture = null;
+                    if (m_SourceCamera.gameObject.activeInHierarchy)
+                        CompositionLayerHelper.DestroyCamera(m_SourceCamera);
                 }
 
-                if (m_sourceProjectionMesh != null)
-                    m_sourceProjectionMesh.Clear();
+                if (m_SourceProjectionMesh != null)
+                    m_SourceProjectionMesh.Clear();
 
-                if (m_commandBuffer != null)
-                    m_commandBuffer.Clear();
-
-                if (m_sourceRenderTexture != null)
+                if (m_SourceRenderTexture != null)
                 {
-                    m_sourceRenderTexture.Release();
-                    GameObject.DestroyImmediate(m_sourceRenderTexture);
+                    m_SourceRenderTexture.Release();
+                    DestroyImmediate(m_SourceRenderTexture);
                 }
 
-                Material.DestroyImmediate(m_sourceRenderMaterial);
+                DestroyImmediate(m_SourceRenderMaterial);
 
-                m_disposed = true;
+                m_Disposed = true;
             }
 
             protected void UpdateRenderTextureScale()
             {
-                if (m_sourceRenderTexture?.width == m_destinationCamera.pixelWidth &&
-                    m_sourceRenderTexture?.height == m_destinationCamera.pixelHeight)
+                if (m_SourceRenderTexture?.width == m_DestinationCamera.pixelWidth &&
+                    m_SourceRenderTexture?.height == m_DestinationCamera.pixelHeight)
                     return;
 
-                if (m_sourceRenderTexture != null)
+                if (m_SourceRenderTexture != null)
                 {
-                    m_sourceCamera.targetTexture = null;
-                    m_sourceRenderTexture.Release();
-                    GameObject.DestroyImmediate(m_sourceRenderTexture);
+                    m_SourceCamera.targetTexture = null;
+                    m_SourceRenderTexture.Release();
+                    DestroyImmediate(m_SourceRenderTexture);
                 }
 
-                m_sourceRenderTexture = new RenderTexture(m_destinationCamera.pixelWidth, m_destinationCamera.pixelHeight, k_DepthBufferBits) { name = "SceneProjection" + "_source" };
-                m_sourceRenderTexture.Create();
-                m_sourceCamera.targetTexture = m_sourceRenderTexture;
-                m_sourceRenderMaterial.SetTexture(EmulatedLayerData.k_MainTex, m_sourceCamera.targetTexture);
+                m_SourceRenderTexture = new RenderTexture(
+                    m_DestinationCamera.pixelWidth,
+                    m_DestinationCamera.pixelHeight,
+                    k_DepthBufferBits) { name = "SceneProjection" + "_source" };
+
+                m_SourceRenderTexture.Create();
+                m_SourceCamera.targetTexture = m_SourceRenderTexture;
+                m_SourceRenderMaterial.SetTexture(EmulatedLayerData.k_MainTex, m_SourceCamera.targetTexture);
             }
 
             void CreateMaterial()
             {
-                Shader emulationShader = Shader.Find(CompositionLayerConstants.UberShader);
-                m_sourceRenderMaterial = new Material(emulationShader);
-                m_sourceRenderMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
-                m_sourceRenderMaterial.EnableKeyword(ProjectionRigEmulationLayerData.k_ShaderLayerTypeKeyword);
-                m_sourceRenderMaterial.EnableKeyword(EmulatedLayerData.k_SourceTextureMaterialKeyword);
+                Shader emulationShader = Shader.Find(CompositionLayerConstants.UberShaderName);
+                m_SourceRenderMaterial = new Material(emulationShader);
+                m_SourceRenderMaterial.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+                m_SourceRenderMaterial.EnableKeyword(ProjectionRigEmulationLayerData.k_ShaderLayerTypeKeyword);
+                m_SourceRenderMaterial.EnableKeyword(EmulatedLayerData.k_SourceTextureMaterialKeyword);
             }
 
-            void CreateCommandBuffer()
+            void CreateProjectionMesh()
             {
-                m_sourceProjectionMesh = EmulatedMeshLayerData.GeneratePlaneMesh(k_ProjectionMeshScale);
-                m_commandBuffer = new CommandBuffer();
-                m_commandBuffer.name = nameof(ProjectionEmulator);
-                ClearAndAddCommand();
+                m_SourceProjectionMesh = EmulatedMeshLayerData.GeneratePlaneMesh(k_ProjectionMeshScale);
             }
 
         }

@@ -81,7 +81,7 @@ Leave **Dynamic Texture** disabled for Render Textures, which already update eve
 Mip Mode has the following requirements:
 
 * Applies to **Local Texture** sources only.
-* Requires the OpenXR Plugin package (1.19.0-pre.2 or newer) and Unity 6000.7.0a4 or newer.
+* Requires the OpenXR Plugin package (7.0.0-pre.1 or newer) and Unity 7000.0 or newer.
 * Supported on Quad, Cylinder, Cube, and Equirect layers.
 
 > [!NOTE]

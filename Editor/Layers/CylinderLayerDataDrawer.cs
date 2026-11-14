@@ -1,9 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
@@ -12,13 +10,11 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
     {
         class Styles
         {
-            internal GUIContent centralAngleRadiansContent;
             internal GUIContent centralAngleDegreesContent;
             internal GUIStyle lockAspectRatioButton;
 
             internal Styles()
             {
-                centralAngleRadiansContent = new GUIContent(k_CentralAngleNameRadians, k_CentralAngleRadiansToolTip);
                 centralAngleDegreesContent = new GUIContent(k_CentralAngleNameDegrees, k_CentralAngleDegreesToolTip);
 
                 lockAspectRatioButton = EditorStyles.iconButton;
@@ -30,14 +26,9 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         const string k_CentralAnglePropertyName = "m_CentralAngle";
         const string k_CentralAngleName = "Central Angle";
         const string k_ApplyTransformScaleName = "m_ApplyTransformScale";
-        const string k_CentralAngleNameRadians = k_CentralAngleName + " (rad)";
         const string k_CentralAngleNameDegrees = k_CentralAngleName + " (deg)";
-        const string k_CentralAngleRadiansToolTip = "The angle of the visible section of the cylinder, " +
-            "based at 0 radians, in the range of [0, 2Pi). It grows symmetrically around the 0 radian angle. "
-            + DisplayAnglePreferenceToolTip;
         const string k_CentralAngleDegreesToolTip = "The angle of the visible section of the cylinder, " +
-            "based at 0 degress, in the range of [0, 360). It grows symmetrically around the 0 degress angle. "
-            + DisplayAnglePreferenceToolTip;
+            "based at 0 degrees, in the range of [0, 360). It grows symmetrically around the 0 degree angle.";
 
         const string k_RadiusPropertyName = "m_Radius";
         const string k_AspectRatioPropertyName = "m_AspectRatio";
@@ -45,9 +36,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         const string k_MaintainAspectRatioToolTip = "|Toggles the option for locking and unlocking Radius and Aspect Ratio. " +
             "When Radius is locked, its value will be driven by the value of Height, and the Aspect Ratio value is unconstrained. When Aspect Ratio is locked, its value will be driven by the value of Height, and the Radius value is unconstrained.";
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static Styles s_Styles;
         static Styles styles
         {
@@ -84,29 +73,12 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
                     if (currentProperty.name == k_CentralAnglePropertyName)
                     {
-                        switch (CompositionLayersPreferences.Instance.DisplayAnglesAs)
-                        {
-                            case AngleDisplayType.Degrees:
-                            {
-                                float clampedCentralAngleInDegrees = Mathf.Clamp(cylinderLayer.CentralAngleInDegrees, 0f, 360f);
-                                float roundedCentralAngleInDegrees = (float)Math.Round(clampedCentralAngleInDegrees, 2);
+                        var clampedCentralAngleInDegrees = Mathf.Clamp(cylinderLayer.CentralAngleInDegrees, 0f, 360f);
+                        var roundedCentralAngleInDegrees = (float)Math.Round(clampedCentralAngleInDegrees, 2);
 
-                                currentProperty.floatValue = EditorGUILayout.FloatField(
-                                    styles.centralAngleDegreesContent,
-                                    roundedCentralAngleInDegrees) * Mathf.Deg2Rad;
-                                break;
-                            }
-                            case AngleDisplayType.Radians:
-                            {
-                                float clampedCentralAngle = Mathf.Clamp(cylinderLayer.CentralAngle, 0f, Mathf.PI * 2f);
-                                float roundedCentralAngle = (float)Math.Round(clampedCentralAngle, 2);
-
-                                currentProperty.floatValue = EditorGUILayout.FloatField(
-                                    styles.centralAngleRadiansContent,
-                                    roundedCentralAngle);
-                                break;
-                            }
-                        }
+                        currentProperty.floatValue = EditorGUILayout.FloatField(
+                            styles.centralAngleDegreesContent,
+                            roundedCentralAngleInDegrees) * Mathf.Deg2Rad;
                     }
                     else if (currentProperty.name == k_MaintainAspectRatioPropertyName)
                     {

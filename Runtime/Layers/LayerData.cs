@@ -68,7 +68,7 @@ namespace Unity.XR.CompositionLayers.Layers
         /// <summary>
         /// Report state change for the <see cref="CompositionLayer"/> associated with this <see cref="LayerData"/>.
         /// </summary>
-        protected internal Action ReportStateChange;
+        internal event Action ReportStateChange;
 
         /// <summary>
         /// Check if new value != old value. If it is, then report state change and return new value.
@@ -86,6 +86,16 @@ namespace Unity.XR.CompositionLayers.Layers
                 return newValue;
             }
             return oldValue;
+        }
+
+        /// <summary>
+        /// Reports to the layer provider that this layer data's state changed in a way that
+        /// <see cref="UpdateValue{T}"/> cannot detect, for example when a collection or texture it
+        /// references is modified in place.
+        /// </summary>
+        protected internal void ReportChange()
+        {
+            ReportStateChange?.Invoke();
         }
 
         /// <summary>

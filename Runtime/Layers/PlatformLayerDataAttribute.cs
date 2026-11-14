@@ -16,7 +16,7 @@ namespace Unity.XR.CompositionLayers.Layers
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="SupportedLayerDataTypes">platformm supported layer types</param>
+        /// <param name="SupportedLayerDataTypes">platform supported layer types</param>
         public PlatformLayerDataFieldAttribute(Type[] SupportedLayerDataTypes)
         {
             this.SupportedLayerDataTypes = SupportedLayerDataTypes;

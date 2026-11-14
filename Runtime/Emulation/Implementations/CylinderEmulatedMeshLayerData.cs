@@ -26,7 +26,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             if (camera.cameraType == CameraType.SceneView)
                 return true;
 
-            return EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported();
+            return IsEmulated || EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported();
         }
 
 
@@ -161,13 +161,13 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                             float texRatio = 1f;
 
 
-                            if (textureExt.sourceTexture == TexturesExtension.SourceTextureEnum.LocalTexture)
+                            if (textureExt.SourceTexture == TexturesExtension.SourceTextureEnum.LocalTexture)
                             {
                                 if (textureExt.LeftTexture == null)
                                     break;
                                 texRatio = (float)textureExt.LeftTexture.width / (float)textureExt.LeftTexture.height;
                             }
-                            else if (textureExt.sourceTexture == TexturesExtension.SourceTextureEnum.AndroidSurface)
+                            else if (textureExt.SourceTexture == TexturesExtension.SourceTextureEnum.AndroidSurface)
                             {
                                 texRatio = (float)textureExt.Resolution.x / (float)textureExt.Resolution.y;
                             }

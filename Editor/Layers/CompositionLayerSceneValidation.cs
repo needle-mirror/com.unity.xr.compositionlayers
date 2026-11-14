@@ -1,21 +1,15 @@
 using System;
 using Unity.XR.CompositionLayers.Services;
 using UnityEngine;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
     static partial class CompositionLayerSceneValidation
     {
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static Camera s_CachedCamera;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static int s_CachedCameraFrame = -1;
 
         internal static string GetCameraConfigWarning(CompositionLayer layer)
@@ -26,6 +20,9 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             var layerData = layer.LayerData;
             if (layerData == null)
                 return null;
+
+            if (layerData is ProjectionLayerRigData rigData && !rigData.TryGetCameras(layer.transform, out _, out _))
+                return ProjectionLayerRigData.k_MissingCamerasMessage;
 
             var isUnderlay = layer.Order < 0;
             var isPassthroughByType = CompositionLayerManager.PassthroughLayerType?.IsInstanceOfType(layerData) == true;
@@ -55,7 +52,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 return s_CachedCamera;
 
             s_CachedCameraFrame = frame;
-            s_CachedCamera = CompositionLayerManager.mainCameraCache;
+            s_CachedCamera = CompositionLayerManager.MainCameraCache;
             if (s_CachedCamera != null)
                 return s_CachedCamera;
 

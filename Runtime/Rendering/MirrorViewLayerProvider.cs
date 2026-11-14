@@ -5,9 +5,7 @@ using Unity.XR.CompositionLayers.Services;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.XR.CompositionLayers.Emulation;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 #if UNITY_EDITOR
 using UnityEditor.SceneManagement;
 #endif
@@ -16,9 +14,7 @@ namespace Unity.XR.CompositionLayers.Rendering
 {
     internal class MirrorViewLayerProvider : ILayerProvider
     {
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static MirrorViewLayerProvider s_Instance;
 
         Dictionary<int, EmulatedCompositionLayer> m_AllCompositionLayers = new();

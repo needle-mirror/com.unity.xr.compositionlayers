@@ -21,7 +21,7 @@ namespace Unity.XR.CompositionLayers.Layers
         InspectorIcon = "LayerCylinderColor",
         ListViewIcon = "LayerCylinder",
         SupportTransform = true,
-        SuggestedExtenstionTypes = new[] { typeof(TexturesExtension) }
+        SuggestedExtensionTypes = new[] { typeof(TexturesExtension) }
      )]
     [CompositionLayersHelpURL(typeof(CylinderLayerData))]
     public class CylinderLayerData : LayerData

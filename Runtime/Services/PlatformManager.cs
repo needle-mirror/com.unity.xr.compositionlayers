@@ -1,7 +1,5 @@
 using Unity.XR.CompositionLayers.Provider;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Services
 {
@@ -10,19 +8,13 @@ namespace Unity.XR.CompositionLayers.Services
     /// </summary>
     public static partial class PlatformManager
     {
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static readonly PlatformProvider s_DefaultPlatformProvider = new DefaultPlatformProvider();
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static PlatformProvider s_ActivePlatformProvider;
 #if UNITY_EDITOR
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static bool s_IsSupportedHDROnPreview;
 #endif
 

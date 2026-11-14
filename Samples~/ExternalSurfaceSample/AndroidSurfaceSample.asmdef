@@ -1,0 +1,23 @@
+{
+    "name": "AndroidSurfaceSample",
+    "rootNamespace": "",
+    "references": [
+        "Unity.XR.CompositionLayers",
+        "Unity.XR.OpenXR"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.xr.openxr",
+            "expression": "7.0.0-pre.1",
+            "define": "XR_OPENXR_7_0_0_PRE_1_OR_NEWER"
+        }
+    ],
+    "noEngineReferences": false
+}

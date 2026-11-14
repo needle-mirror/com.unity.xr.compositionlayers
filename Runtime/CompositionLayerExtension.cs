@@ -56,7 +56,7 @@ namespace Unity.XR.CompositionLayers
         /// <summary>
         /// Report state change for the <see cref="Unity.XR.CompositionLayers.CompositionLayer"/> associated with this <see cref="CompositionLayerExtension"/>.
         /// </summary>
-        protected internal Action ReportStateChange;
+        internal event Action ReportStateChange;
 
         private CompositionLayer CompositionLayer
         {
@@ -71,7 +71,13 @@ namespace Unity.XR.CompositionLayers
         private CompositionLayer m_compositionLayer;
 
         /// <inheritdoc cref="MonoBehaviour"/>
+        [Obsolete("Awake is a Unity callback that the package drives. Calling it directly is obsolete as of Composition Layers 7.0.0-pre.1, and it will become protected in a future release.")]
         public virtual void Awake()
+        {
+            InitializeStateChangeReporting();
+        }
+
+        internal void InitializeStateChangeReporting()
         {
             m_compositionLayer = gameObject.GetComponent<CompositionLayer>();
             if (!m_compositionLayer)
@@ -85,6 +91,7 @@ namespace Unity.XR.CompositionLayers
         }
 
         /// <inheritdoc cref="MonoBehaviour"/>
+        [Obsolete("OnDestroy is a Unity callback that the package drives. Calling it directly is obsolete as of Composition Layers 7.0.0-pre.1, and it will become protected in a future release.")]
         public virtual void OnDestroy()
         {
             ReportStateChange?.Invoke();
@@ -92,6 +99,7 @@ namespace Unity.XR.CompositionLayers
         }
 
         /// <inheritdoc cref="MonoBehaviour"/>
+        [Obsolete("OnEnable is a Unity callback that the package drives. Calling it directly is obsolete as of Composition Layers 7.0.0-pre.1, and it will become protected in a future release.")]
         public virtual void OnEnable()
         {
             if (!CompositionLayer.Extensions.Contains(this))
@@ -102,6 +110,7 @@ namespace Unity.XR.CompositionLayers
         }
 
         /// <inheritdoc cref="MonoBehaviour"/>
+        [Obsolete("OnDisable is a Unity callback that the package drives. Calling it directly is obsolete as of Composition Layers 7.0.0-pre.1, and it will become protected in a future release.")]
         public virtual void OnDisable()
         {
             if (CompositionLayer != null)
@@ -126,6 +135,16 @@ namespace Unity.XR.CompositionLayers
             }
 
             return oldValue;
+        }
+
+        /// <summary>
+        /// Reports to the layer provider that this extension's state changed in a way that
+        /// <see cref="UpdateValue{T}"/> cannot detect, for example when a collection or texture it
+        /// references is modified in place.
+        /// </summary>
+        protected internal void ReportChange()
+        {
+            ReportStateChange?.Invoke();
         }
     }
 }

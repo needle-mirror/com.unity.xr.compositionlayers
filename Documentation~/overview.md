@@ -88,9 +88,9 @@ Other XR packages and provider plug-ins can define additional layer extension co
 
 ## Compositor layer emulation
 
-In-editor layer emulation provides rough visual approximation of your composition layers and layers will display differently on devices. As such, you should only rely on layer emulation to check rough layout and previews. Emulation In Playmode or Standalone is only available when no XR provider is active or no headset connected.
+Layer emulation renders composition layers in Edit mode, and in Play mode and built players until a provider plug-in starts to composite them. Emulation approximates how layers look when a device composites them, so emulated layers can look different on a device. Use emulation to check layout and preview layers, and test on a device to check how layers look. For more information, refer to [Layer emulation at runtime](xref:xr-layers-runtime-settings).
 
-If your project uses URP, then you must configure the [Emulation Layer Renderer Feature (URP)](xref:xr-layers-graphics-settings#emulation-layer-renderer-feature).
+XR Composition Layers adds the [Emulation Layer Renderer Feature](xref:xr-layers-graphics-settings#emulation-layer-renderer-feature) to your project automatically.
 
 ## Platform support
 

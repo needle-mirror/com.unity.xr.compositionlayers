@@ -1,16 +1,10 @@
 #ifndef XR_SDK_COMPOSITION_LAYERS_BLITCOPYHDR_INC
 #define XR_SDK_COMPOSITION_LAYERS_BLITCOPYHDR_INC
 
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
-#endif
 
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Macros.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-#else
-#include "UnityCG.cginc"
-#endif
 
 #if COMPOSITION_LAYERS_UNIVERSAL
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -35,15 +29,9 @@ static float4 compositionLayers_ScreenSize;
 #endif
 #endif
 
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRendering.hlsl"
-#endif
 
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 #include "ColorGamut.hlsl"
-#else
-#include "ColorGamut.cginc"
-#endif
 
 #if defined(COMPOSITION_LAYERS_DISABLE_TEXTURE2D_X_ARRAY)
 #define SRC_TEXTURE2D_X_ARRAY 0
@@ -52,19 +40,11 @@ static float4 compositionLayers_ScreenSize;
 #endif
 
 #if SRC_TEXTURE2D_X_ARRAY
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 TEXTURE2D_ARRAY(_MainTex);
 SAMPLER(sampler_MainTex);
 #else
-UNITY_DECLARE_TEX2DARRAY(_MainTex);
-#endif
-#else
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 TEXTURE2D(_MainTex);
 SAMPLER(sampler_MainTex);
-#else
-UNITY_DECLARE_TEX2D(_MainTex);
-#endif
 #endif
 
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
@@ -168,17 +148,9 @@ float4 frag(v2f i) : SV_Target
 
     #if SRC_TEXTURE2D_X_ARRAY
     uint mainTexArraySlice = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MainTex_ArraySlice);
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
     float4 scene = SAMPLE_TEXTURE2D_ARRAY(_MainTex, sampler_MainTex, uv, mainTexArraySlice);
-#else
-    float4 scene = UNITY_SAMPLE_TEX2DARRAY(_MainTex, float3(uv, mainTexArraySlice));
-#endif
     #else
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
     float4 scene = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
-#else
-    float4 scene = UNITY_SAMPLE_TEX2D(_MainTex, uv);
-#endif
     #endif
 
     float3 result = scene.rgb;

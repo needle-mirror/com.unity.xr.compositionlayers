@@ -5,29 +5,33 @@
 using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.Rendering;
-using UnityEngine.XR.CompositionLayers.Rendering.Internals;
+using Unity.XR.CompositionLayers.Rendering.Internals;
 using Unity.XR.CompositionLayers.Services;
 using System.Collections;
 
 namespace Unity.XR.CompositionLayers.Rendering
 {
+#pragma warning disable CS0618
     /// <summary>
     /// XR mirror view rendering on XR Composition Layers.
-    /// This component works on BiRP, URP and HDRP.
+    /// This component works on URP. HDRP support is deprecated and will be removed in a future release.
     /// Call XRDisplaySystem.SetPreferredMirrorBlitMode() to set the mirror blit mode.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(Camera))]
     [DefaultExecutionOrder(32000)]
-    public class MirrorViewRenderer : MonoBehaviour
+    public partial class MirrorViewRenderer : MonoBehaviour
     {
-        const CameraEvent TargetCameraEvent = CameraEvent.AfterEverything;
-
         /// <summary>
-        /// AlphaMode.Opaque works fine in most cases.
-        /// AlphaMode.Alpha or AlphaMode.Premultily will be used for overlay drawing. (Need the alpha channel on back buffers.)
+        /// How the mirror view blends with the back buffer. <see cref="ImageFilters.AlphaMode.Opaque"/> works in most cases.
+        /// <see cref="ImageFilters.AlphaMode.Alpha"/> or <see cref="ImageFilters.AlphaMode.Premultiply"/> are used for overlay
+        /// drawing and need an alpha channel on the back buffer.
         /// </summary>
-        public ImageFilters.AlphaMode AlphaMode = ImageFilters.AlphaMode.Opaque;
+        public ImageFilters.AlphaMode AlphaBlendMode
+        {
+            get => AlphaMode;
+            set => AlphaMode = value;
+        }
 
         Camera m_Camera;
         CommandBuffer m_CommandBuffer;
@@ -35,7 +39,8 @@ namespace Unity.XR.CompositionLayers.Rendering
         XRDisplaySubsystem m_DisplaySubsystem;
         int m_MirrorBlitMode;
 
-        ImageFilters.RenderPipeline m_RenderPipeline;
+        ImageFilters.RenderPipeline m_RenderPipeline = ImageFilters.RenderPipeline.Universal;
+        bool m_WarnedUnsupportedRenderPipeline;
 
         void Start()
         {
@@ -110,8 +115,6 @@ namespace Unity.XR.CompositionLayers.Rendering
                 if (m_Camera != null)
                 {
                     m_Camera.clearFlags = CameraClearFlags.Nothing;
-                    m_Camera.renderingPath = RenderingPath.Forward; // Supports build-in render pipeline only.
-                    m_RenderPipeline = ImageFilters.RenderPipeline.Builtin;
                     if (GraphicsSettings.currentRenderPipeline != null)
                     {
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
@@ -133,13 +136,12 @@ namespace Unity.XR.CompositionLayers.Rendering
                             if (RenderPipelineUtility.IsHDRenderPipeline())
                             {
                                 m_RenderPipeline = ImageFilters.RenderPipeline.HighDefinition;
+#if UNITY_EDITOR
+                                Debug.LogWarning("High Definition Render Pipeline support for layer emulation and the Mirror View Renderer is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release. Use the Universal Render Pipeline.");
+#endif
                             }
                         }
 #endif
-                    }
-                    else
-                    {
-                        m_Camera.stereoTargetEye = StereoTargetEyeMask.None;
                     }
 
                     m_Camera.cullingMask = 0;
@@ -178,6 +180,20 @@ namespace Unity.XR.CompositionLayers.Rendering
 
             if (m_DisplaySubsystem == displaySystem)
             {
+                return;
+            }
+
+            if (GraphicsSettings.currentRenderPipeline == null)
+            {
+                if (!m_WarnedUnsupportedRenderPipeline)
+                {
+                    m_WarnedUnsupportedRenderPipeline = true;
+#if UNITY_EDITOR || UNITY_ENABLE_CHECKS
+                    Debug.LogWarning("MirrorViewRenderer requires the Universal Render Pipeline.");
+#endif
+                }
+
+                CleanupMirrorView();
                 return;
             }
 
@@ -232,10 +248,7 @@ namespace Unity.XR.CompositionLayers.Rendering
                 m_CommandBuffer = new CommandBuffer();
                 m_CommandBuffer.name = "MirrorViewRenderer";
                 m_IsAddedCommandBufferToCamera = true;
-                if (GraphicsSettings.currentRenderPipeline != null)
-                    RenderPipelineManager.endCameraRendering += OnEndCameraRendering;
-                else
-                    m_Camera.AddCommandBuffer(TargetCameraEvent, m_CommandBuffer);
+                RenderPipelineManager.endCameraRendering += OnEndCameraRendering;
             }
         }
 
@@ -244,10 +257,7 @@ namespace Unity.XR.CompositionLayers.Rendering
             if (m_Camera != null && m_IsAddedCommandBufferToCamera)
             {
                 m_IsAddedCommandBufferToCamera = false;
-                if (GraphicsSettings.currentRenderPipeline != null)
-                    RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
-                else
-                    m_Camera.RemoveCommandBuffer(TargetCameraEvent, m_CommandBuffer);
+                RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
                 m_CommandBuffer = null;
             }
         }
@@ -266,10 +276,11 @@ namespace Unity.XR.CompositionLayers.Rendering
             mirrorViewParams.mainCamera = CompositionLayerUtils.GetStereoMainCamera();
             mirrorViewParams.mirrorViewCamera = m_Camera;
             mirrorViewParams.blitMode = m_MirrorBlitMode == XRMirrorViewBlitMode.Default ? XRMirrorViewBlitMode.SideBySide : m_MirrorBlitMode;
-            mirrorViewParams.alphaMode = AlphaMode;
+            mirrorViewParams.alphaMode = AlphaBlendMode;
             mirrorViewParams.renderPipeline = m_RenderPipeline;
 
             ImageFilters.BlitMirrorView(m_CommandBuffer, mirrorViewParams);
         }
     }
+#pragma warning restore CS0618
 }

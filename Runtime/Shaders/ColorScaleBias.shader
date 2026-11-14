@@ -62,87 +62,12 @@ Shader "Hidden/XRCompositionLayers/ColorScaleBias"
             /// </summary>
             float4 Frag(Varyings input) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
                 // Sample screen texture with proper filtering
                 float4 sceneColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
                 return ApplyColorScaleBias(sceneColor, _ColorScale, _ColorBias);
             }
-            ENDHLSL
-        }
-    }
-
-    // Built-in Render Pipeline implementation
-    SubShader
-    {
-        Tags
-        {
-            "RenderType"="Opaque"
-            "Queue"="Transparent" // Render after opaque objects
-            "ForceNoShadowCasting" = "True"
-            "IgnoreProjector" = "True"
-        }
-        LOD 100
-        Lighting Off
-        Fog { Mode Off }
-        ZWrite Off
-        Cull Off
-        ZTest Always
-        Blend SrcAlpha OneMinusSrcAlpha
-
-        Pass
-        {
-            Name "ColorScaleBiasEmulation_BIRP"
-
-            HLSLPROGRAM
-
-            #pragma vertex vert
-            #pragma fragment frag
-            #include "UnityCG.cginc"
-
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float2 uv     : TEXCOORD0;
-            };
-
-            struct v2f
-            {
-                float2 uv     : TEXCOORD0;
-                float4 vertex : SV_POSITION;
-            };
-
-            sampler2D _MainTex;
-            float4 _MainTex_ST; // Texture scale/offset
-            float4 _ColorScale;
-            float4 _ColorBias;
-
-            /// <summary>
-            /// Vertex shader for Built-in Render Pipeline
-            /// Corrects Built-in Render Pipeline render texture vertical flip
-            /// </summary>
-            v2f vert (appdata v)
-            {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-
-                // Fixes inversion for Game View without flipping Scene View
-                // Inverts verticaly when rendering to textures (_ProjectionParams.x > 0)
-                // Maintain original UV for direct screen rendering
-                o.uv.y = lerp(o.uv.y, 1 - o.uv.y, _ProjectionParams.x > 0);
-                return o;
-            }
-
-            /// <summary>
-            /// Fragment shader for Built-in Render Pipeline
-            /// Uses standard texture sampling
-            /// </summary>
-            float4 frag (v2f i) : SV_Target
-            {
-                // Sample input texture
-                float4 sceneColor = tex2D(_MainTex, i.uv);
-                return ApplyColorScaleBias(sceneColor, _ColorScale, _ColorBias);
-            }
-
             ENDHLSL
         }
     }

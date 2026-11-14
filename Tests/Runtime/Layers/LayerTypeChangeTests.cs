@@ -1,13 +1,13 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Unity.XR.CompositionLayers.Extensions;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Services;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Tests.Layers
 {
@@ -18,9 +18,10 @@ namespace Unity.XR.CompositionLayers.Tests.Layers
     /// </summary>
     class LayerTypeChangeTests : CompositionLayerManagerTestBase
     {
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
+        static readonly Regex k_UnregisteredTypeWarning = new Regex("isn't a registered layer data type");
+
+        [NoAutoStaticsCleanup]
         static readonly Type[] s_UserLayerTypes =
         {
             typeof(QuadLayerData),
@@ -32,9 +33,7 @@ namespace Unity.XR.CompositionLayers.Tests.Layers
         };
 
         // CompositionLayerData attribute that use a TexturesExtension.
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static readonly Type[] s_TextureSuggestingTypes =
         {
             typeof(QuadLayerData),
@@ -102,6 +101,25 @@ namespace Unity.XR.CompositionLayers.Tests.Layers
         }
 
         [Test]
+        public void ChangeLayerDataType_UnknownType_KeepsLayerData()
+        {
+            var layer = CreateTrackedLayer(typeof(QuadLayerData));
+            var layerData = layer.LayerData;
+
+            LogAssert.Expect(LogType.Warning, k_UnregisteredTypeWarning);
+            layer.ChangeLayerDataType("Not.A.Real.LayerData");
+            Assert.AreSame(layerData, layer.LayerData);
+
+            LogAssert.Expect(LogType.Warning, k_UnregisteredTypeWarning);
+            layer.ChangeLayerDataType(typeof(string));
+            Assert.AreSame(layerData, layer.LayerData);
+
+            LogAssert.Expect(LogType.Warning, k_UnregisteredTypeWarning);
+            layer.ChangeLayerDataType(LayerDataDescriptor.Empty);
+            Assert.AreSame(layerData, layer.LayerData);
+        }
+
+        [Test]
         public void AddSuggestedExtensions_AddsTexturesExtension(
             [ValueSource(nameof(s_TextureSuggestingTypes))] Type layerType)
         {
@@ -126,11 +144,11 @@ namespace Unity.XR.CompositionLayers.Tests.Layers
         public async Task ChangingTypeOnActiveLayer_ReportsModifiedNotCreated()
         {
             var layer = CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
-            await new WaitForUpdateCall(this); // settle initial creation/modification
+            await NextManagerUpdate();
+            await NextManagerUpdate(); // settle initial creation/modification
 
             layer.ChangeLayerDataType<CylinderLayerData>();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             Assert.IsInstanceOf<CylinderLayerData>(layer.LayerData);
             Assert.IsTrue(WasReportedModified(layer));

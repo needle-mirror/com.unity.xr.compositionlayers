@@ -1,12 +1,8 @@
 #ifndef XR_SDK_COMPOSITION_LAYERS_CORE_INC
 #define XR_SDK_COMPOSITION_LAYERS_CORE_INC
 
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Macros.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-#else
-#include "UnityCG.cginc"
-#endif
 
 #if COMPOSITION_LAYERS_UNIVERSAL
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -16,11 +12,7 @@
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 #endif
 
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 #include "ColorGamut.hlsl"
-#else
-#include "ColorGamut.cginc"
-#endif
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -30,31 +22,17 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 #define COMPOSITION_LAYERS_PI         PI
 #define COMPOSITION_LAYERS_TWO_PI     TWO_PI
 #define COMPOSITION_LAYERS_FOUR_PI    FOUR_PI
-#else
-#define COMPOSITION_LAYERS_PI         UNITY_PI
-#define COMPOSITION_LAYERS_TWO_PI     UNITY_TWO_PI
-#define COMPOSITION_LAYERS_FOUR_PI    UNITY_FOUR_PI
-#endif
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
 #define COMPOSITION_LAYERS_DECLARE_TEX2D(TEXTURE_)                  TEXTURE2D(TEXTURE_); SAMPLER(sampler##TEXTURE_);
 #define COMPOSITION_LAYERS_DECLARE_TEXCUBE(TEXTURE_)                TEXTURECUBE(TEXTURE_); SAMPLER(sampler##TEXTURE_);
 #define COMPOSITION_LAYERS_SAMPLE_TEX2D(TEXTURE_, COORDS2_)         SAMPLE_TEXTURE2D(TEXTURE_, sampler##TEXTURE_, COORDS2_)
 #define COMPOSITION_LAYERS_SAMPLE_TEX2D_LOD(TEXTURE_, COORDS4_)     SAMPLE_TEXTURE2D_LOD(TEXTURE_, sampler##TEXTURE_, COORDS4_.xy, COORDS4_.w)
 #define COMPOSITION_LAYERS_SAMPLE_TEXCUBE_LOD(TEXTURE_, COORDS4_)   SAMPLE_TEXTURECUBE_LOD(TEXTURE_, sampler##TEXTURE_, COORDS4_.xyz, COORDS4_.w)
-#else
-#define COMPOSITION_LAYERS_DECLARE_TEX2D(TEXTURE_)                  UNITY_DECLARE_TEX2D(TEXTURE_)
-#define COMPOSITION_LAYERS_DECLARE_TEXCUBE(TEXTURE_)                UNITY_DECLARE_TEXCUBE(TEXTURE_)
-#define COMPOSITION_LAYERS_SAMPLE_TEX2D(TEXTURE_, COORDS2_)         UNITY_SAMPLE_TEX2D(TEXTURE_, COORDS2_)
-#define COMPOSITION_LAYERS_SAMPLE_TEX2D_LOD(TEXTURE_, COORDS4_)     UNITY_SAMPLE_TEX2D_LOD(TEXTURE_, COORDS4_.xyz, COORDS4_.w) // Note: OORDS4_.z is unused.
-#define COMPOSITION_LAYERS_SAMPLE_TEXCUBE_LOD(TEXTURE_, COORDS4_)   UNITY_SAMPLE_TEXCUBE_LOD(TEXTURE_, COORDS4_.xyz, COORDS4_.w)
-#endif
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -306,11 +284,7 @@ inline float4 TransformCubePos(float4 pos)
 
 inline float4 TransformWorldObjectPos(float4 pos)
 {
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
     pos = TransformObjectToHClip(pos.xyz);
-#else
-    pos = UnityObjectToClipPos(pos);
-#endif
     return PostfixTransformObjectPos(pos);
 }
 
@@ -324,11 +298,7 @@ inline float4 TransformResolveCameraForwardZ(float4 pos, in float4x4 viewMatrix)
 
 inline float4 TransformModelViewObjectPos(float4 pos, float4x4 modelViewMatrix)
 {
-#if COMPOSITION_LAYERS_UNIVERSAL || COMPOSITION_LAYERS_HDRENDER
     float4x4 worldToViewMatrix = GetWorldToViewMatrix(), viewToHClipMatrix = GetViewToHClipMatrix();
-#else // BiRP
-    float4x4 worldToViewMatrix = UNITY_MATRIX_V, viewToHClipMatrix = UNITY_MATRIX_P;
-#endif
     // Note: Can't use UNITY_MATRIX_M / UNITY_MATRIX_V immediately when CameraRelativeRendering(SHADEROPTIONS_CAMERA_RELATIVE_RENDERING) is enabled on HDRP. See also, "Packages/High Definition RP Config/Runtime/ShaderConfig.cs" in the Project Window.
     pos = mul(modelViewMatrix, pos);
     pos = TransformResolveCameraForwardZ(pos, worldToViewMatrix);

@@ -75,17 +75,17 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
         public async Task TogglingRectProperty_ReportsModified([Values] ToggleProperty property)
         {
             var layer = CreateActiveLayer<QuadLayerData>(addSuggestedExtensions: true);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             var ext = GetExtension<TexturesExtension>(layer);
             Assert.IsNotNull(ext);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             if (property == ToggleProperty.CustomRects)
                 ext.CustomRects = true;
             else
                 ext.CropToAspect = true;
 
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
         }
     }

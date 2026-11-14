@@ -16,12 +16,12 @@ namespace Unity.XR.CompositionLayers.Tests.Ordering
         public async Task ChangingOrder_ReportsModified()
         {
             var layer = CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
-            await new WaitForUpdateCall(this); // settle
+            await NextManagerUpdate();
+            await NextManagerUpdate(); // settle
 
             // 42 is well clear of the default low-order layers, so the change should succeed.
             layer.Order = 42;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             Assert.AreEqual(42, layer.Order);
             Assert.IsTrue(WasReportedModified(layer));
@@ -32,7 +32,7 @@ namespace Unity.XR.CompositionLayers.Tests.Ordering
         {
             CreateActiveLayer(typeof(QuadLayerData), order: 5);
             CreateActiveLayer(typeof(QuadLayerData), order: 3);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             // Regardless of the exact assigned orders, the active list is sorted ascending by Order.
             for (var i = 1; i < lastActiveLayers.Count; i++)
@@ -48,11 +48,11 @@ namespace Unity.XR.CompositionLayers.Tests.Ordering
         public async Task DisablingLayer_RemovesFromActive_AndReportsModified()
         {
             var layer = CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(WasReportedActive(layer));
 
             layer.gameObject.SetActive(false);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             Assert.IsFalse(WasReportedActive(layer));
             Assert.IsTrue(WasReportedModified(layer));

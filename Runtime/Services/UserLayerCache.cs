@@ -45,17 +45,10 @@ namespace Unity.XR.CompositionLayers
             ChangeLayerOfAllChildren(gameObject, layerBit);
 
             // Remove canvas layer from all cameras
-#if UNTIY_EDITOR
-            Tools.visibleLayers &= ~(1 << canvasLayerBit);
-#endif
             if (removeFromAllCameras)
             {
 
-#if UNITY_6000_4_OR_NEWER
                 var cameras = UnityEngine.Object.FindObjectsByType<Camera>();
-#else
-                var cameras = UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
-#endif
 
                 foreach (var camera in cameras)
                 {

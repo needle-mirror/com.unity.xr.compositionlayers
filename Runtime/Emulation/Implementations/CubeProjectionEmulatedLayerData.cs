@@ -1,13 +1,11 @@
 
 using System;
-using Unity.XR.CompositionLayers;
-using Unity.XR.CompositionLayers.Emulation;
-using Unity.XR.CompositionLayers.Emulation.Implementations;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CoreUtils;
+using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace UnityEngine.XR.CompositionLayers.Emulation.Implementations
+namespace Unity.XR.CompositionLayers.Emulation.Implementations
 {
     [EmulatedLayerDataType(typeof(CubeProjectionLayerData))]
     internal class CubeProjectionEmulatedLayerData : EmulatedMeshLayerData
@@ -19,7 +17,7 @@ namespace UnityEngine.XR.CompositionLayers.Emulation.Implementations
             if (camera.cameraType == CameraType.SceneView)
                 return true;
 
-            return EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported();
+            return IsEmulated || EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported();
         }
 
         protected override string GetShaderLayerTypeKeyword()

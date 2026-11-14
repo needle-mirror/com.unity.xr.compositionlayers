@@ -9,7 +9,7 @@ XR Composition Layers is an official Unity package available via the [Package Ma
 <a id="editor-compatibility"></a>
 ## Editor compatibility
 
-This version of Composition Layers is compatible with Unity Editor version 6000.0 and later.
+This version of Composition Layers is compatible with Unity Editor version 7000.0 and later. In-Editor layer emulation and the Mirror View Renderer require the Universal Render Pipeline (URP). High Definition Render Pipeline (HDRP) support for those features is deprecated and will be removed in a future release.
 
 <a id="required-packages"></a>
 ## Required packages
@@ -18,12 +18,13 @@ The XR Composition Layers package contains interfaces, types, and emulation for 
 
 | Provider plug-in package | Version |
 | :----------------------- | :------ |
-| OpenXR                   | [1.19.0](com.unity3d.kharma:upmpackage/com.unity.xr.openxr@1.19.0)   |
+| OpenXR                   | [7.0.0-pre.1](com.unity3d.kharma:upmpackage/com.unity.xr.openxr@7.0.0-pre.1)   |
 
 Please note for older versions of Composition Layers there are different versions of the OpenXR package that are compatible. The following chart highlights the compatibility between past Composition Layers and OpenXR package versions.
 
 |Composition Layers Package Version | OpenXR Package Version |
 | :--- | :--- |
+|`7.0.0` | `7.0.0-pre.1`+|
 |`2.6.0` | `1.19.0-pre.2`+|
 |`2.5.0` | `1.18.0`+|
 |`2.4.0` | `1.15.1`+ |
@@ -53,11 +54,11 @@ After you install the package, refer to [Settings](xref:xr-layers-settings) for 
 
 ## Other common XR packages
 
-The following table outlines the recommended versions for other common XR packages when using composition layers <code class="long_version">2.6.0</code>:
+The following table outlines the recommended versions for other common XR packages when using composition layers <code class="long_version">7.0.0</code>:
 
 | Package | Version |
 |:--------|:--------|
-| Unity OpenXR: Meta | [2.3.0](https://docs.unity3d.com/Packages/com.unity.xr.meta-openxr@2.3/manual/index.html)+ |
-| Unity OpenXR: Android XR | [1.1.0](https://docs.unity3d.com/Packages/com.unity.xr.androidxr-openxr@1.1/manual/index.html)+ |
+| Unity OpenXR: Meta | [7.0.0-pre.1](https://docs.unity3d.com/Packages/com.unity.xr.meta-openxr@7.0)+ |
+| Unity OpenXR: Android XR | [7.0.0-pre.1](https://docs.unity3d.com/Packages/com.unity.xr.androidxr-openxr@7.0)+ |
 | Meta XR Core SDK | [81.0](https://developers.meta.com/horizon/reference/unity/v81/)+ |
 

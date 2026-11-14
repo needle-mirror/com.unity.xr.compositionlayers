@@ -71,8 +71,6 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             {
                 if (m_MaterialPropertyBlockSceneView == null)
                     m_MaterialPropertyBlockSceneView = new MaterialPropertyBlock();
-                m_CommandBufferTemp.IsInvalidated = true;
-                m_CommandBufferTempSceneView.IsInvalidated = true;
 
                 m_CustomTransformDataInSceneView = customTransformDataInSceneView;
                 m_MaterialPropertyBlockSceneView.SetMatrix(k_TransformMatrix, customTransformDataInSceneView.Matrix);
@@ -82,8 +80,6 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
 
             if (isCreated || m_CustomTransformData != customTransformData)
             {
-                m_CommandBufferTemp.IsInvalidated = true;
-                m_CommandBufferTempSceneView.IsInvalidated = true;
                 m_CustomTransformData = customTransformData;
                 if (EmulationMaterial != null)
                 {

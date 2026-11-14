@@ -6,12 +6,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
-#if UNITY_6000_0_OR_NEWER
 using AsyncReturnType = UnityEngine.Awaitable;
-#else
-using System.Threading.Tasks;
-using AsyncReturnType = System.Threading.Tasks.Task;
-#endif
 
 namespace Unity.XR.CompositionLayers
 {
@@ -41,7 +36,7 @@ namespace Unity.XR.CompositionLayers
 
         bool m_MainCameraRendered = false;
 
-        CompositionLayersRuntimeSettings m_pref;
+        CompositionLayersRuntimeSettings m_Settings;
 
         Camera m_MainCamera;
 
@@ -53,14 +48,10 @@ namespace Unity.XR.CompositionLayers
         {
             if (!Validate()) return;
 
-            m_pref = CompositionLayersRuntimeSettings.Instance;
+            m_Settings = RuntimeSettingsLookup.Current;
             if (splashScreenAwaitable != null && !splashScreenAwaitable.IsCompleted)
             {
-#if UNITY_6000_0_OR_NEWER
                 splashScreenAwaitable.Cancel();
-#else
-                splashScreenAwaitable.Dispose();
-#endif
                 splashScreenAwaitable = null;
             }
 
@@ -82,23 +73,28 @@ namespace Unity.XR.CompositionLayers
 
             Camera camera = GetMainCamera();
 
-            Vector3 lerpPosition = Vector3.Lerp(compositionLayer.transform.position, GetTargetPosition(m_pref.LockToHorizon), Time.deltaTime * m_pref.FollowSpeed);
-            Quaternion lerpRotation = Quaternion.Lerp(compositionLayer.transform.rotation, GetTargetRotation(m_pref.LockToHorizon), Time.deltaTime * m_pref.FollowSpeed);
+            var lerpPosition = Vector3.Lerp(
+                compositionLayer.transform.position,
+                GetTargetPosition(m_Settings.LockToHorizon),
+                Time.deltaTime * m_Settings.FollowSpeed);
+            var lerpRotation = Quaternion.Lerp(
+                compositionLayer.transform.rotation,
+                GetTargetRotation(m_Settings.LockToHorizon),
+                Time.deltaTime * m_Settings.FollowSpeed);
 
-            compositionLayer.transform.position = TransformPointToNearestPointOnSphere(lerpPosition, camera.transform.position, m_pref.FollowDistance);
+            compositionLayer.transform.position = TransformPointToNearestPointOnSphere(
+                lerpPosition, camera.transform.position, m_Settings.FollowDistance);
             compositionLayer.transform.rotation = lerpRotation;
         }
 
         void OnEnable()
         {
             RenderPipelineManager.endCameraRendering += (_, camera) => OnCameraPostRender(camera);
-            Camera.onPostRender += OnCameraPostRender;
         }
 
         void OnDisable()
         {
             RenderPipelineManager.endCameraRendering -= (_, camera) => OnCameraPostRender(camera);
-            Camera.onPostRender -= OnCameraPostRender;
         }
 
         void OnCameraPostRender(Camera cam)
@@ -107,30 +103,33 @@ namespace Unity.XR.CompositionLayers
 
             m_MainCameraRendered = true;
 
-            compositionLayer.transform.position = TransformPointToNearestPointOnSphere(GetTargetPosition(m_pref.LockToHorizon), cam.transform.position, m_pref.FollowDistance);
-            compositionLayer.transform.rotation = GetTargetRotation(m_pref.LockToHorizon);
+            compositionLayer.transform.position = TransformPointToNearestPointOnSphere(
+                GetTargetPosition(m_Settings.LockToHorizon),
+                cam.transform.position,
+                m_Settings.FollowDistance);
+            compositionLayer.transform.rotation = GetTargetRotation(m_Settings.LockToHorizon);
         }
 
         void SetupLayer()
         {
             // Set layer type
-            switch (m_pref.LayerType)
+            switch (m_Settings.LayerType)
             {
                 case CompositionLayersRuntimeSettings.Layer.Quad:
-                    compositionLayer.ChangeLayerDataType(m_pref.QuadLayerData);
+                    compositionLayer.ChangeLayerDataType(m_Settings.QuadLayerData);
                     break;
                 case CompositionLayersRuntimeSettings.Layer.Cylinder:
-                    compositionLayer.ChangeLayerDataType(m_pref.CylinderLayerData);
+                    compositionLayer.ChangeLayerDataType(m_Settings.CylinderLayerData);
                     break;
             }
         }
 
         bool TrySetupPassthrough()
         {
-            if (m_pref == null)
+            if (m_Settings == null)
                 return false;
 
-            if (m_pref.BackgroundType != CompositionLayersRuntimeSettings.SplashBackgroundType.Passthrough)
+            if (m_Settings.BackgroundType != CompositionLayersRuntimeSettings.SplashBackgroundType.Passthrough)
                 return false;
 
             Type passthroughType = CompositionLayerManager.PassthroughLayerType;
@@ -177,43 +176,44 @@ namespace Unity.XR.CompositionLayers
         async AsyncReturnType DisplaySplashscreens()
         {
             // Set splash texture
-            if (m_pref.SplashImage != null)
-                splashTexture.LeftTexture = m_pref.SplashImage;
+            if (m_Settings.SplashImage != null)
+                splashTexture.LeftTexture = m_Settings.SplashImage;
 
             // Hide splash screen
             SetColorScale(new Vector4(colorScaleBias.Scale.x, colorScaleBias.Scale.y, colorScaleBias.Scale.z, 0.0f));
 
             // Fade in
-            if (m_pref.FadeInDuration <= 0)
+            if (m_Settings.FadeInDuration <= 0)
             {
                 SetColorScale(new Vector4(colorScaleBias.Scale.x, colorScaleBias.Scale.y, colorScaleBias.Scale.z, 1.0f));
             }
             else
             {
                 float timer = 0.0f;
-                while (timer < m_pref.FadeInDuration)
+                while (timer < m_Settings.FadeInDuration)
                 {
                     timer += Time.deltaTime;
-                    SetColorScale(ColorScaleBiasLerp(timer, m_pref.FadeInDuration));
+                    SetColorScale(ColorScaleBiasLerp(timer, m_Settings.FadeInDuration));
                     await WaitForEndOfFrame();
                 }
             }
 
             // Wait for splash duration
-            await WaitForSeconds(m_pref.SplashDuration);
+            await WaitForSeconds(m_Settings.SplashDuration);
 
             // Fade out
-            if (m_pref.FadeOutDuration <= 0)
+            if (m_Settings.FadeOutDuration <= 0)
             {
                 SetColorScale(new Vector4(colorScaleBias.Scale.x, colorScaleBias.Scale.y, colorScaleBias.Scale.z, 0.0f));
             }
             else
             {
                 float timer = 0.0f;
-                while (timer < m_pref.FadeOutDuration)
+                while (timer < m_Settings.FadeOutDuration)
                 {
                     timer += Time.deltaTime;
-                    SetColorScale(ColorScaleBiasLerp(m_pref.FadeOutDuration - timer, m_pref.FadeOutDuration));
+                    SetColorScale(ColorScaleBiasLerp(
+                        m_Settings.FadeOutDuration - timer, m_Settings.FadeOutDuration));
                     await WaitForEndOfFrame();
                 }
             }
@@ -236,7 +236,7 @@ namespace Unity.XR.CompositionLayers
                 return;
 
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = passthrough ? Color.clear : m_pref.BackgroundColor;
+            camera.backgroundColor = passthrough ? Color.clear : m_Settings.BackgroundColor;
         }
 
         Vector4 ColorScaleBiasLerp(float timer, float duration)
@@ -276,7 +276,7 @@ namespace Unity.XR.CompositionLayers
         Vector3 GetTargetPosition(bool lockToHorizon = false)
         {
             Camera camera = GetMainCamera();
-            Vector3 target = camera.transform.position + camera.transform.forward * m_pref.FollowDistance;
+            Vector3 target = camera.transform.position + camera.transform.forward * m_Settings.FollowDistance;
             return lockToHorizon ? new Vector3(target.x, camera.transform.position.y, target.z) : target;
         }
 
@@ -305,20 +305,12 @@ namespace Unity.XR.CompositionLayers
 
         async AsyncReturnType WaitForEndOfFrame()
         {
-#if UNITY_6000_0_OR_NEWER
             await Awaitable.EndOfFrameAsync();
-#else
-            await Task.Yield();
-#endif
         }
 
         async AsyncReturnType WaitForSeconds(float seconds)
         {
-#if UNITY_6000_0_OR_NEWER
             await Awaitable.WaitForSecondsAsync(seconds);
-#else
-            await Task.Delay((int)(seconds * 1000));
-#endif
         }
     }
 }

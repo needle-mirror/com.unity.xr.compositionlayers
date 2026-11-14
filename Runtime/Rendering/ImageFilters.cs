@@ -3,12 +3,11 @@ using UnityEngine.XR;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
 using System;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Rendering
 {
+#pragma warning disable CS0618
     /// <summary>
     /// Provides image filtering and blitting functionalities for composition layers in XR applications.
     /// </summary>
@@ -38,30 +37,33 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// <summary>
         /// Enumerates the supported render pipelines.
         /// </summary>
+        [Obsolete("ImageFilters.RenderPipeline is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public enum RenderPipeline
         {
             /// <summary>
-            /// Built-in render pipeline.
+            /// Obsolete. The Built-in Render Pipeline is no longer supported for layer emulation or the Mirror View Renderer.
             /// </summary>
-            Builtin,
-
+            [Obsolete("Built-in Render Pipeline support was removed in Composition Layers 7.0.0-pre.1. Use Universal. This value will be removed in a future release.")]
+            Builtin = 0,
             /// <summary>
             /// Universal Render Pipeline.
             /// </summary>
-            Universal,
+            Universal = 1,
             /// <summary>
             /// High Definition Render Pipeline.
             /// </summary>
-            HighDefinition,
+            [Obsolete("High Definition Render Pipeline support for layer emulation and the Mirror View Renderer is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release. Use the Universal Render Pipeline.")]
+            HighDefinition = 2,
         }
 
         /// <summary>
         /// Represents HDR parameters for image processing.
         /// </summary>
+        [Obsolete("ImageFilters.HDRParams is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public struct HDRParams
         {
-            const float defaultNitsForPaperWhite = 160.0f;
-            const float defaultMaxDisplayNits = 160.0f;
+            const float k_DefaultNitsForPaperWhite = 160.0f;
+            const float k_DefaultMaxDisplayNits = 160.0f;
 
             /// <summary>
             /// Indicates whether HDR encoding is enabled.
@@ -86,19 +88,14 @@ namespace Unity.XR.CompositionLayers.Rendering
             /// <summary>
             /// Gets an inactive HDR parameters instance with default values.
             /// </summary>
-            public static HDRParams inactiveHdrParams
-            {
-                get
+            public static HDRParams inactiveHdrParams =>
+                new()
                 {
-                    return new HDRParams
-                    {
-                        hdrEncoded = false,
-                        colorGamut = ColorGamut.sRGB,
-                        nitsForPaperWhite = defaultNitsForPaperWhite,
-                        maxDisplayNits = defaultMaxDisplayNits,
-                    };
-                }
-            }
+                    hdrEncoded = false,
+                    colorGamut = ColorGamut.sRGB,
+                    nitsForPaperWhite = k_DefaultNitsForPaperWhite,
+                    maxDisplayNits = k_DefaultMaxDisplayNits,
+                };
 
             HDRParams(HDROutputSettings hdrSettings)
             {
@@ -113,8 +110,8 @@ namespace Unity.XR.CompositionLayers.Rendering
                 {
                     hdrEncoded = false;
                     colorGamut = ColorGamut.sRGB;
-                    nitsForPaperWhite = defaultNitsForPaperWhite;
-                    maxDisplayNits = defaultMaxDisplayNits;
+                    nitsForPaperWhite = k_DefaultNitsForPaperWhite;
+                    maxDisplayNits = k_DefaultMaxDisplayNits;
                 }
             }
 
@@ -141,6 +138,7 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// <summary>
         /// Parameters for blitting textures.
         /// </summary>
+        [Obsolete("ImageFilters.BlitParams is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public struct BlitParams
         {
             /// <summary>
@@ -226,6 +224,7 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// <summary>
         /// Parameters for the blit target.
         /// </summary>
+        [Obsolete("ImageFilters.TargetParams is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public struct TargetParams
         {
             /// <summary>
@@ -288,6 +287,7 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// <summary>
         /// Parameters for mirror view rendering.
         /// </summary>
+        [Obsolete("ImageFilters.MirrorViewParams is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public struct MirrorViewParams
         {
             /// <summary>
@@ -323,21 +323,13 @@ namespace Unity.XR.CompositionLayers.Rendering
 
         const string ShaderName = "Unlit/XRCompositionLayers/BlitCopyHDR";
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static Material s_Material = null;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static MaterialPropertyBlock s_MaterialProperty = new MaterialPropertyBlock();
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static CommandBuffer s_CommandBuffer = null;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static int s_BatchingDepth = 0;
 
         static readonly int k_MainTex = Shader.PropertyToID("_MainTex");
@@ -360,6 +352,7 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// <summary>
         /// Begins a batch of image operations.
         /// </summary>
+        [Obsolete("ImageFilters.BeginBatch is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public static void BeginBatch()
         {
             if (s_BatchingDepth == 0)
@@ -376,6 +369,7 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// <summary>
         /// Ends a batch of image operations and executes the command buffer.
         /// </summary>
+        [Obsolete("ImageFilters.EndBatch is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public static void EndBatch()
         {
             if (s_BatchingDepth > 0)
@@ -395,6 +389,7 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// </summary>
         /// <param name="blitParam">Parameters for the blit operation.</param>
         /// <param name="targetParams">Parameters for the blit target.</param>
+        [Obsolete("ImageFilters.Blit is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public static void Blit(in BlitParams blitParam, in TargetParams targetParams)
         {
             BeginBatch();
@@ -408,6 +403,7 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// <param name="cmd">The command buffer to use.</param>
         /// <param name="blitParam">Parameters for the blit operation.</param>
         /// <param name="targetDisplay">The target display index.</param>
+        [Obsolete("ImageFilters.Blit is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public static void Blit(CommandBuffer cmd, in BlitParams blitParam, int targetDisplay)
         {
             var targetParams = new TargetParams(targetDisplay);
@@ -420,6 +416,7 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// <param name="cmd">The command buffer to use.</param>
         /// <param name="blitParam">Parameters for the blit operation.</param>
         /// <param name="targetParams">Parameters for the blit target.</param>
+        [Obsolete("ImageFilters.Blit is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public static void Blit(CommandBuffer cmd, in BlitParams blitParam, in TargetParams targetParams)
         {
             BlitInternal(cmd, blitParam, targetParams);
@@ -429,7 +426,8 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// Blits the mirror view using the specified parameters.
         /// </summary>
         /// <param name="cmd">The command buffer to use.</param>
-        /// <param name="mirrorViewParams">Parameters for the mirror view blit operation.</param>
+        /// <param name="blitParam">Parameters for the mirror view blit operation.</param>
+        /// <param name="targetParams">Parameters for the blit target.</param>
         static void BlitInternal(CommandBuffer cmd, in BlitParams blitParam, in TargetParams targetParams)
         {
             if (blitParam.sourceTexture == null)
@@ -442,8 +440,8 @@ namespace Unity.XR.CompositionLayers.Rendering
             if (mat == null)
                 return;
 
-            Vector4 sourceRect = new Vector4(blitParam.sourceRect.width, blitParam.sourceRect.height, blitParam.sourceRect.x, blitParam.sourceRect.y);
-            Vector4 destRect = new Vector4(blitParam.destRect.width, blitParam.destRect.height, blitParam.destRect.x, blitParam.destRect.y);
+            var sourceRect = new Vector4(blitParam.sourceRect.width, blitParam.sourceRect.height, blitParam.sourceRect.x, blitParam.sourceRect.y);
+            var destRect = new Vector4(blitParam.destRect.width, blitParam.destRect.height, blitParam.destRect.x, blitParam.destRect.y);
 
             if (ShouldYFlipTexture(blitParam.sourceTexture))
             {
@@ -451,8 +449,8 @@ namespace Unity.XR.CompositionLayers.Rendering
                 sourceRect.w += blitParam.sourceRect.height;
             }
 
-            int sourceColorGamut = blitParam.sourceHdrParams.hdrEncoded ? (int)blitParam.sourceHdrParams.colorGamut : -1;
-            int colorGamut = targetParams.hdrParams.hdrEncoded ? (int)targetParams.hdrParams.colorGamut : -1;
+            var sourceColorGamut = blitParam.sourceHdrParams.hdrEncoded ? (int)blitParam.sourceHdrParams.colorGamut : -1;
+            var colorGamut = targetParams.hdrParams.hdrEncoded ? (int)targetParams.hdrParams.colorGamut : -1;
 
             if (QualitySettings.activeColorSpace == ColorSpace.Linear)
             {
@@ -461,8 +459,8 @@ namespace Unity.XR.CompositionLayers.Rendering
                     // See also: UniversalCameraData.requireSrgbConversion
                     // Note: Need to convert from gamma to linear manually for linear color space when sourceTexture is fromatted as R8G8B8A8_UNorm or B8G8R8A8_UNorm. (Reproducible on URP)
                     bool isSRGBRead = !blitParam.sourceTexture.isDataSRGB &&
-                                          (blitParam.sourceTexture.graphicsFormat == GraphicsFormat.R8G8B8A8_UNorm ||
-                                           blitParam.sourceTexture.graphicsFormat == GraphicsFormat.B8G8R8A8_UNorm);
+                        (blitParam.sourceTexture.graphicsFormat == GraphicsFormat.R8G8B8A8_UNorm ||
+                            blitParam.sourceTexture.graphicsFormat == GraphicsFormat.B8G8R8A8_UNorm);
 
                     if (isSRGBRead)
                     {
@@ -504,7 +502,10 @@ namespace Unity.XR.CompositionLayers.Rendering
                 cmd.SetRenderTarget(targetParams.renderTarget);
 
 #if UNITY_RENDER_PIPELINES_CORE
-            bool isEnabledFoveatedRendering = XRSystem.foveatedRenderingCaps.HasFlag(FoveatedRenderingCaps.NonUniformRaster) && blitParam.foveatedRenderingInfo != IntPtr.Zero;
+            var isEnabledFoveatedRendering =
+                (XRSystem.foveatedRenderingCaps & FoveatedRenderingCaps.NonUniformRaster) != 0 &&
+                blitParam.foveatedRenderingInfo != IntPtr.Zero;
+
             if (isEnabledFoveatedRendering)
             {
                 cmd.ConfigureFoveatedRendering(blitParam.foveatedRenderingInfo);
@@ -533,7 +534,12 @@ namespace Unity.XR.CompositionLayers.Rendering
                 cmd.SetRenderTarget(-1);
         }
 
-        static void SetBlend(MaterialPropertyBlock materialProperty, BlendMode srcBlend, BlendMode dstBlend, BlendMode alphaSrcBlend, BlendMode alphaDstBlend)
+        static void SetBlend(
+            MaterialPropertyBlock materialProperty,
+            BlendMode srcBlend,
+            BlendMode dstBlend,
+            BlendMode alphaSrcBlend,
+            BlendMode alphaDstBlend)
         {
             materialProperty.SetInt(k_SrcBlend, (int)srcBlend);
             materialProperty.SetInt(k_DstBlend, (int)dstBlend);
@@ -550,10 +556,8 @@ namespace Unity.XR.CompositionLayers.Rendering
             if (sourceTextureRT == null)
                 return false;
 
-            if ((sourceTextureRT.descriptor.flags & RenderTextureCreationFlags.AllowVerticalFlip) == 0 && SystemInfo.graphicsUVStartsAtTop)
-                return true;
-
-            return false;
+            return (sourceTextureRT.descriptor.flags & RenderTextureCreationFlags.AllowVerticalFlip) == 0 &&
+                SystemInfo.graphicsUVStartsAtTop;
         }
 
         static Material InitializeMaterial()
@@ -577,9 +581,14 @@ namespace Unity.XR.CompositionLayers.Rendering
         /// </summary>
         /// <param name="cmd">The command buffer to use.</param>
         /// <param name="mirrorViewParams">Parameters for the mirror view blit operation.</param>
+        [Obsolete("ImageFilters.BlitMirrorView is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
         public static void BlitMirrorView(CommandBuffer cmd, in MirrorViewParams mirrorViewParams)
         {
-            if (cmd == null || mirrorViewParams.displaySubsystem == null || mirrorViewParams.mainCamera == null || mirrorViewParams.mirrorViewCamera == null || mirrorViewParams.blitMode == XRMirrorViewBlitMode.None)
+            if (cmd == null ||
+                mirrorViewParams.displaySubsystem == null ||
+                mirrorViewParams.mainCamera == null ||
+                mirrorViewParams.mirrorViewCamera == null ||
+                mirrorViewParams.blitMode == XRMirrorViewBlitMode.None)
             {
                 return;
             }
@@ -591,20 +600,16 @@ namespace Unity.XR.CompositionLayers.Rendering
 #endif
 
             if (!mirrorViewParams.displaySubsystem.GetMirrorViewBlitDesc(tempRT, out var blitDesc, mirrorViewParams.blitMode))
-            {
                 return;
-            }
 
             bool viewportEnabled = IsViewportEnabled(blitDesc);
 
             if (mirrorViewParams.renderPipeline == RenderPipeline.HighDefinition)
-            {
                 cmd.EnableShaderKeyword("COMPOSITION_LAYERS_OVERRIDE_SHADER_VARIABLES_GLOBAL");
-            }
 
-            for (int blitParamIndex = 0; blitParamIndex < blitDesc.blitParamsCount; ++blitParamIndex)
+            for (var blitParamIndex = 0; blitParamIndex < blitDesc.blitParamsCount; ++blitParamIndex)
             {
-                int stereoEyeIndex = GetStereoEyeIndex(mirrorViewParams.blitMode, blitParamIndex);
+                var stereoEyeIndex = GetStereoEyeIndex(mirrorViewParams.blitMode, blitParamIndex);
 
                 blitDesc.GetBlitParameter(blitParamIndex, out XRDisplaySubsystem.XRBlitParams blitParameter);
 
@@ -676,9 +681,7 @@ namespace Unity.XR.CompositionLayers.Rendering
         }
 
 #if UNITY_EDITOR
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static RenderTexture s_CachedTempRenderTexture;
 
         static RenderTexture GetTempRenderTexture(int width, int height)
@@ -706,9 +709,9 @@ namespace Unity.XR.CompositionLayers.Rendering
 
         static XRDisplaySubsystem.XRRenderParameter GetRenderParameter(in MirrorViewParams mirrorViewParams, int stereoEyeIndex)
         {
-            int blitParamIndex = 0;
+            var blitParamIndex = 0;
             int renderPassCount = mirrorViewParams.displaySubsystem.GetRenderPassCount();
-            for (int renderPassIndex = 0; renderPassIndex < renderPassCount; ++renderPassIndex)
+            for (var renderPassIndex = 0; renderPassIndex < renderPassCount; ++renderPassIndex)
             {
                 mirrorViewParams.displaySubsystem.GetRenderPass(renderPassIndex, out var renderPass);
                 for (int renderParameterIndex = 0, renderParameterCount = renderPass.GetRenderParameterCount(); renderParameterIndex < renderParameterCount; ++renderParameterIndex, ++blitParamIndex)
@@ -726,12 +729,12 @@ namespace Unity.XR.CompositionLayers.Rendering
 
         static int GetStereoEyeIndex(int blitMode, int blitParamIndex)
         {
-            if (blitMode == XRMirrorViewBlitMode.LeftEye)
-                return 0;
-            if (blitMode == XRMirrorViewBlitMode.RightEye)
-                return 1;
-
-            return blitParamIndex;
+            return blitMode switch
+            {
+                XRMirrorViewBlitMode.LeftEye => 0,
+                XRMirrorViewBlitMode.RightEye => 1,
+                _ => blitParamIndex
+            };
         }
 
         static void EnableViewport(CommandBuffer cmd, Camera camera, Rect viewport)
@@ -746,7 +749,7 @@ namespace Unity.XR.CompositionLayers.Rendering
 
         static bool IsViewportEnabled(in XRDisplaySubsystem.XRMirrorViewBlitDesc blitDesc)
         {
-            for (int blitParamIndex = 0; blitParamIndex < blitDesc.blitParamsCount; ++blitParamIndex)
+            for (var blitParamIndex = 0; blitParamIndex < blitDesc.blitParamsCount; ++blitParamIndex)
             {
                 blitDesc.GetBlitParameter(blitParamIndex, out var blitParam);
                 if (IsViewportEnabled(blitParam.destRect))
@@ -758,13 +761,10 @@ namespace Unity.XR.CompositionLayers.Rendering
 
         static bool IsViewportEnabled(Rect rect)
         {
-            if (Mathf.Approximately(rect.x, 0.0f) &&
-                Mathf.Approximately(rect.y, 0.0f) &&
-                Mathf.Approximately(rect.width, 1.0f) &&
-                Mathf.Approximately(rect.height, 1.0f))
-                return false;
-            else
-                return true;
+            return !Mathf.Approximately(rect.x, 0.0f) ||
+                !Mathf.Approximately(rect.y, 0.0f) ||
+                !Mathf.Approximately(rect.width, 1.0f) ||
+                !Mathf.Approximately(rect.height, 1.0f);
         }
 
         static Rect GetPixelRect(Camera camera)
@@ -780,7 +780,11 @@ namespace Unity.XR.CompositionLayers.Rendering
             var pixelRect = camera.pixelRect;
             pixelRect.width = camera.pixelWidth;
             pixelRect.height = camera.pixelHeight;
-            return new Rect(rect.x * pixelRect.width + pixelRect.x, rect.y * pixelRect.height + pixelRect.y, rect.width * pixelRect.width, rect.height * pixelRect.height);
+            return new Rect(
+                rect.x * pixelRect.width + pixelRect.x,
+                rect.y * pixelRect.height + pixelRect.y,
+                rect.width * pixelRect.width,
+                rect.height * pixelRect.height);
         }
 
         static Matrix4x4 GetWindowMatrix(Rect viewport)
@@ -800,4 +804,5 @@ namespace Unity.XR.CompositionLayers.Rendering
             return (y > 1e-7f || y < -1e-7f) ? x / y : 0.0f;
         }
     }
+#pragma warning restore CS0618
 }

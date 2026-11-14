@@ -17,9 +17,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
     {
         public const string k_ShaderLayerTypeKeyword = "COMPOSITION_LAYERTYPE_PROJECTION";
 
-        public const int k_LayerIndexAfterDefaults = 7;
-
-        Camera MainCamera => CompositionLayerManager.mainCameraCache;
+        Camera MainCamera => CompositionLayerManager.MainCameraCache;
 
         // Caches the last supported camera so this object knows which camera it's preparing command buffers for.
         Camera currentSupportedCamera;
@@ -29,21 +27,15 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
         internal Camera rightCam;
         RenderTexture m_emulationLeftEyeTexture;
         RenderTexture m_emulationRightEyeTexture;
-        bool exitingPlayMode;
-
-#if !UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
-        // Caches a command buffer to use during play mode.
-        CommandBuffer m_playModeCommandBuffer = new CommandBuffer();
-        int m_cachedLayer = -1;
-#endif
+        bool m_MissingCamerasReported;
 
         int m_CachedLayerId;
+        bool m_EyeProjectionsApplied;
+        bool m_EyeProjectionsAvailable;
 
         public ProjectionRigEmulationLayerData()
         {
-#if UNITY_EDITOR
-            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-#endif
+            RenderPipelineManager.endCameraRendering += OnEndCameraRendering;
         }
 
         protected internal override void UpdateEmulatedLayerData()
@@ -53,11 +45,8 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             if (MainCamera == null)
                 return;
 
-            //re-create render texture if detected gameview window size changed
-            if (m_emulationLeftEyeTexture == null || m_emulationRightEyeTexture == null || m_emulationLeftEyeTexture.width != MainCamera.pixelWidth || m_emulationLeftEyeTexture.height != MainCamera.pixelHeight)
-            {
+            if (NeedsEyeTextures())
                 CreateAndSetRenderTexture(MainCamera.pixelWidth, MainCamera.pixelHeight, 32);
-            }
 
             if (leftCam == null || rightCam == null)
                 return;
@@ -74,11 +63,76 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 }
             }
 
-            if (Application.isPlaying && !CompositionLayerUtils.IsDisplaySubsystemActive()) //For emulation cases only when using no headset: project rig cams follow mainCam transform.
+            if (!Application.isPlaying)
+                return;
+
+            if (!CompositionLayerUtils.IsDisplaySubsystemActive())
             {
                 leftCam.transform.SetPositionAndRotation(MainCamera.transform.position, MainCamera.transform.rotation);
                 rightCam.transform.SetPositionAndRotation(MainCamera.transform.position, MainCamera.transform.rotation);
+                ResetEyeProjections();
             }
+            else if (IsEmulated && m_EyeProjectionsAvailable)
+            {
+                CopyClipPlanes(MainCamera, leftCam, rightCam);
+                ApplyEyeProjections(
+                    leftCam,
+                    rightCam,
+                    MainCamera.GetStereoProjectionMatrix(Camera.StereoscopicEye.Left),
+                    MainCamera.GetStereoProjectionMatrix(Camera.StereoscopicEye.Right));
+                m_EyeProjectionsApplied = true;
+            }
+        }
+
+        // A camera that is deleted or moved out of the rig releases the textures and reports it; a resized Game view
+        // needs textures of the new size.
+        bool NeedsEyeTextures()
+        {
+            return !IsUnderRig(leftCam)
+                || !IsUnderRig(rightCam)
+                || m_emulationLeftEyeTexture == null
+                || m_emulationRightEyeTexture == null
+                || m_emulationLeftEyeTexture.width != MainCamera.pixelWidth
+                || m_emulationLeftEyeTexture.height != MainCamera.pixelHeight;
+        }
+
+        bool IsUnderRig(Camera camera)
+        {
+            return camera != null && camera.transform.IsChildOf(CompositionLayer.transform);
+        }
+
+        internal static void ApplyEyeProjections(
+            Camera leftCamera, Camera rightCamera, Matrix4x4 leftProjection, Matrix4x4 rightProjection)
+        {
+            leftCamera.projectionMatrix = leftProjection;
+            rightCamera.projectionMatrix = rightProjection;
+        }
+
+        void OnEndCameraRendering(ScriptableRenderContext context, Camera camera)
+        {
+            if (!Application.isPlaying || camera != MainCamera || !camera.stereoEnabled)
+                return;
+
+            m_EyeProjectionsAvailable = true;
+            RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
+        }
+
+        internal static void CopyClipPlanes(Camera source, Camera leftCamera, Camera rightCamera)
+        {
+            leftCamera.nearClipPlane = source.nearClipPlane;
+            leftCamera.farClipPlane = source.farClipPlane;
+            rightCamera.nearClipPlane = source.nearClipPlane;
+            rightCamera.farClipPlane = source.farClipPlane;
+        }
+
+        void ResetEyeProjections()
+        {
+            if (!m_EyeProjectionsApplied)
+                return;
+
+            leftCam.ResetProjectionMatrix();
+            rightCam.ResetProjectionMatrix();
+            m_EyeProjectionsApplied = false;
         }
 
         private Pose GetTotalLocalPoseOffset(Transform currentTransform)
@@ -104,134 +158,96 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 return;
             }
 
-            if (leftCam == null && rightCam == null)
-            {
-                leftCam = layer.gameObject.transform.GetChild(0).GetComponent<Camera>();
-                rightCam = layer.gameObject.transform.GetChild(1).GetComponent<Camera>();
-            }
-            leftCam.targetTexture = null;
-            rightCam.targetTexture = null;
+            ReleaseEyeTextures();
+            if (!TryResolveCameras(layer))
+                return;
 
-            // Left Eye Emulation Texture.
-            if (m_emulationLeftEyeTexture != null)
+            m_emulationLeftEyeTexture = CreateEyeTexture(layer.name + "_left", width, height, depth);
+            m_emulationRightEyeTexture = CreateEyeTexture(layer.name + "_right", width, height, depth);
+
+            var texturesExtension = layer.GetComponent<TexturesExtension>();
+            if (texturesExtension != null)
             {
-                m_emulationLeftEyeTexture.Release();
-                UnityEngine.Object.DestroyImmediate(m_emulationLeftEyeTexture);
+                texturesExtension.LeftTexture = m_emulationLeftEyeTexture;
+                texturesExtension.RightTexture = m_emulationRightEyeTexture;
             }
-            m_emulationLeftEyeTexture = new RenderTexture((int)width, (int)height, depth)
+
+            leftCam.targetTexture = m_emulationLeftEyeTexture;
+            rightCam.targetTexture = m_emulationRightEyeTexture;
+        }
+
+        bool TryResolveCameras(CompositionLayer layer)
+        {
+            var rigData = layer.LayerData as ProjectionLayerRigData;
+            if (rigData != null && rigData.TryGetCameras(layer.transform, out leftCam, out rightCam))
+                return true;
+
+            leftCam = null;
+            rightCam = null;
+            if (!m_MissingCamerasReported)
             {
-                name = layer.name + "_left",
+                Debug.LogError($"{layer.name}: {ProjectionLayerRigData.k_MissingCamerasMessage}", layer);
+                m_MissingCamerasReported = true;
+            }
+
+            return false;
+        }
+
+        static RenderTexture CreateEyeTexture(string name, int width, int height, int depth)
+        {
+            var texture = new RenderTexture(width, height, depth)
+            {
+                name = name,
                 format = RenderTextureFormat.ARGB32,
                 depthStencilFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.D32_SFloat
             };
-            m_emulationLeftEyeTexture.Create();
-
-            // Right Eye Emulation Texture
-            if (m_emulationRightEyeTexture != null)
-            {
-                m_emulationRightEyeTexture.Release();
-                UnityEngine.Object.DestroyImmediate(m_emulationRightEyeTexture);
-            }
-            m_emulationRightEyeTexture = new RenderTexture((int)width, (int)height, depth)
-            {
-                name = layer.name + "_right",
-                format = RenderTextureFormat.ARGB32,
-                depthStencilFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.D32_SFloat
-            };
-            m_emulationRightEyeTexture.Create();
-
-            if (layer != null)
-            {
-                var textExt = layer.GetComponent<TexturesExtension>();
-                if (textExt != null)
-                {
-                    textExt.LeftTexture = m_emulationLeftEyeTexture;
-                    textExt.RightTexture = m_emulationRightEyeTexture;
-                }
-                if (leftCam == null && rightCam == null)
-                {
-                    leftCam = layer.gameObject.transform.GetChild(0).GetComponent<Camera>();
-                    rightCam = layer.gameObject.transform.GetChild(1).GetComponent<Camera>();
-                }
-                leftCam.targetTexture = m_emulationLeftEyeTexture;
-                rightCam.targetTexture = m_emulationRightEyeTexture;
-            }
+            texture.Create();
+            return texture;
         }
 
-#if UNITY_EDITOR
-        private void OnPlayModeStateChanged(PlayModeStateChange state)
+        // Clears only references to this object's textures, which another provider may have replaced.
+        void ReleaseEyeTextures()
         {
-            exitingPlayMode = state == PlayModeStateChange.ExitingPlayMode;
-        }
-#endif
-        private void DestroyRig()
-        {
-#if UNITY_EDITOR
-            // Don't destroy the layer inside of play mode
-            // as all changes will be reverted on unplay
-            if (exitingPlayMode) return;
+            if (leftCam != null && leftCam.targetTexture == m_emulationLeftEyeTexture)
+                leftCam.targetTexture = null;
 
-            if (CompositionLayer == null) return;
+            if (rightCam != null && rightCam.targetTexture == m_emulationRightEyeTexture)
+                rightCam.targetTexture = null;
 
             var layer = CompositionLayer;
-            var textExt = layer.GetComponent<TexturesExtension>();
-
-            if (layer == null || textExt == null) return;
-
-            // Remove references on the TextureExtension
-            if (textExt != null)
+            var texturesExtension = layer != null ? layer.GetComponent<TexturesExtension>() : null;
+            if (texturesExtension != null)
             {
-                textExt.LeftTexture = null;
-                textExt.RightTexture = null;
+                if (texturesExtension.LeftTexture == m_emulationLeftEyeTexture)
+                    texturesExtension.LeftTexture = null;
 
-                // Show the TextureExtension component
-                textExt.hideFlags = HideFlags.None;
+                if (texturesExtension.RightTexture == m_emulationRightEyeTexture)
+                    texturesExtension.RightTexture = null;
             }
 
-            // Destroy the cameras
-            if (leftCam != null)
-            {
-                leftCam.targetTexture = null;
-                GameObject.DestroyImmediate(leftCam.gameObject);
-            }
+            ReleaseTexture(ref m_emulationLeftEyeTexture);
+            ReleaseTexture(ref m_emulationRightEyeTexture);
+        }
 
-            if (rightCam != null)
-            {
-                rightCam.targetTexture = null;
-                GameObject.DestroyImmediate(rightCam.gameObject);
-            }
+        static void ReleaseTexture(ref RenderTexture texture)
+        {
+            if (texture == null)
+                return;
 
-            // Release render textures
-            if (m_emulationLeftEyeTexture != null)
-            {
-                m_emulationLeftEyeTexture.Release();
-                UnityEngine.Object.DestroyImmediate(m_emulationLeftEyeTexture);
-                m_emulationLeftEyeTexture = null;
-            }
-
-            if (m_emulationRightEyeTexture != null)
-            {
-                m_emulationRightEyeTexture.Release();
-                UnityEngine.Object.DestroyImmediate(m_emulationRightEyeTexture);
-                m_emulationRightEyeTexture = null;
-            }
-
-            // Reset to default layer
-            Transform.gameObject.layer = 0;
-#endif
+            texture.Release();
+            UnityEngine.Object.DestroyImmediate(texture);
+            texture = null;
         }
 
         /// <summary>
-        /// There are three ways this object may be Disposed
-        ///     The layer is changed from it's current type.
-        ///     The layer is destroyed or deleted.
-        ///     Playmode is exited.
+        /// Releases what emulation created. The rig's cameras and components belong to the scene and stay; changing
+        /// the layer type removes them instead.
         /// </summary>
         public override void Dispose()
         {
+            RenderPipelineManager.endCameraRendering -= OnEndCameraRendering;
+            ReleaseEyeTextures();
 #if UNITY_EDITOR
-            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
-            DestroyRig();
             SceneEmulatedProjectionRig.DestroyAllEmulatedRigsForLayerId(m_CachedLayerId);
 #endif
             base.Dispose();
@@ -239,22 +255,10 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
 
         protected override void PrepareCommands()
         {
-            if (currentSupportedCamera == null)
+            if (currentSupportedCamera == null || currentSupportedCamera.cameraType == CameraType.SceneView)
                 return;
 
-            if (currentSupportedCamera.cameraType == CameraType.SceneView)
-            {
-                // If IsInvalidatedCommandBuffer is true and the command buffer is already initialized then AddCommands() won't be called.
-                // Set the command buffer at this stage so this object sends the correct buffer to the appropriate scene camera.
-                if (!m_CommandBufferTempSceneView.IsInvalidated)
-                    SetCommandBufferToSceneEmulatedRigBuffer();
-            }
-            else
-            {
-                base.PrepareCommands();
-                if (!m_CommandBufferTemp.IsInvalidated)
-                    SetCommandBufferToPlayModeBuffer();
-            }
+            base.PrepareCommands();
         }
 
         protected override void AddCommands(RenderContext renderContext, CommandArgs commandArgs)
@@ -278,8 +282,8 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
                 return true;
             }
 
-            var isSupported = EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported()
-                && camera == CompositionLayerManager.mainCameraCache;
+            var isSupported = (IsEmulated || EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported())
+                && camera == CompositionLayerManager.MainCameraCache;
 
             currentSupportedCamera = isSupported ? camera : null;
             return isSupported;
@@ -298,9 +302,9 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             }
         }
 
-        void SetCommandBufferToSceneEmulatedRigBuffer(RenderContext renderContext = default)
+        void SetCommandBufferToSceneEmulatedRigBuffer(RenderContext renderContext)
         {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && UNITY_RENDER_PIPELINES_UNIVERSAL
             // Don't create a command buffer if we're building a player.
             if (BuildPipeline.isBuildingPlayer)
                 return;
@@ -309,39 +313,23 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             if (rig == null)
                 return;
 
-            // Unity 6000+ uses this path when on URP.
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
-
             if (renderContext.m_CommandBuffer != null)
                 rig.ClearAndAddCommand(renderContext.m_CommandBuffer);
 
             if (renderContext.m_RasterCommandBuffer != null)
                 rig.ClearAndAddCommand(renderContext.m_RasterCommandBuffer);
-#else
-            rig.ClearAndAddCommand();
-            m_CommandBufferTempSceneView = new CommandBufferTemp { CommandBuffer = rig.CommandBufffer, IsInvalidated = false };
-            if (CompositionLayer.gameObject.layer > k_LayerIndexAfterDefaults)
-                m_cachedLayer = CompositionLayer.gameObject.layer;
 #endif
-#endif
-
         }
 
-        void SetCommandBufferToPlayModeBuffer(RenderContext renderContext = default)
+        void SetCommandBufferToPlayModeBuffer(RenderContext renderContext)
         {
-            // Unity 6000+ uses this path when on URP.
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
             if (renderContext.m_CommandBuffer != null)
                 base.AddCommands(renderContext.m_CommandBuffer, new CommandArgs { IsSceneView = false });
 
             if (renderContext.m_RasterCommandBuffer != null)
                 base.AddCommands(renderContext.m_RasterCommandBuffer, new CommandArgs { IsSceneView = false });
-#else
-            m_playModeCommandBuffer.Clear();
-            base.AddCommands(m_playModeCommandBuffer, new CommandArgs { IsSceneView = false });
-            m_CommandBufferTemp = new CommandBufferTemp { CommandBuffer = m_playModeCommandBuffer, IsInvalidated = false };
 #endif
-
         }
 
     }

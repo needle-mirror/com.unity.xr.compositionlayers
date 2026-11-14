@@ -7,9 +7,7 @@ using UnityEditor;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Provider;
 using Unity.XR.CompositionLayers.Emulation;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Services.Editor
 {
@@ -31,17 +29,11 @@ namespace Unity.XR.CompositionLayers.Services.Editor
 
         internal static IReadOnlyList<PlatformProvider> SupportingHDRProviders { get => s_SupportingHDRProviders; }
 
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static List<PlatformProvider> s_ActivePlatformProviders;
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static List<Type> s_ActivePlatformLayerDataTypes;
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static List<PlatformProvider> s_SupportingHDRProviders;
 
         static EditorPlatformManager()

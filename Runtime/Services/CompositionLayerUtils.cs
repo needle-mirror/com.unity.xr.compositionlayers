@@ -4,9 +4,7 @@ using Unity.XR.CoreUtils;
 using Unity.XR.CompositionLayers.Layers;
 using UnityEngine;
 using UnityEngine.XR;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Services
 {
@@ -15,26 +13,16 @@ namespace Unity.XR.CompositionLayers.Services
     /// </summary>
     public static class CompositionLayerUtils
     {
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static readonly Dictionary<string, LayerDataDescriptor> k_LayerDescriptors = new Dictionary<string, LayerDataDescriptor>();
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         internal static Action<CompositionLayer, int> SetOrderValueInEditor;
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         internal static UserLayerCache UserLayers;
 
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static readonly List<Type> k_LayerDataTypes = new List<Type>();
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static readonly List<XRDisplaySubsystem> k_DisplaySubsystems = new List<XRDisplaySubsystem>();
 
         static CompositionLayerUtils()
@@ -58,7 +46,7 @@ namespace Unity.XR.CompositionLayers.Services
                     var listViewIcon = hasCompAttr && !string.IsNullOrEmpty(compAttr.ListViewIcon) ? compAttr.ListViewIcon : "";
                     var preferOverlay = !hasCompAttr || compAttr.PreferOverlay;
                     var supportTransform = hasCompAttr && compAttr.SupportTransform;
-                    var suggestedExtenstionTypes = hasCompAttr ? compAttr.SuggestedExtenstionTypes : Type.EmptyTypes;
+                    var suggestedExtensionTypes = hasCompAttr ? compAttr.SuggestedExtensionTypes : Type.EmptyTypes;
 
                     var layerDataDescriptor = new LayerDataDescriptor(
                         provider,
@@ -71,7 +59,7 @@ namespace Unity.XR.CompositionLayers.Services
                         preferOverlay,
                         supportTransform,
                         layerDataType,
-                        suggestedExtenstionTypes);
+                        suggestedExtensionTypes);
 
                     if (k_LayerDescriptors.ContainsKey(layerDataDescriptor.TypeFullName))
                         throw new ArgumentException($"Layer Data already exists with Id of {layerDataDescriptor.TypeFullName}");
@@ -151,7 +139,7 @@ namespace Unity.XR.CompositionLayers.Services
         public static LayerData CreateLayerData(string typeFullName)
         {
             var desc = GetLayerDescriptor(typeFullName);
-            if (!desc.Equals(default) || desc.Equals(LayerDataDescriptor.Empty))
+            if (!desc.Equals(default) && !desc.Equals(LayerDataDescriptor.Empty))
             {
                 // High risk crash due to code stripping of default constructors
                 try
@@ -180,6 +168,11 @@ namespace Unity.XR.CompositionLayers.Services
         /// </returns>
         public static LayerData CreateLayerData(Type type)
         {
+            if (type == null)
+            {
+                return null;
+            }
+
             return CreateLayerData(type.FullName);
         }
 
@@ -398,7 +391,7 @@ namespace Unity.XR.CompositionLayers.Services
 
         internal static Camera GetStereoMainCamera()
         {
-            var mainCamera = CompositionLayerManager.mainCameraCache;
+            var mainCamera = CompositionLayerManager.MainCameraCache;
             if (ValidateStereoCamera(mainCamera))
             {
                 return mainCamera;

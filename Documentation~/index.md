@@ -22,4 +22,4 @@ Refer to the following topics to get started with the Composition Layers package
 | [Known Issues](xref:xr-layer-known-issues) | Review known limitations and issues in this package. |
 
 [Using Composition Layers]: xref:xr-layers-using
-[ILayerProvider]: xref:UnityEngine.XR.CompositionLayers.Provider.ILayerProvider
+[ILayerProvider]: xref:Unity.XR.CompositionLayers.Provider.ILayerProvider

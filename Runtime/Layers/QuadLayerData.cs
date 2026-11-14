@@ -22,7 +22,7 @@ namespace Unity.XR.CompositionLayers.Layers
         SupportTransform = true,
         Description = "Defines a simple quad layer in a scene. A quad layer is simply a rectangular area of the display " +
             "that will be rendered with some texture by the current ILayerProvider instance.",
-        SuggestedExtenstionTypes = new[] { typeof(TexturesExtension) }
+        SuggestedExtensionTypes = new[] { typeof(TexturesExtension) }
      )]
     [CompositionLayersHelpURL(typeof(QuadLayerData))]
     public class QuadLayerData : LayerData

@@ -17,7 +17,7 @@ namespace Unity.XR.CompositionLayers.Emulation.Implementations
             if (camera.cameraType == CameraType.SceneView)
                 return true;
 
-            return EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported();
+            return IsEmulated || EmulatedCompositionLayerUtils.IsRuntimeEmulationSupported();
         }
 
         protected override string GetShaderLayerTypeKeyword()

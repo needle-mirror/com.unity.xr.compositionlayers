@@ -2,9 +2,7 @@ using System;
 using Unity.XR.CompositionLayers.Layers.Editor;
 using UnityEditor;
 using UnityEngine;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Extensions.Editor
 {
@@ -57,9 +55,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
 
         static partial class Styles
         {
-#if LIFECYCLE_APIS_AVAILABLE
             [AutoStaticsCleanup]
-#endif
             public static GUIStyle centeredText;
         }
 
@@ -246,7 +242,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
                 foreach (var targetObject in serializedObject.targetObjects)
                 {
                     if (targetObject is CompositionLayerExtension layerExtension)
-                        layerExtension.ReportStateChange?.Invoke();
+                        layerExtension.ReportChange();
                 }
             }
         }

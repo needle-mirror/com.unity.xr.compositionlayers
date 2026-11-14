@@ -26,10 +26,10 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
         public async Task PerEyeTextureAssignment_ReportsModified_AndSetsTextureAdded([Values] bool leftEye)
         {
             var layer = CreateActiveLayer<QuadLayerData>(addSuggestedExtensions: true);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             var ext = GetExtension<TexturesExtension>(layer);
             Assert.IsNotNull(ext);
-            await new WaitForUpdateCall(this); // settle
+            await NextManagerUpdate(); // settle
 
             ext.TextureAdded = false;
             if (leftEye)
@@ -37,7 +37,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
             else
                 ext.RightTexture = Texture2D.whiteTexture;
 
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
             Assert.IsTrue(ext.TextureAdded, "Assigning a texture to a previously-null eye should set TextureAdded.");
         }
@@ -46,39 +46,39 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
         public async Task ChangingTargetEyeToIndividual_ReportsModified()
         {
             var layer = CreateActiveLayer<QuadLayerData>(addSuggestedExtensions: true);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             var ext = GetExtension<TexturesExtension>(layer);
             Assert.IsNotNull(ext);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             ext.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
 
             // Setting the same value does not report a modification.
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             ext.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
         }
 
-#if XR_OPENXR_1_18_0_PRE_1_OR_NEWER
+#if XR_OPENXR_7_0_0_PRE_1_OR_NEWER
         [Test]
         public async Task ChangingTargetEyeToLeftThenRight_ReportsModified()
         {
             var layer = CreateActiveLayer<QuadLayerData>(addSuggestedExtensions: true);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             var ext = GetExtension<TexturesExtension>(layer);
             Assert.IsNotNull(ext);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             ext.TargetEye = TexturesExtension.TargetEyeEnum.Left;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             ext.TargetEye = TexturesExtension.TargetEyeEnum.Right;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
         }
 #endif

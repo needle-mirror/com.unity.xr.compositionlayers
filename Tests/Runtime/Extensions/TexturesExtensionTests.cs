@@ -20,19 +20,19 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
 
             layer.AddSuggestedExtensions();
 
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
             Assert.IsNotNull(textureExt);
 
             textureExt.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
 
             textureExt.TargetEye = TexturesExtension.TargetEyeEnum.Individual;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
         }
 
@@ -44,31 +44,31 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
             layer.gameObject.SetActive(true);
 
             layer.AddSuggestedExtensions();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
             Assert.IsNotNull(textureExt);
 
             textureExt.LeftTexture = Texture2D.whiteTexture;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
 
             textureExt.LeftTexture = Texture2D.whiteTexture;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
 
             textureExt.LeftTexture = Texture2D.blackTexture;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
 
             textureExt.LeftTexture = null;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
         }
 
@@ -80,27 +80,27 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
             layer.gameObject.SetActive(true);
 
             layer.AddSuggestedExtensions();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             var textureExt = layer.gameObject.GetComponent<TexturesExtension>();
             Assert.IsNotNull(textureExt);
             Assert.AreEqual(TexturesExtension.MipMapModeEnum.None, textureExt.MipMapMode);
 
             textureExt.MipMapMode = TexturesExtension.MipMapModeEnum.CopyFromSource;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
 
             // Setting the same value again should not report a modification.
             textureExt.MipMapMode = TexturesExtension.MipMapModeEnum.CopyFromSource;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
 
             textureExt.MipMapMode = TexturesExtension.MipMapModeEnum.AutoGenerate;
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
         }
     }

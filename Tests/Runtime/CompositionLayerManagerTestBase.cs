@@ -1,6 +1,7 @@
 using System;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Unity.XR.CompositionLayers.Emulation;
 using Unity.XR.CompositionLayers.Extensions;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Provider;
@@ -30,7 +31,15 @@ namespace Unity.XR.CompositionLayers.Tests
         // any layer left in the scene leaks into the next test's OccupiedLayers/known-layers state.
         protected readonly List<CompositionLayer> m_TrackedLayers = new();
 
-        bool m_EditorProviderState;
+        // The base occupies the native provider slot, so its own reports are the native side. The emulation
+        // slot holds a second recorder in place of the real EmulatedLayerProvider.
+        protected readonly RecordingLayerProvider m_NativeRecorder = new("native");
+        protected readonly RecordingLayerProvider m_EmulationRecorder = new("emulation");
+
+        AwaitableCompletionSource m_UpdateCompletion;
+        bool m_UpdateReported;
+        PlatformProvider m_ReplacedPlatformProvider;
+        Type m_ReplacedPassthroughLayerType;
 
         [SetUp]
         public void SetUp()
@@ -56,12 +65,43 @@ namespace Unity.XR.CompositionLayers.Tests
             lastModifiedLayers.Clear();
             lastActiveLayers.Clear();
 
-            CompositionLayerManager.Instance?.ClearAllState();
-            CompositionLayerManager.Instance?.EnsureSceneCompositionManager();
+            m_NativeRecorder.Clear();
+            m_EmulationRecorder.Clear();
+
+            m_ReplacedPlatformProvider = PlatformManager.ActivePlatformProvider;
+            m_ReplacedPassthroughLayerType = CompositionLayerManager.PassthroughLayerType;
+            PlatformManager.ActivePlatformProvider = new TestPlatformProvider();
+
+            // The manager stops itself on any update where no layers exist, and the real EmulatedLayerProvider
+            // reclaims the emulation slot from ManagerStarted every time it restarts. Unsubscribing it for the
+            // duration of the test is what keeps the recorder installed across those restarts.
+            EmulatedLayerProvider.DisconnectEmulatedLayerProvider();
+
+            // Teardown stops the manager, so Instance stays null here until something restarts it.
+            CompositionLayerManager.StartCompositionLayerManager();
+            CompositionLayerManager.Instance.ClearAllState();
+            CompositionLayerManager.Instance.EnsureSceneCompositionManager();
+
+            ResetUpdateSignal();
+            CompositionLayerManager.Instance.LayerProvider = this;
+            CompositionLayerManager.Instance.EmulationLayerProvider = m_EmulationRecorder;
         }
 
         protected virtual void Teardown()
         {
+            if (CompositionLayerManager.ManagerActive)
+            {
+                CompositionLayerManager.Instance.LayerProvider = null;
+                CompositionLayerManager.Instance.EmulationLayerProvider = null;
+            }
+
+            // Setup sets a provider, so without this every later test in the Play session starts with one ever set.
+            CompositionLayerManager.ResetLayerProviderHistory();
+            PlatformManager.ActivePlatformProvider = m_ReplacedPlatformProvider;
+            CompositionLayerManager.PassthroughLayerType = m_ReplacedPassthroughLayerType;
+
+            ResetUpdateSignal();
+
             foreach (var layer in m_TrackedLayers)
             {
                 if (layer)
@@ -76,11 +116,7 @@ namespace Unity.XR.CompositionLayers.Tests
             // In edit mode a duplicate is then validated and DestroyImmediate'd from within OnEnable, which is
             // illegal and logs "Destroying object ... is not allowed at this time" plus a duplicate-layer warning.
             CompositionLayerManager.StopCompositionLayerManager();
-#if UNITY_6000_4_OR_NEWER
             var sceneLayers = UnityObject.FindObjectsByType<CompositionLayer>(FindObjectsInactive.Include);
-#else
-            var sceneLayers = UnityObject.FindObjectsByType<CompositionLayer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-#endif
             foreach (var layer in sceneLayers)
             {
                 if (layer)
@@ -96,6 +132,8 @@ namespace Unity.XR.CompositionLayers.Tests
             hasRemovedLayers = false;
             hasModifiedLayers = false;
             hasActiveLayers = false;
+
+            EmulatedLayerProvider.ConnectEmulatedLayerProvider();
         }
 
         public void SetInitialState(List<LayerInfo> layers) { }
@@ -149,13 +187,74 @@ namespace Unity.XR.CompositionLayers.Tests
             {
                 hasActiveLayers = false;
             }
+
+            m_NativeRecorder.UpdateLayers(createdLayers, removedLayers, modifiedLayers, activeLayers);
+
+            m_UpdateReported = true;
         }
 
-        public void LateUpdate() { }
+        public void LateUpdate()
+        {
+            if (!m_UpdateReported)
+                return;
+
+            // Completing resumes the awaiting test synchronously, and it may request the next cycle
+            // before this method returns.
+            var completion = m_UpdateCompletion;
+            ResetUpdateSignal();
+
+            completion?.TrySetResult();
+        }
 
         public void OnRenderObject() { }
 
-        protected CompositionLayer CreateLayerGameObject(bool recycle = true)
+        /// Waits for the manager to run one full update cycle and report it to this provider.
+        protected Awaitable NextManagerUpdate()
+        {
+            m_UpdateReported = false;
+            m_UpdateCompletion = new AwaitableCompletionSource();
+
+            return m_UpdateCompletion.Awaitable;
+        }
+
+        /// Waits for one update cycle as seen by the emulation slot. Use this while the native provider is detached,
+        /// because NextManagerUpdate only completes from the native slot.
+        protected async Awaitable NextEmulationUpdate()
+        {
+            var reportCount = m_EmulationRecorder.Reports.Count;
+            while (m_EmulationRecorder.Reports.Count == reportCount)
+            {
+                await Awaitable.NextFrameAsync();
+            }
+        }
+
+        /// Clears the native provider slot the way application pause does. Teardown is unaffected.
+        protected static void DetachNativeProvider()
+        {
+            // The manager stops itself on an update with no layers, which can run between SetUp and the test body.
+            CompositionLayerManager.StartCompositionLayerManager();
+            CompositionLayerManager.Instance.LayerProvider = null;
+        }
+
+        /// Puts the base class back in the native provider slot after DetachNativeProvider.
+        protected void ReattachNativeProvider()
+            => CompositionLayerManager.Instance.LayerProvider = this;
+
+        /// Detaches the native provider and forgets it was ever set, as on a platform that never sets one.
+        protected static void ForgetNativeProvider()
+        {
+            DetachNativeProvider();
+            CompositionLayerManager.ResetLayerProviderHistory();
+        }
+
+        void ResetUpdateSignal()
+        {
+            m_UpdateCompletion = null;
+            m_UpdateReported = false;
+        }
+
+        // Reset gives new layers QuadLayerData in Edit Mode only, so Play Mode tests assign it here.
+        protected CompositionLayer CreateLayerGameObject(bool recycle = true, bool assignLayerType = true)
         {
             var name = "Test";
             GameObject gameObject = null;
@@ -173,6 +272,9 @@ namespace Unity.XR.CompositionLayers.Tests
             }
 
             var layerComponent = gameObject.AddComponent<CompositionLayer>();
+            if (assignLayerType && layerComponent.LayerData == null)
+                layerComponent.ChangeLayerDataType(typeof(QuadLayerData));
+
             return layerComponent;
         }
 
@@ -239,5 +341,24 @@ namespace Unity.XR.CompositionLayers.Tests
 
         /// True if the layer was reported in the created list during the last provider update cycle.
         protected bool WasReportedCreated(CompositionLayer layer) => FindLayer(lastCreatedLayers, layer, out _);
+
+        /// Treats the layer data type as passthrough, the way a platform's camera subsystem does at runtime.
+        protected static void SetPassthroughLayerType(Type layerDataType)
+            => CompositionLayerManager.PassthroughLayerType = layerDataType;
+
+        /// Fails if any single update cycle dispatched the layer to both providers.
+        protected void AssertDispatchedToOneProvider(CompositionLayer layer)
+        {
+            var cycles = Mathf.Min(m_NativeRecorder.Reports.Count, m_EmulationRecorder.Reports.Count);
+
+            for (var i = 0; i < cycles; i++)
+            {
+                var native = RecordingLayerProvider.Owns(m_NativeRecorder.Reports[i], layer);
+                var emulated = RecordingLayerProvider.Owns(m_EmulationRecorder.Reports[i], layer);
+
+                Assert.IsFalse(native && emulated,
+                    $"Layer '{layer.name}' was dispatched to both providers in update cycle {i}.");
+            }
+        }
     }
 }

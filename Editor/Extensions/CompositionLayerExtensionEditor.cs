@@ -18,8 +18,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             {
                 if (targetObject is CompositionLayerExtension layerExtension)
                 {
-                    // Ensures `ReportStateChange` is set
-                    layerExtension.Awake();
+                    layerExtension.InitializeStateChangeReporting();
                 }
             }
         }
@@ -37,7 +36,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
 
         /// <summary>
         /// Used to <see cref="SerializedObject.ApplyModifiedProperties"/> then
-        /// <see cref="CompositionExtensionBase.ReportStateChange"/> so any changes made in the editor are reported
+        /// <see cref="CompositionLayerExtension.ReportStateChange"/> so any changes made in the editor are reported
         /// back to the <see cref="Unity.XR.CompositionLayers.Services.CompositionLayerManager"/>
         /// </summary>
         protected void ApplyChangesWithReportStateChange()
@@ -46,7 +45,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Editor
             foreach (var targetObject in serializedObject.targetObjects)
             {
                 if (targetObject is CompositionLayerExtension layerExtension)
-                    layerExtension.ReportStateChange();
+                    layerExtension.ReportChange();
             }
         }
     }

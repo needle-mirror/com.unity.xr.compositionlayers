@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction
 {
@@ -16,9 +14,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         // Desired size of render texture
         Vector2 m_RenderTextureSize = new Vector2(500, 500);
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static readonly Dictionary<RenderTexture, Camera> s_CamerasByRenderTexture = new();
 
         /// <summary>

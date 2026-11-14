@@ -1,37 +1,18 @@
 using System;
 using System.Collections.Generic;
+using Unity.XR.CompositionLayers.Extensions;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CoreUtils;
 using UnityEngine;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Emulation
 {
     static class EmulatedCompositionLayerUtils
     {
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static readonly Dictionary<Type, Type> k_EmulatedLayerDataTypes = new();
-
-#if LIFECYCLE_APIS_AVAILABLE
-        [NoAutoStaticsCleanup]
-#endif
-        internal static Func<bool> GetEmulationInScene;
-#if LIFECYCLE_APIS_AVAILABLE
-        [NoAutoStaticsCleanup]
-#endif
-        internal static Func<bool> GetEmulationInPlayMode;
-#if LIFECYCLE_APIS_AVAILABLE
-        [NoAutoStaticsCleanup]
-#endif
-        internal static Func<bool> GetEmulationInStandalone;
-        internal static bool EmulationInScene => GetEmulationInScene != null && GetEmulationInScene();
-        internal static bool EmulationInPlayMode => GetEmulationInPlayMode != null && GetEmulationInPlayMode();
-        internal static bool EmulationInStandalone => GetEmulationInStandalone != null && GetEmulationInStandalone();
 
         internal static bool IsRuntimeEmulationSupported()
         {
@@ -44,6 +25,70 @@ namespace Unity.XR.CompositionLayers.Emulation
             return true;
 #endif
         }
+
+        /// <summary>
+        /// The Default Scene Layer's Color Scale and Bias to apply through emulation, or null when none applies.
+        /// </summary>
+        internal static ColorScaleBiasExtension GetEmulatedColorScaleBias(
+            CompositionLayer defaultLayer, CameraType cameraType)
+        {
+            if (defaultLayer == null || !IsColorScaleBiasEmulated(defaultLayer, cameraType))
+                return null;
+
+            var colorScaleBiasExtension = defaultLayer.GetComponent<ColorScaleBiasExtension>();
+            if (colorScaleBiasExtension == null || !colorScaleBiasExtension.isActiveAndEnabled)
+                return null;
+
+            return colorScaleBiasExtension;
+        }
+
+        // Edit mode and the Scene View preview the tint whatever the render path, as they do emulated layers.
+        static bool IsColorScaleBiasEmulated(CompositionLayer defaultLayer, CameraType cameraType)
+        {
+            return !Application.isPlaying ||
+                cameraType == CameraType.SceneView ||
+                defaultLayer.RenderPath == CompositionLayerRenderPath.Emulated;
+        }
+
+        /// <summary>
+        /// Whether emulated layers may draw. False only in a standalone player with no XR display running and the
+        /// deprecated <c>EmulationInStandalone</c> setting off.
+        /// </summary>
+        internal static bool IsEmulationAllowedInPlayer(
+            bool isStandalonePlayer, bool isXRDisplayActive, bool emulationInStandalone)
+        {
+            return !isStandalonePlayer || isXRDisplayActive || emulationInStandalone;
+        }
+
+        /// <summary>
+        /// The deprecated Emulation In Standalone setting that the standalone player gate reads.
+        /// </summary>
+        internal static bool IsEmulationInStandaloneEnabled =>
+            RuntimeSettingsLookup.Current.IsEmulationInStandaloneEnabled;
+
+        /// <summary>
+        /// Whether emulated layers may draw on the current platform, as decided by
+        /// <see cref="IsEmulationAllowedInPlayer(bool, bool, bool)"/>.
+        /// </summary>
+        internal static bool IsEmulationAllowedInPlayer()
+        {
+#if !UNITY_EDITOR && UNITY_STANDALONE
+            return IsEmulationAllowedInPlayer(true, IsXRDisplayActive(), IsEmulationInStandaloneEnabled);
+#else
+            return true;
+#endif
+        }
+
+#if !UNITY_EDITOR && UNITY_STANDALONE
+        static bool IsXRDisplayActive()
+        {
+#if ENABLE_UNITY_XR
+            return CompositionLayerUtils.IsDisplaySubsystemActive();
+#else
+            return false;
+#endif
+        }
+#endif
 
         static EmulatedCompositionLayerUtils()
         {

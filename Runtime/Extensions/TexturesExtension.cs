@@ -25,7 +25,7 @@ namespace Unity.XR.CompositionLayers.Extensions
     [DisallowMultipleComponent]
     [AddComponentMenu("XR/Composition Layers/Extensions/Source Textures")]
     [CompositionLayersHelpURL(typeof(TexturesExtension))]
-    public class TexturesExtension : CompositionLayerExtension
+    public partial class TexturesExtension : CompositionLayerExtension
     {
         /// <summary>
         /// Source Texture enumeration.
@@ -55,7 +55,7 @@ namespace Unity.XR.CompositionLayers.Extensions
             /// Allow Emulation in each individual eye for seperate images to be used.
             /// </summary>
             Individual,
-#if XR_OPENXR_1_18_0_PRE_1_OR_NEWER
+#if XR_OPENXR_7_0_0_PRE_1_OR_NEWER
             /// <summary>
             /// Render only in the left eye.
             /// </summary>
@@ -223,9 +223,9 @@ namespace Unity.XR.CompositionLayers.Extensions
         }
 
         /// <summary>
-        /// When true the layer will be used for render Android external surface.
+        /// Where the layer's texture comes from: a local texture or an external Android surface.
         /// </summary>
-        public SourceTextureEnum sourceTexture
+        public SourceTextureEnum SourceTexture
         {
             get => m_SourceTexture;
             set => m_SourceTexture = UpdateValue(m_SourceTexture, value);

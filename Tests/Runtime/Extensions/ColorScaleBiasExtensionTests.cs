@@ -29,8 +29,8 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
         {
             var layer = CreateActiveLayer<QuadLayerData>();
             var ext = layer.gameObject.AddComponent<ColorScaleBiasExtension>();
-            await new WaitForUpdateCall(this);
-            await new WaitForUpdateCall(this); // settle the add
+            await NextManagerUpdate();
+            await NextManagerUpdate(); // settle the add
 
             var changed = new Vector4(0.5f, 0.5f, 0.5f, 0.5f);
             if (useScale)
@@ -38,10 +38,10 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
             else
                 ext.Bias = changed;
 
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
 
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
 
             // Setting the same value again should not report a modification.
@@ -50,7 +50,7 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
             else
                 ext.Bias = changed;
 
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
         }
     }

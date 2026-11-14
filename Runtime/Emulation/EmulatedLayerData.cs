@@ -17,13 +17,14 @@ namespace Unity.XR.CompositionLayers.Emulation
     /// Class for rendering emulated layer data with a command buffer. The EmulatedLayerProvider handles sorting
     /// and managing the command buffers applied to the cameras.
     /// </summary>
-    internal abstract class EmulatedLayerData : IDisposable
+    abstract class EmulatedLayerData : IDisposable
     {
         public const string k_CustomRectsMaterialKeyword = "CUSTOM_RECTS_ON";
         public const string k_SourceTextureMaterialKeyword = "SOURCE_TEXTURE_ON";
         public const string k_ColorScaleMaterialKeyword = "COLOR_SCALE_BIAS_ON";
 
         public static readonly int k_MainTex = Shader.PropertyToID("_MainTex");
+        internal static readonly int k_RightEyeTex = Shader.PropertyToID("_RightEyeTex");
         static readonly int k_Cubemap = Shader.PropertyToID("_Cubemap");
         static readonly int k_ColorScale = Shader.PropertyToID("_ColorScale");
         static readonly int k_ColorBias = Shader.PropertyToID("_ColorBias");
@@ -38,25 +39,16 @@ namespace Unity.XR.CompositionLayers.Emulation
         protected static readonly int k_TransformMatrix = Shader.PropertyToID("_TransformMatrix");
         protected static readonly int k_TransformMatrixType = Shader.PropertyToID("_TransformMatrixType");
 
-        protected CommandBufferTemp m_CommandBufferTemp;
-        protected CommandBufferTemp m_CommandBufferTempSceneView;
 
         bool m_IsInitialized;
         EmulatedCompositionLayer m_EmulatedCompositionLayer;
-        private Texture m_ExternalTexturePlaceholder;
-        private string m_TypeName = string.Empty;
-
-        //------------------------------------------------------------------------------------------------------------------------------------------------
+        Texture m_ExternalTexturePlaceholder;
+        string m_TypeName = string.Empty;
 
         /// <summary>
         /// Is the <see cref="EmulatedLayerData"/> initialized and ready to use.
         /// </summary>
-        public bool IsInitialized
-        {
-            get => m_IsInitialized;
-        }
-
-        //------------------------------------------------------------------------------------------------------------------------------------------------
+        public bool IsInitialized => m_IsInitialized;
 
         /// <summary>
         /// Is the emulation of the <see cref="LayerData"/> supported with your current configuration on a given
@@ -67,14 +59,13 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// <returns><c>true</c> if emulation the <see cref="LayerData"/> type is supported in your configuration.</returns>
         public abstract bool IsSupported(Camera camera);
 
-        //------------------------------------------------------------------------------------------------------------------------------------------------
-        // Accessors
-        //------------------------------------------------------------------------------------------------------------------------------------------------
+        protected CompositionLayer CompositionLayer => m_EmulatedCompositionLayer?.CompositionLayer;
 
-        protected CompositionLayer CompositionLayer
-        {
-            get => m_EmulatedCompositionLayer?.CompositionLayer;
-        }
+        /// <summary>
+        /// Whether the layer this instance renders is on the <see cref="CompositionLayerRenderPath.Emulated"/> path.
+        /// </summary>
+        protected bool IsEmulated =>
+            CompositionLayer != null && CompositionLayer.RenderPath == CompositionLayerRenderPath.Emulated;
 
         protected LayerData LayerData
         {
@@ -98,22 +89,18 @@ namespace Unity.XR.CompositionLayers.Emulation
             }
         }
 
-        protected List<CompositionLayerExtension> LayerExtensions
-        {
-            get => m_EmulatedCompositionLayer?.LayerExtensions;
-        }
-
-        //------------------------------------------------------------------------------------------------------------------------------------------------
+        protected List<CompositionLayerExtension> LayerExtensions => m_EmulatedCompositionLayer?.LayerExtensions;
 
         /// <summary>
         /// Get the shader for layer rendering.
         /// </summary>
-        Shader GetShader()
+        static Shader GetShader()
         {
-            var shader = Shader.Find(CompositionLayerConstants.UberShader);
+            var shader = Shader.Find(CompositionLayerConstants.UberShaderName);
             if (shader == null)
             {
-                Debug.LogWarning($"Can't find {CompositionLayerConstants.UberShader}. Treat this layer as invisible.");
+                Debug.LogError(
+                    $"Can't find {CompositionLayerConstants.UberShaderName}. Treat this layer as invisible.");
             }
 
             return shader;
@@ -129,9 +116,7 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// <summary>
         /// Material instance used to blit the emulated composition layer to the camera.
         /// </summary>
-        protected Material EmulationMaterial;
-
-        //------------------------------------------------------------------------------------------------------------------------------------------------
+        protected internal Material EmulationMaterial;
 
         /// <summary>
         /// Used to set the initial values and setup for the <see cref="EmulatedLayerData"/> so it can be used in the
@@ -162,6 +147,13 @@ namespace Unity.XR.CompositionLayers.Emulation
             }
         }
 
+        Texture GetRightEyeTexture(TexturesExtension texturesExtension, Texture texture)
+        {
+            return CompositionLayer.LayerData is ProjectionLayerRigData && texturesExtension.RightTexture != null
+                ? texturesExtension.RightTexture
+                : texture;
+        }
+
         /// <summary>
         /// Updates this instance's <see cref="EmulatedLayerData"/> with values from the <paramref name="layer"/>.
         /// </summary>
@@ -169,9 +161,13 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// <param name="extensions">The <see cref="CompositionLayerExtension"/> components on the <paramref name="layer"/> object.</param>
         protected internal virtual void UpdateEmulatedLayerData()
         {
-            m_CommandBufferTemp.IsInvalidated = true;
-            m_CommandBufferTempSceneView.IsInvalidated = true;
             UpdateMaterial();
+        }
+
+        // Native providers composite a projection rig's camera output as premultiplied alpha.
+        static BlendType GetEmulatedBlendType(LayerData layerData)
+        {
+            return layerData is ProjectionLayerRigData ? BlendType.Premultiply : layerData.BlendType;
         }
 
         void UpdateMaterial()
@@ -185,7 +181,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             var layerData = LayerData;
             if (layerData != null)
             {
-                switch (layerData.BlendType)
+                switch (GetEmulatedBlendType(layerData))
                 {
                     case BlendType.Alpha:
                         material.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
@@ -211,7 +207,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             }
 
             var layerExtensions = LayerExtensions;
-            var isSupportedHDR = PlatformManager.IsSupportedHDR; // for supporting the pass-thtough rendering.
+            var isSupportedHDR = PlatformManager.IsSupportedHDR; // for supporting the pass-through rendering.
             var hasHDRTonemappingExtension = false;
             if (layerExtensions != null)
             {
@@ -228,7 +224,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                             int eyeIndex = 0;
                             Texture texture = null;
 #if UNITY_EDITOR
-                            if (texturesExtension.sourceTexture == TexturesExtension.SourceTextureEnum.AndroidSurface)
+                            if (texturesExtension.SourceTexture == TexturesExtension.SourceTextureEnum.AndroidSurface)
                             {
                                 var layerDataType = CompositionLayer.LayerData.GetType();
                                 if ((layerDataType == typeof(QuadLayerData)) ||
@@ -275,6 +271,8 @@ namespace Unity.XR.CompositionLayers.Emulation
                                 else if (texture is not Cubemap)
                                 {
                                     EmulationMaterial.SetTexture(k_MainTex, texture);
+                                    EmulationMaterial.SetTexture(
+                                        k_RightEyeTex, GetRightEyeTexture(texturesExtension, texture));
                                 }
                             }
 
@@ -341,9 +339,6 @@ namespace Unity.XR.CompositionLayers.Emulation
         /// </summary>
         public virtual void Dispose()
         {
-            m_CommandBufferTemp.Release();
-            m_CommandBufferTempSceneView.Release();
-
             if (EmulationMaterial != null)
                 UnityObjectUtils.Destroy(EmulationMaterial);
 
@@ -353,10 +348,6 @@ namespace Unity.XR.CompositionLayers.Emulation
             m_TypeName = string.Empty;
             m_IsInitialized = false;
         }
-
-        //------------------------------------------------------------------------------------------------------------------------------------------------
-        // Command Buffers
-        //------------------------------------------------------------------------------------------------------------------------------------------------
 
         public struct CommandArgs
         {
@@ -368,68 +359,17 @@ namespace Unity.XR.CompositionLayers.Emulation
             }
         }
 
-        protected struct CommandBufferTemp
-        {
-            public CommandBuffer CommandBuffer;
-            public bool IsInvalidated;
-
-            public bool IsRequiredToCreate
-            {
-                get
-                {
-                    return CommandBuffer == null || IsInvalidated;
-                }
-            }
-
-            public CommandBuffer Create(string bufferName)
-            {
-                if (CommandBuffer == null)
-                {
-#if UNITY_RENDER_PIPELINES_CORE
-                    CommandBuffer = CommandBufferPool.Get(bufferName);
-#else
-                    CommandBuffer = new CommandBuffer()
-                    {
-                        name = bufferName
-                    };
-#endif
-                }
-                else
-                {
-                    CommandBuffer.Clear();
-                }
-
-                IsInvalidated = false;
-                return CommandBuffer;
-            }
-
-            public void Release()
-            {
-                if (CommandBuffer != null)
-                {
-#if UNITY_RENDER_PIPELINES_CORE
-                    CommandBufferPool.Release(CommandBuffer);
-#else
-                    CommandBuffer.Release();
-#endif
-                }
-
-                CommandBuffer = null;
-                IsInvalidated = false;
-            }
-        }
-
         public struct RenderContext
         {
             public CommandBuffer m_CommandBuffer;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
             public RasterCommandBuffer m_RasterCommandBuffer;
 #endif
 
             public RenderContext(CommandBuffer commandBuffer)
             {
                 m_CommandBuffer = commandBuffer;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
                 m_RasterCommandBuffer = null;
 #endif
             }
@@ -439,7 +379,7 @@ namespace Unity.XR.CompositionLayers.Emulation
                 return new RenderContext(commandBuffer);
             }
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
             public RenderContext(RasterCommandBuffer rasterCommandBuffer)
             {
                 m_CommandBuffer = null;
@@ -456,7 +396,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             {
                 if (m_CommandBuffer != null)
                     m_CommandBuffer.DrawMesh(mesh, matrix, material, subMeshIndex, shaderPass, properties);
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
                 else if (m_RasterCommandBuffer != null)
                     m_RasterCommandBuffer.DrawMesh(mesh, matrix, material, subMeshIndex, shaderPass, properties);
 #endif
@@ -466,7 +406,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             {
                 if (m_CommandBuffer != null)
                     m_CommandBuffer.ClearRenderTarget(clearDepth, clearColor, backgroundColor);
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
+#if UNITY_RENDER_PIPELINES_UNIVERSAL
                 else if (m_RasterCommandBuffer != null)
                     m_RasterCommandBuffer.ClearRenderTarget(clearDepth, clearColor, backgroundColor);
 #endif
@@ -476,35 +416,6 @@ namespace Unity.XR.CompositionLayers.Emulation
         protected abstract void PrepareCommands();
 
         protected abstract void AddCommands(RenderContext renderContext, CommandArgs commandArgs);
-
-        /// <summary>
-        /// Update the <see cref="RenderContext"/> that is used for rendering the <see cref="EmulatedLayerData"/> for
-        /// the <paramref name="camera"/>.
-        /// </summary>
-        /// <param name="camera">The <see cref="Camera"/> that the command buffer is being setup for.</param>
-        public CommandBuffer UpdateCommandBuffer(CommandArgs commandArgs)
-        {
-#if UNITY_EDITOR
-            if (commandArgs.IsSceneView)
-            {
-                return UpdateCommandBufferInternal(ref m_CommandBufferTempSceneView, commandArgs);
-            }
-#endif
-            return UpdateCommandBufferInternal(ref m_CommandBufferTemp, commandArgs);
-        }
-
-        CommandBuffer UpdateCommandBufferInternal(ref CommandBufferTemp commandBufferTemp, CommandArgs commandArgs)
-        {
-            PrepareCommands();
-
-            if (commandBufferTemp.IsRequiredToCreate)
-            {
-                var commandBuffer = commandBufferTemp.Create(m_TypeName);
-                AddCommands(commandBuffer, commandArgs);
-            }
-
-            return commandBufferTemp.CommandBuffer;
-        }
 
         public void AddToCommandBuffer(RenderContext renderContext, CommandArgs commandArgs)
         {
@@ -519,10 +430,6 @@ namespace Unity.XR.CompositionLayers.Emulation
             PrepareCommands();
             AddCommands(renderContext, commandArgs);
         }
-
-        //------------------------------------------------------------------------------------------------------------------------------------------------
-        // Internal utilities
-        //------------------------------------------------------------------------------------------------------------------------------------------------
 
         protected static Vector4 ToVector4(Rect rect)
         {

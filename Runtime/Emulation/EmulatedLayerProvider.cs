@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using Unity.XR.CompositionLayers.Provider;
 using Unity.XR.CompositionLayers.Services;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Unity.Profiling;
 using Unity.XR.CompositionLayers.Rendering;
 using Unity.XR.CompositionLayers.Emulation.Implementations;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
 using UnityEngine.Rendering.Universal;
 #endif
@@ -22,25 +19,18 @@ namespace Unity.XR.CompositionLayers.Emulation
 {
     class EmulatedLayerProvider : ILayerProvider
     {
-        static readonly ProfilerMarker s_EmulatedLayerProviderCreate = new ProfilerMarker("EmulatedLayerProvider.Create");
-        static readonly ProfilerMarker s_EmulatedLayerProviderRemove = new ProfilerMarker("EmulatedLayerProvider.Remove");
-        static readonly ProfilerMarker s_EmulatedLayerProviderModify = new ProfilerMarker("EmulatedLayerProvider.Modify");
-        static readonly ProfilerMarker s_EmulatedLayerProviderActive = new ProfilerMarker("EmulatedLayerProvider.Active");
-        static readonly ProfilerMarker s_EmulatedLayerProviderSetupRenderPipeline = new ProfilerMarker("EmulatedLayerProvider.SetupRenderPipeline");
+        static readonly ProfilerMarker s_EmulatedLayerProviderCreate = new("EmulatedLayerProvider.Create");
+        static readonly ProfilerMarker s_EmulatedLayerProviderRemove = new("EmulatedLayerProvider.Remove");
+        static readonly ProfilerMarker s_EmulatedLayerProviderModify = new("EmulatedLayerProvider.Modify");
+        static readonly ProfilerMarker s_EmulatedLayerProviderActive = new("EmulatedLayerProvider.Active");
+        static readonly ProfilerMarker s_EmulatedLayerProviderSetupRenderPipeline = new("EmulatedLayerProvider.SetupRenderPipeline");
 
-        static readonly CameraEvent[] k_DefaultUnderlayCameraEvents = { CameraEvent.BeforeForwardOpaque };
-        static readonly CameraEvent[] k_DefaultOverlayCameraEvents = { CameraEvent.AfterImageEffects };
-        static readonly CameraEvent[] k_DeferredUnderlayCameraEvents = { CameraEvent.BeforeGBuffer };
-        static readonly CameraEvent[] k_DeferredOverlayCameraEvents = { CameraEvent.AfterImageEffects };
-
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static EmulatedLayerProvider s_Instance;
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static bool s_WarnUnsupportedEmulation;
+        [NoAutoStaticsCleanup]
+        internal static bool s_WarnUnsupportedRenderPipeline;
 
         Dictionary<int, EmulatedCompositionLayer> m_AllCompositionLayers = new();
 
@@ -50,12 +40,15 @@ namespace Unity.XR.CompositionLayers.Emulation
 
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]
+#else
+        [RuntimeInitializeOnLoadMethod]
 #endif
         internal static void ConnectEmulatedLayerProvider()
         {
             CompositionLayerManager.ManagerStarted += OnCompositionLayerManagerStarted;
             CompositionLayerManager.ManagerStopped += OnCompositionLayerManagerStopped;
             s_WarnUnsupportedEmulation = true;
+            s_WarnUnsupportedRenderPipeline = true;
 
             if (CompositionLayerManager.ManagerActive)
                 OnCompositionLayerManagerStarted();
@@ -85,6 +78,14 @@ namespace Unity.XR.CompositionLayers.Emulation
             EmulationColorScaleBiasPass.RegisterScriptableRendererPass();
 #endif
 #if UNITY_RENDER_PIPELINES_HDRENDER
+#if UNITY_EDITOR
+#pragma warning disable CS0618
+            if (RenderPipelineUtility.IsHDRenderPipeline())
+            {
+                Debug.LogWarning("High Definition Render Pipeline support for layer emulation and the Mirror View Renderer is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release. Use the Universal Render Pipeline.");
+            }
+#pragma warning restore CS0618
+#endif
             EmulationLayerHighDefinitionVolumeManager.ActivateCustomPassVolumes();
 #endif
         }
@@ -131,10 +132,7 @@ namespace Unity.XR.CompositionLayers.Emulation
             emulatedLayer.ModifyLayer();
             emulatedLayer.UpdateLayer();
 
-            if (!m_AllCompositionLayers.ContainsKey(layerInfo.Id))
-                m_AllCompositionLayers.Add(layerInfo.Id, emulatedLayer);
-            else
-                m_AllCompositionLayers[layerInfo.Id] = emulatedLayer;
+            m_AllCompositionLayers[layerInfo.Id] = emulatedLayer;
 
             return emulatedLayer;
         }
@@ -266,18 +264,9 @@ namespace Unity.XR.CompositionLayers.Emulation
 
         public void LateUpdate() { }
 
-        internal static CameraEvent[] GetUnderlayCameraEvents(Camera camera)
-        {
-            return camera.actualRenderingPath != RenderingPath.DeferredShading ?
-                k_DefaultUnderlayCameraEvents : k_DeferredUnderlayCameraEvents;
-        }
-
-        internal static CameraEvent[] GetOverlayCameraEvents(Camera camera)
-        {
-            return camera.actualRenderingPath != RenderingPath.DeferredShading ?
-                k_DefaultOverlayCameraEvents : k_DeferredOverlayCameraEvents;
-        }
-
+        /// <summary>
+        /// Whether emulated layers may be drawn into <paramref name="camera"/>.
+        /// </summary>
         internal static bool IsSupported(Camera camera)
         {
             if(s_Instance == null)
@@ -295,33 +284,27 @@ namespace Unity.XR.CompositionLayers.Emulation
 
             UpdateActiveCamerasAndSortedLayers();
 
-            if (GraphicsSettings.currentRenderPipeline != null)
-            {
-#if UNITY_RENDER_PIPELINES_UNIVERSAL || UNITY_RENDER_PIPELINES_HDRENDER
-                bool isSupported = false;
+            var isSupported = false;
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
-                isSupported |= RenderPipelineUtility.IsUniversalRenderPipeline();
+            isSupported |= RenderPipelineUtility.IsUniversalRenderPipeline();
 #endif
 #if UNITY_RENDER_PIPELINES_HDRENDER
-                isSupported |= RenderPipelineUtility.IsHDRenderPipeline();
+#pragma warning disable CS0618
+            isSupported |= RenderPipelineUtility.IsHDRenderPipeline();
+#pragma warning restore CS0618
 #endif
-                if (isSupported)
+            if (isSupported)
+            {
+#if UNITY_RENDER_PIPELINES_UNIVERSAL || UNITY_RENDER_PIPELINES_HDRENDER
+                foreach (var commandBufferLayer in m_SortedLayers)
                 {
-                    foreach (var commandBufferLayer in m_SortedLayers)
-                    {
-                        EmulationLayerScriptableRendererManager.Add(commandBufferLayer.EmulatedLayerData, commandBufferLayer.Order);
-                    }
-
-                    s_EmulatedLayerProviderSetupRenderPipeline.End();
-                    return;
+                    EmulationLayerScriptableRendererManager.Add(commandBufferLayer.EmulatedLayerData, commandBufferLayer.Order);
                 }
 #endif
             }
-
-            // for Built-in Render Pipeline.
-            foreach (var commandBufferLayer in m_SortedLayers)
+            else
             {
-                commandBufferLayer.AddCommandBuffer(m_ActiveCameras);
+                WarnUnsupportedRenderPipeline();
             }
 
             s_EmulatedLayerProviderSetupRenderPipeline.End();
@@ -332,50 +315,60 @@ namespace Unity.XR.CompositionLayers.Emulation
 #if UNITY_RENDER_PIPELINES_HDRENDER || UNITY_RENDER_PIPELINES_UNIVERSAL
             EmulationLayerScriptableRendererManager.Clear();
 #endif
-            // for Built-in Render Pipeline.
-            foreach (var commandBufferLayer in m_SortedLayers)
+        }
+
+        void WarnUnsupportedRenderPipeline()
+        {
+            if (!s_WarnUnsupportedRenderPipeline || m_SortedLayers.Count == 0)
             {
-                commandBufferLayer.RemoveCommandBuffer(m_ActiveCameras);
+                return;
             }
+
+            s_WarnUnsupportedRenderPipeline = false;
+#if UNITY_EDITOR || UNITY_ENABLE_CHECKS
+            Debug.LogWarning("Composition layer emulation requires the Universal Render Pipeline. Layers are not emulated in this project.");
+#endif
         }
 
         void AddEmulationToActiveCamera()
         {
-            var mainCamera = CompositionLayerManager.mainCameraCache;
+            var mainCamera = CompositionLayerManager.MainCameraCache;
             if (mainCamera != null)
                 m_ActiveCameras.Add(mainCamera);
         }
 
+        /// <summary>
+        /// Whether any layer is on the <see cref="CompositionLayerRenderPath.Emulated"/> path, meaning emulation is
+        /// that layer's only rendering path and the main camera has to draw it.
+        /// </summary>
+        bool HasEmulatedLayers()
+        {
+            foreach (var compositionLayerSet in m_AllCompositionLayers)
+            {
+                var compositionLayer = compositionLayerSet.Value?.CompositionLayer;
+                if (compositionLayer != null && compositionLayer.RenderPath == CompositionLayerRenderPath.Emulated)
+                    return true;
+            }
+
+            return false;
+        }
+
         void UpdateActiveCamerasAndSortedLayers()
         {
-#if UNITY_EDITOR || UNITY_STANDALONE
             if (!CompositionLayerManager.ManagerActive)
                 return;
 
             m_ActiveCameras.Clear();
 
-            if (!Application.isPlaying)
-            {
-               AddEmulationToActiveCamera();
-            }
-#if UNITY_EDITOR
-            else if (EmulatedCompositionLayerUtils.EmulationInPlayMode)
-            {
+            if (!Application.isPlaying ||
+                (HasEmulatedLayers() && EmulatedCompositionLayerUtils.IsEmulationAllowedInPlayer()))
                 AddEmulationToActiveCamera();
-            }
 
-            if (EmulatedCompositionLayerUtils.EmulationInScene)
+#if UNITY_EDITOR
+            foreach (var sceneViewObject in SceneView.sceneViews)
             {
-                foreach (var sceneViewObject in SceneView.sceneViews)
-                {
-                    if (sceneViewObject is SceneView sceneView)
-                        m_ActiveCameras.Add(sceneView.camera);
-                }
-            }
-#elif UNITY_STANDALONE
-            if (EmulatedCompositionLayerUtils.EmulationInStandalone)
-            {
-                AddEmulationToActiveCamera();
+                if (sceneViewObject is SceneView sceneView)
+                    m_ActiveCameras.Add(sceneView.camera);
             }
 #endif
             m_SortedLayers.Clear();
@@ -411,7 +404,6 @@ namespace Unity.XR.CompositionLayers.Emulation
 
             // Sort emulated render layers
             m_SortedLayers.Sort(EmulatedLayerDataSorter);
-#endif
         }
 
         static int EmulatedLayerDataSorter(EmulatedCompositionLayer lhs, EmulatedCompositionLayer rhs)

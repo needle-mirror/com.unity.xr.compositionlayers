@@ -1,14 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Unity.XR.CompositionLayers.Layers;
 using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CompositionLayers.Extensions;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -17,57 +13,38 @@ using UnityEditor.SceneManagement;
 
 namespace Unity.XR.CompositionLayers
 {
-    internal partial class CompositionLayerAnalyticsHelper
+    partial class CompositionLayerAnalyticsHelper
     {
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
-        internal static readonly Type k_UIMirrorComponentType = System.Reflection.Assembly.Load("Unity.XR.CompositionLayers.UIInteraction").GetType("Unity.XR.CompositionLayers.UIInteraction.InteractableUIMirror");
+        internal static readonly Type k_UIMirrorComponentType = Type.GetType(
+            "Unity.XR.CompositionLayers.UIInteraction.InteractableUIMirror, Unity.XR.CompositionLayers.UIInteraction");
+
         /// <summary>
         /// Reference to all the Layer Types and their usage in all scenes created in the project.
         /// </summary>
-        internal static Dictionary<string, int> LayerTypesUsage
-        {
-            get => m_layerTypesUsage;
-        }
-#if LIFECYCLE_APIS_AVAILABLE
+        internal static Dictionary<string, int> LayerTypesUsage => s_LayerTypesUsage;
         [AutoStaticsCleanup]
-#endif
-        private static Dictionary<string, int> m_layerTypesUsage = new Dictionary<string, int>();
+        static Dictionary<string, int> s_LayerTypesUsage = new();
         /// <summary>
         /// Tracks the number of ColorScaleAndBias components in the active scene
         /// </summary>
-        internal static int TotalLayerTypesUsage
-        {
-            get => m_totalLayerTypesUsage;
-        }
-#if LIFECYCLE_APIS_AVAILABLE
+        internal static int TotalLayerTypesUsage => s_TotalLayerTypesUsage;
         [AutoStaticsCleanup]
-#endif
-        private static int m_totalLayerTypesUsage = 0;
+        static int s_TotalLayerTypesUsage;
+
         /// <summary>
         /// Tracks the number of ColorScaleAndBias components in the active scene
         /// </summary>
-        internal static int ColorScaleAndBiasExtensionsUsage
-        {
-            get => m_colorScaleAndBiasExtensionsUsage;
-        }
-#if LIFECYCLE_APIS_AVAILABLE
+        internal static int ColorScaleAndBiasExtensionsUsage => s_ColorScaleAndBiasExtensionsUsage;
         [AutoStaticsCleanup]
-#endif
-        private static int m_colorScaleAndBiasExtensionsUsage = 0;
+        static int s_ColorScaleAndBiasExtensionsUsage;
 
         /// <summary>
         /// Checks if the Splash Screen is enabled in the project
         /// </summary>
-        internal static bool IsEnabledSplashScreen
-        {
-            get => m_isEnabledSplashScreen;
-        }
-#if LIFECYCLE_APIS_AVAILABLE
+        internal static bool IsEnabledSplashScreen => s_IsEnabledSplashScreen;
         [AutoStaticsCleanup]
-#endif
-        private static bool m_isEnabledSplashScreen = false;
+        static bool s_IsEnabledSplashScreen;
 
         /// <summary>
         /// Loops through all scenes in the Project Assets folder
@@ -75,9 +52,9 @@ namespace Unity.XR.CompositionLayers
         /// </summary>
         internal static void ProcessCompositionLayersAnalyticsData()
         {
-            m_layerTypesUsage = new Dictionary<string, int>();
-            m_colorScaleAndBiasExtensionsUsage = 0;
-            m_totalLayerTypesUsage = 0;
+            s_LayerTypesUsage = new Dictionary<string, int>();
+            s_ColorScaleAndBiasExtensionsUsage = 0;
+            s_TotalLayerTypesUsage = 0;
 
 #if UNITY_EDITOR
             // Retrieve all scenes included in the build
@@ -94,24 +71,23 @@ namespace Unity.XR.CompositionLayers
                 ProcessSceneLayerTypesUsage();
             }
 #endif
-            foreach (var layerTypeUsage in m_layerTypesUsage.Values)
+            foreach (var layerTypeUsage in s_LayerTypesUsage.Values)
             {
-                m_totalLayerTypesUsage += layerTypeUsage;
+                s_TotalLayerTypesUsage += layerTypeUsage;
             }
 
-            m_isEnabledSplashScreen = CompositionLayersRuntimeSettings.Instance.EnableSplashScreen;
+            s_IsEnabledSplashScreen = RuntimeSettingsLookup.Current.EnableSplashScreen;
         }
 
         /// <summary>
         /// Method to get the number of each type of CompositionLayer components in any given scene
         /// </summary>
-        /// <param name="scene"></param>
         internal static void ProcessSceneLayerTypesUsage()
         {
             var manager = CompositionLayerManager.Instance;
             if (manager == null) return;
 
-            foreach (CompositionLayer layer in manager.CompositionLayers)
+            foreach (var layer in manager.CompositionLayers)
             {
                 if (layer == null)
                     continue;
@@ -123,13 +99,14 @@ namespace Unity.XR.CompositionLayers
                 var layerTypeName = layerDataType.FullName;
                 var extensions = layer.Extensions;
 
-                // To prevent countinug DefaultLayers automatically generated in each new scene.
-                if ((layerDataType == typeof(DefaultLayerData)) && layer.hideFlags.HasFlag(DefaultLayerData.DefaultLayerHideFlags))
-                { continue; }
+                // To prevent counting DefaultLayers automatically generated in each new scene.
+                if (layerDataType == typeof(DefaultLayerData)
+                    && layer.hideFlags.HasFlag(DefaultLayerData.DefaultLayerHideFlags))
+                    continue;
 
-                if ((layerDataType == typeof(QuadLayerData) || layerDataType == typeof(CylinderLayerData)))
+                if (layerDataType == typeof(QuadLayerData) || layerDataType == typeof(CylinderLayerData))
                 {
-                    // Check for Ineractable UI Component
+                    // Check for Interactable UI Component
                     if (layer.gameObject.GetComponent(k_UIMirrorComponentType) != null)
                     {
                         layerTypeName += ".InteractableUI";
@@ -146,8 +123,8 @@ namespace Unity.XR.CompositionLayers
                         }
                     }
 
-                    if (texturesExtension != null && (texturesExtension.sourceTexture ==
-                                                      TexturesExtension.SourceTextureEnum.AndroidSurface))
+                    if (texturesExtension != null
+                        && texturesExtension.SourceTexture == TexturesExtension.SourceTextureEnum.AndroidSurface)
                     {
                         layerTypeName += ".AndroidSurface";
                     }
@@ -157,18 +134,18 @@ namespace Unity.XR.CompositionLayers
                 {
                     if (extension.GetType() == typeof(ColorScaleBiasExtension))
                     {
-                        m_colorScaleAndBiasExtensionsUsage++;
+                        s_ColorScaleAndBiasExtensionsUsage++;
                         break;
                     }
                 }
 
-                if (m_layerTypesUsage.ContainsKey(layerTypeName))
+                if (s_LayerTypesUsage.ContainsKey(layerTypeName))
                 {
-                    m_layerTypesUsage[layerTypeName]++;
+                    s_LayerTypesUsage[layerTypeName]++;
                 }
                 else
                 {
-                    m_layerTypesUsage[layerTypeName] = 1;
+                    s_LayerTypesUsage[layerTypeName] = 1;
                 }
             }
         }

@@ -1,9 +1,8 @@
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
+using Unity.XR.CompositionLayers;
 using UnityEngine;
 
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
@@ -13,19 +12,24 @@ using Unity.XR.CompositionLayers.Emulation;
 
 namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 {
+#pragma warning disable CS0618
+    [System.Obsolete("CompositionLayerProjectValidation is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
     public static partial class CompositionLayerProjectValidation
     {
-#if LIFECYCLE_APIS_AVAILABLE
+        // Declared before the rules that use it, since static fields initialize in order.
         [NoAutoStaticsCleanup]
-#endif
+        static readonly RuntimeSettingsValidation k_RuntimeSettingsValidation = new(
+            RuntimeSettingsLocations.Default, PlayerSettings.GetPreloadedAssets, PlayerSettings.SetPreloadedAssets);
+
+        [NoAutoStaticsCleanup]
         private static readonly CompositionLayerBuildValidationRule[] BuiltinValidationRules =
         {
             new CompositionLayerBuildValidationRule
             {
-                Message = "OpenXR Plugin 1.19.0-pre.2 or later is recommended for full feature support. Minimum version required is 1.12.0-exp.1 for the composition layers runtime.",
+                Message = "OpenXR Plugin 7.0.0-pre.1 or later is required for composition layers at runtime.",
                 CheckPredicate = () =>
                 {
-#if XR_OPENXR_1_12_0_EXP_1_OR_NEWER
+#if XR_OPENXR_7_0_0_PRE_1_OR_NEWER
                     return true;
 #else
                     return false;
@@ -37,6 +41,12 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
                 Error = false,
                 buildTargetGroup = BuildTargetGroup.Android,
             },
+            RuntimeSettingsValidation.CreateMigrateRule(k_RuntimeSettingsValidation),
+            RuntimeSettingsValidation.CreateMissingRule(k_RuntimeSettingsValidation),
+            RuntimeSettingsValidation.CreateNotPreloadedRule(k_RuntimeSettingsValidation),
+            RuntimeSettingsValidation.CreateOldCopyRule(k_RuntimeSettingsValidation),
+            CompositionLayerBuildValidationRuleFactory.CreateLeftoverPreferencesRule(
+                new CompositionLayersPreferencesCheck("Assets")),
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
             CompositionLayerBuildValidationRuleFactory.CreateHDRRuleForURP(BuildTargetGroup.Android),
             CompositionLayerBuildValidationRuleFactory.CreateAlphaProcessingRuleForURP(BuildTargetGroup.Android),
@@ -45,9 +55,7 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 #endif
         };
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         private static List<CompositionLayerBuildValidationRule> CachedValidationList = new List<CompositionLayerBuildValidationRule>(BuiltinValidationRules.Length);
 
 
@@ -108,7 +116,6 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 
         internal static void OpenFirstURPAssetWithAlphaOutputOff(BuildTargetGroup buildTargetGroup)
         {
-#if UNITY_2023_1_OR_NEWER
             foreach (var urpAsset in GetURPAssetsForBuildTarget(buildTargetGroup))
             {
 
@@ -119,7 +126,6 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
                     return;
                 }
             }
-#endif
         }
 
         internal static HashSet<UniversalRenderPipelineAsset> GetURPAssetsForBuildTarget(BuildTargetGroup buildTargetGroup)
@@ -129,5 +135,6 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
         }
 #endif
     }
+#pragma warning restore CS0618
 }
 #endif //UNITY_EDITOR

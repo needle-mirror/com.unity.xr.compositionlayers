@@ -8,9 +8,7 @@ using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CompositionLayers.Services.Editor;
 using Unity.XR.CompositionLayers.Layers.Internal.Editor;
 using Button = UnityEngine.UIElements.Button;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
@@ -36,9 +34,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         List<PlatformLayerDataDrawer> m_PlatformLayerDataDrawers;
 
         SerializedObject m_LayerDataObject;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static readonly List<Type> k_ExtensionTypes = new();
 
         void OnEnable()
@@ -171,12 +167,11 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
             m_RootElement.MarkDirtyRepaint();
 
-            // Ensure `ReportStateChange` is set on layer data
             foreach (var targetObject in targets)
             {
-                if (targetObject is CompositionLayer compLayer && compLayer.LayerData != null)
+                if (targetObject is CompositionLayer compLayer)
                 {
-                    compLayer.LayerData.ReportStateChange = compLayer.ReportStateChange;
+                    compLayer.InitializeStateChangeReporting();
                 }
             }
 
@@ -261,7 +256,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
 
             ChangeLayerType(layerId);
 
-#if UNITY_XR_INTERACTION_TOOLKIT
+#if UNITY_XR_INTERACTION_TOOLKIT_3_6_1_OR_NEWER
             (target as CompositionLayer)?.GetComponent<UIInteraction.InteractableUIMirror>()?.SyncLayerUIScaleWithLayerType(true);
 #endif
 

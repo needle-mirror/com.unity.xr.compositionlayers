@@ -34,15 +34,15 @@ namespace Unity.XR.CompositionLayers.Extensions.Tests
         {
             var layer = CreateActiveLayer<QuadLayerData>();
             var ext = layer.gameObject.AddComponent<HDRTonemappingExtension>();
-            await new WaitForUpdateCall(this);
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
+            await NextManagerUpdate();
 
             MutateProperty(ext, property);
 
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsTrue(hasModifiedLayers);
 
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
             Assert.IsFalse(hasModifiedLayers);
         }
 

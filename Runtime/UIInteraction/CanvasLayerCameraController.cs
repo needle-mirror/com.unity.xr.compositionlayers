@@ -2,18 +2,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction
 {
     partial class CanvasLayerCameraController : IDisposable
     {
         // The cameras cached that we manage
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static readonly List<Camera> s_ConfiguredCameras = new();
 
         public GameObject canvasToManage { get; set; }
@@ -22,7 +18,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
         {
             this.canvasToManage = canvasToManage;
 
-            Camera.onPreRender += OnCameraPreRender;
             RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
 
             UnityEngine.SceneManagement.SceneManager.sceneUnloaded += OnSceneUnloaded;
@@ -85,7 +80,6 @@ namespace Unity.XR.CompositionLayers.UIInteraction
 
         public void Dispose()
         {
-            Camera.onPreRender -= OnCameraPreRender;
             RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
 
             UnityEngine.SceneManagement.SceneManager.sceneUnloaded -= OnSceneUnloaded;

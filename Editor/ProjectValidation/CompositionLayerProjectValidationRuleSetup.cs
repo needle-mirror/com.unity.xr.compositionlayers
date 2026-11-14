@@ -4,20 +4,18 @@ using UnityEditor.PackageManager;
 using System;
 using Unity.XR.CompositionLayers.Services;
 using Unity.XR.CoreUtils.Editor;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
 {
+#pragma warning disable CS0618
     /// <summary>
     /// Project validation rule class for composition layer package.
     /// </summary>
+    [System.Obsolete("CompositionLayerProjectValidationRuleSetup is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
     public partial class CompositionLayerProjectValidationRuleSetup
     {
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static BuildTargetGroup[] s_BuildTargetGroups =
             ((BuildTargetGroup[])Enum.GetValues(typeof(BuildTargetGroup))).Distinct().ToArray();
 
@@ -81,15 +79,8 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
                 {
                     var rule = new BuildValidationRule
                     {
-                        // This will hide the rules given a condition so that when you click "Show all" it doesn't show up as passed
-                        IsRuleEnabled = () =>
-                        {
-                            // If Composition Layers isn't enabled, no need to show the rule
-                            if (!CompositionLayerManager.ManagerActive)
-                                return false;
-
-                            return true;
-                        },
+                        // Hides the rule rather than letting "Show all" list it as passed.
+                        IsRuleEnabled = () => !issue.requiresActiveManager || CompositionLayerManager.ManagerActive,
                         CheckPredicate = issue.CheckPredicate,
                         Error = issue.Error,
                         FixIt = issue.FixIt,
@@ -122,4 +113,5 @@ namespace UnityEditor.XR.CompositionLayers.Editor.ProjectValidation
             };
         }
     }
+#pragma warning restore CS0618
 }

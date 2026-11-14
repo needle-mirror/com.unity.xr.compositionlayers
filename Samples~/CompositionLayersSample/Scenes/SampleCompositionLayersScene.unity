@@ -130,7 +130,6 @@ GameObject:
   - component: {fileID: 380723503}
   - component: {fileID: 380723502}
   - component: {fileID: 380723501}
-  - component: {fileID: 380723500}
   m_Layer: 0
   m_Name: Quad Layer - Individual
   m_TagString: Untagged
@@ -138,18 +137,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &380723500
-MonoBehaviour:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 380723499}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c239b33ee5aee77488aadc51463c91de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.XR.CompositionLayers::Unity.XR.CompositionLayers.CompositionOutline
 --- !u!114 &380723501
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,7 +195,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.XR.CompositionLayers::Unity.XR.CompositionLayers.CompositionLayer
   m_UICanvas: {fileID: 0}
   m_UIMirrorComponent: {fileID: 0}
-  m_LayerOutline: {fileID: 380723500}
+  m_LayerOutline: {fileID: 0}
   m_Order: 4
   m_LayerData:
     rid: 8800664919800021184
@@ -438,7 +425,6 @@ GameObject:
   - component: {fileID: 996663511}
   - component: {fileID: 996663510}
   - component: {fileID: 996663509}
-  - component: {fileID: 996663508}
   m_Layer: 0
   m_Name: Quad Layer - Right
   m_TagString: Untagged
@@ -446,18 +432,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &996663508
-MonoBehaviour:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 996663507}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c239b33ee5aee77488aadc51463c91de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.XR.CompositionLayers::Unity.XR.CompositionLayers.CompositionOutline
 --- !u!114 &996663509
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -516,7 +490,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.XR.CompositionLayers::Unity.XR.CompositionLayers.CompositionLayer
   m_UICanvas: {fileID: 0}
   m_UIMirrorComponent: {fileID: 0}
-  m_LayerOutline: {fileID: 996663508}
+  m_LayerOutline: {fileID: 0}
   m_Order: 5
   m_LayerData:
     rid: 8800664919800021210
@@ -558,7 +532,6 @@ GameObject:
   - component: {fileID: 1069001260}
   - component: {fileID: 1069001259}
   - component: {fileID: 1069001258}
-  - component: {fileID: 1069001257}
   m_Layer: 9
   m_Name: Midground Objects Layer
   m_TagString: Untagged
@@ -566,18 +539,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1069001257
-MonoBehaviour:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1069001256}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c239b33ee5aee77488aadc51463c91de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1069001258
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -636,7 +597,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_UICanvas: {fileID: 0}
   m_UIMirrorComponent: {fileID: 0}
-  m_LayerOutline: {fileID: 1069001257}
+  m_LayerOutline: {fileID: 0}
   m_Order: 2
   m_LayerData:
     rid: 1136978736099885074
@@ -678,7 +639,6 @@ GameObject:
   - component: {fileID: 1246227382}
   - component: {fileID: 1246227381}
   - component: {fileID: 1246227380}
-  - component: {fileID: 1246227379}
   - component: {fileID: 1246227383}
   m_Layer: 0
   m_Name: Skybox Cubemap Layer
@@ -687,18 +647,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1246227379
-MonoBehaviour:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1246227378}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c239b33ee5aee77488aadc51463c91de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1246227380
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -757,7 +705,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_UICanvas: {fileID: 0}
   m_UIMirrorComponent: {fileID: 0}
-  m_LayerOutline: {fileID: 1246227379}
+  m_LayerOutline: {fileID: 0}
   m_Order: -2
   m_LayerData:
     rid: 3032001617740431364
@@ -811,7 +759,6 @@ GameObject:
   - component: {fileID: 1348721496}
   - component: {fileID: 1348721495}
   - component: {fileID: 1348721494}
-  - component: {fileID: 1348721493}
   - component: {fileID: 1348721492}
   m_Layer: 0
   m_Name: Equirect Grid Layer
@@ -834,18 +781,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Scale: {x: 1, y: 1, z: 1, w: 0.28235295}
   m_Bias: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &1348721493
-MonoBehaviour:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1348721491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c239b33ee5aee77488aadc51463c91de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1348721494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -904,7 +839,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_UICanvas: {fileID: 0}
   m_UIMirrorComponent: {fileID: 0}
-  m_LayerOutline: {fileID: 1348721493}
+  m_LayerOutline: {fileID: 0}
   m_Order: -1
   m_LayerData:
     rid: 1136978940112666625
@@ -1345,7 +1280,6 @@ GameObject:
   - component: {fileID: 1486182735}
   - component: {fileID: 1486182734}
   - component: {fileID: 1486182733}
-  - component: {fileID: 1486182732}
   - component: {fileID: 1486182731}
   m_Layer: 0
   m_Name: Video Cylinder Layer
@@ -1390,18 +1324,6 @@ VideoPlayer:
   m_WaitForFirstFrame: 1
   m_FrameReadyEventEnabled: 0
   m_VideoShaders: []
---- !u!114 &1486182732
-MonoBehaviour:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1486182730}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c239b33ee5aee77488aadc51463c91de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1486182733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1460,7 +1382,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_UICanvas: {fileID: 0}
   m_UIMirrorComponent: {fileID: 0}
-  m_LayerOutline: {fileID: 1486182732}
+  m_LayerOutline: {fileID: 0}
   m_Order: 1
   m_LayerData:
     rid: 1136978736099885060
@@ -1616,7 +1538,6 @@ GameObject:
   - component: {fileID: 1649114658}
   - component: {fileID: 1649114657}
   - component: {fileID: 1649114656}
-  - component: {fileID: 1649114655}
   m_Layer: 0
   m_Name: Quad Layer - Left
   m_TagString: Untagged
@@ -1624,18 +1545,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1649114655
-MonoBehaviour:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1649114654}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c239b33ee5aee77488aadc51463c91de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.XR.CompositionLayers::Unity.XR.CompositionLayers.CompositionOutline
 --- !u!114 &1649114656
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1694,7 +1603,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.XR.CompositionLayers::Unity.XR.CompositionLayers.CompositionLayer
   m_UICanvas: {fileID: 0}
   m_UIMirrorComponent: {fileID: 0}
-  m_LayerOutline: {fileID: 1649114655}
+  m_LayerOutline: {fileID: 0}
   m_Order: 6
   m_LayerData:
     rid: 8800664919800021200
@@ -1736,7 +1645,6 @@ GameObject:
   - component: {fileID: 1973427452}
   - component: {fileID: 1973427451}
   - component: {fileID: 1973427450}
-  - component: {fileID: 1973427449}
   m_Layer: 0
   m_Name: Quad Layer
   m_TagString: Untagged
@@ -1744,18 +1652,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1973427449
-MonoBehaviour:
-  m_ObjectHideFlags: 2
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1973427448}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c239b33ee5aee77488aadc51463c91de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1973427450
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1814,7 +1710,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_UICanvas: {fileID: 0}
   m_UIMirrorComponent: {fileID: 0}
-  m_LayerOutline: {fileID: 1973427449}
+  m_LayerOutline: {fileID: 0}
   m_Order: 3
   m_LayerData:
     rid: 1136978736099885063

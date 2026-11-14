@@ -15,10 +15,10 @@ namespace Unity.XR.CompositionLayers.Tests.Ordering
         {
             // Both default to the same overlay order; the manager must resolve the collision.
             var first = CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             var second = CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             Assert.GreaterOrEqual(first.Order, 1);
             Assert.GreaterOrEqual(second.Order, 1);
@@ -30,14 +30,14 @@ namespace Unity.XR.CompositionLayers.Tests.Ordering
         {
             var a = CreateActiveLayer<QuadLayerData>();
             var b = CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             var orderA = a.Order;
             var orderB = b.Order;
             Assert.AreNotEqual(orderA, orderB);
 
             Assert.IsTrue(CompositionLayerUtils.TrySwapLayers(a, b));
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             Assert.AreEqual(orderB, a.Order);
             Assert.AreEqual(orderA, b.Order);
@@ -47,7 +47,7 @@ namespace Unity.XR.CompositionLayers.Tests.Ordering
         public async Task TrySwapLayers_RejectsSameLayer()
         {
             var a = CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             Assert.IsFalse(CompositionLayerUtils.TrySwapLayers(a, a));
         }
@@ -56,7 +56,7 @@ namespace Unity.XR.CompositionLayers.Tests.Ordering
         public async Task TrySwapLayers_RejectsDefaultSceneLayer()
         {
             var a = CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             var defaultLayer = CompositionLayerManager.Instance.DefaultSceneCompositionLayer;
             Assert.IsNotNull(defaultLayer, "A default scene layer should exist once a layer is active.");
@@ -68,7 +68,7 @@ namespace Unity.XR.CompositionLayers.Tests.Ordering
         public async Task CanChangeOrderToZero_OnlyForDefaultSceneLayer()
         {
             var quad = CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             var defaultLayer = CompositionLayerManager.Instance.DefaultSceneCompositionLayer;
             Assert.IsNotNull(defaultLayer);
@@ -82,7 +82,7 @@ namespace Unity.XR.CompositionLayers.Tests.Ordering
         {
             // Ensure the manager is active with at least one occupied layer.
             CreateActiveLayer<QuadLayerData>();
-            await new WaitForUpdateCall(this);
+            await NextManagerUpdate();
 
             Assert.GreaterOrEqual(CompositionLayerManager.GetNextUnusedLayer(0, true), 1);
             Assert.LessOrEqual(CompositionLayerManager.GetNextUnusedLayer(0, false), -1);

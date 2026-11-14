@@ -1,8 +1,6 @@
 using UnityEditor;
 using UnityEngine;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
@@ -12,37 +10,19 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
         const float k_IconSize = 16f;
         const float k_IconPadding = 2f;
 
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         static GUIContent s_WarningIcon;
 
         static CompositionLayerHierarchyIcon()
         {
-#if UNITY_6000_4_OR_NEWER
             EditorApplication.hierarchyWindowItemByEntityIdOnGUI -= OnHierarchyItemGUI;
             EditorApplication.hierarchyWindowItemByEntityIdOnGUI += OnHierarchyItemGUI;
-#else
-            EditorApplication.hierarchyWindowItemOnGUI -= OnHierarchyItemGUI;
-            EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyItemGUI;
-#endif
         }
 
-#if UNITY_6000_4_OR_NEWER
         static void OnHierarchyItemGUI(EntityId entityId, Rect selectionRect)
         {
             DrawIcon(EditorUtility.EntityIdToObject(entityId) as GameObject, selectionRect);
         }
-#else
-        static void OnHierarchyItemGUI(int instanceID, Rect selectionRect)
-        {
-#if UNITY_6000_3_OR_NEWER
-            DrawIcon(EditorUtility.EntityIdToObject(instanceID) as GameObject, selectionRect);
-#else
-            DrawIcon(EditorUtility.InstanceIDToObject(instanceID) as GameObject, selectionRect);
-#endif
-        }
-#endif
 
         static void DrawIcon(GameObject go, Rect selectionRect)
         {

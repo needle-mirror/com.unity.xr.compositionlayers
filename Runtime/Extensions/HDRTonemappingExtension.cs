@@ -5,16 +5,20 @@ using Unity.XR.CompositionLayers.Provider;
 namespace Unity.XR.CompositionLayers.Extensions
 {
     /// <summary>
-    /// Subclass of <see cref="CompositionLayerExtension" /> to support
-    /// color scaling and biasing for the <see cref="CompositionLayer"/> instance
-    /// on the same game object.
+    /// Subclass of <see cref="CompositionLayerExtension" /> that describes the HDR encoding of the source texture
+    /// of the <see cref="CompositionLayer"/> instance on the same game object: its color gamut, the luminance of
+    /// paper white, and its maximum luminance.
     ///
-    /// Support for this component is up the the instance of <see cref="ILayerProvider" />
-    /// currently assigned to the <see cref="Unity.XR.CompositionLayers.Services.CompositionLayerManager" />.
+    /// Providers that support HDR output use these values to convert the layer's content for the display.
+    /// Editor emulation also uses them when the Game view outputs HDR. Support for this component is up to the
+    /// instance of <see cref="ILayerProvider" /> currently assigned to the
+    /// <see cref="Unity.XR.CompositionLayers.Services.CompositionLayerManager" />; the OpenXR provider ignores it.
     ///
-    /// If this extension is not added to a layer game object, it is expected that
-    /// the provider will assume no color scale/bias is to be applied.
+    /// If this extension is not added to a layer game object, the layer's source texture is treated as not
+    /// HDR-encoded.
     /// </summary>
+    // The PlayStation®VR2 provider (`com.unity.xr.psvr2`) reads this component at runtime for its HDR layers and adds
+    // it when converting layers, so check that package before changing or removing this API.
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [AddComponentMenu("XR/Composition Layers/Extensions/HDR Tonemapping")]

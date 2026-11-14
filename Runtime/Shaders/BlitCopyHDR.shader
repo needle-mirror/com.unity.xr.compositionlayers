@@ -97,38 +97,5 @@ Shader "Unlit/XRCompositionLayers/BlitCopyHDR"
         }
     }
 
-    SubShader
-    {
-        Tags
-        {
-            "Queue" = "Overlay"
-            "RenderType" = "Transparent"
-            "ForceNoShadowCasting" = "True"
-            "IgnoreProjector" = "True"
-        }
-
-        LOD 100
-        Lighting Off
-        Fog { Mode Off }
-        Blend[_SrcBlend][_DstBlend],[_AlphaSrcBlend][_AlphaDstBlend]
-        ZTest Always
-        Cull Off
-        ZWrite Off
-
-        Pass
-        {
-            Name "FORWARD"
-            Tags { "LightMode" = "ForwardBase" }
-
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-            #pragma multi_compile_fragment _ COMPOSITION_LAYERS_DISABLE_TEXTURE2D_X_ARRAY
-
-            #include "Packages/com.unity.xr.compositionlayers/Runtime/Shaders/BlitCopyHDR.cginc"
-            ENDCG
-        }
-    }
-
     Fallback Off
 }

@@ -49,14 +49,7 @@ For example, to display a layer at 10% opacity, set **Scale** to `(0.1, 0.1, 0.1
 Color scale and bias adjustments on the default scene layer can be emulated by the renderer in the Editor's Scene View and Game Veiw along with standalone platform builds. Emulation is only supported for **Color Scale and Bias** components associated with the default scene layer.
 
 > [!NOTE]
-> Composition Layers automatically adds the `Hidden/XRCompositionLayers/ColorScaleBias` shader used for emulation to the **Always Include Shader** list for standalone builds.
-
-#### Built-in Render Pipeline
-
-> [!IMPORTANT]
-> In Unity 6.5 and newer, the Built-In Render Pipeline is deprecated and will be made obsolete in a future release. For more information, refer to [Migrating from the Built-In Render Pipeline to URP](https://docs.unity3d.com/6000.5/Documentation/Manual/urp/upgrading-from-birp.html) and [Render pipeline feature comparison](https://docs.unity3d.com/6000.5/Documentation/Manual/render-pipelines-feature-comparison.html).
-
-To implement the color and scale bias effect in the Built-in Render Pipeline, Composition Layers automatically adds a `EmulatedColorScaleBias` component to the main camera when the **Color Scale and Bias** component is enabled on the default layer.
+> XR Composition Layers includes the `Hidden/XRCompositionLayers/ColorScaleBias` shader used for emulation in builds automatically. For more information, refer to [Shader inclusion](xref:xr-layers-graphics-settings#shader-inclusion).
 
 #### Universal Render Pipeline (URP)
 

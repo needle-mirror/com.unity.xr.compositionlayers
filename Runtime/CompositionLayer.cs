@@ -11,6 +11,22 @@ using UnityEditor;
 namespace Unity.XR.CompositionLayers
 {
     /// <summary>
+    /// How a <see cref="CompositionLayer"/> is rendered.
+    /// </summary>
+    enum CompositionLayerRenderPath
+    {
+        /// <summary>
+        /// The platform composites the layer.
+        /// </summary>
+        Native,
+
+        /// <summary>
+        /// Unity renders the layer into the eye buffer through emulation.
+        /// </summary>
+        Emulated,
+    }
+
+    /// <summary>
     /// Base class for all composition layer types. Derive from this and extend to add
     /// your own layer type.
     /// </summary>
@@ -23,7 +39,8 @@ namespace Unity.XR.CompositionLayers
     public sealed class CompositionLayer : MonoBehaviour
     {
 #if UNITY_EDITOR
-        readonly Type k_UIMirrorComponentType = System.Reflection.Assembly.Load("Unity.XR.CompositionLayers.UIInteraction").GetType("Unity.XR.CompositionLayers.UIInteraction.InteractableUIMirror");
+        readonly Type k_UIMirrorComponentType = Type.GetType(
+            "Unity.XR.CompositionLayers.UIInteraction.InteractableUIMirror, Unity.XR.CompositionLayers.UIInteraction");
 #endif
         [SerializeField, HideInInspector]
         Canvas m_UICanvas;
@@ -43,6 +60,9 @@ namespace Unity.XR.CompositionLayers
         [SerializeReference]
         [Tooltip("The data associated with the layer type this layer is set to.")]
         internal LayerData m_LayerData;
+
+        // The LayerData this layer is subscribed to, so a replaced or destroyed layer stops reporting for it.
+        LayerData m_StateChangeSource;
 
         /// <summary>
         /// Current PlatformLayerData cache. This property isn't serialized immediately.
@@ -117,6 +137,11 @@ namespace Unity.XR.CompositionLayers
         }
 
         /// <summary>
+        /// How this layer is currently rendered. Defaults to <see cref="CompositionLayerRenderPath.Native"/>.
+        /// </summary>
+        internal CompositionLayerRenderPath RenderPath { get; set; }
+
+        /// <summary>
         /// The data associated with the layer type this layer is set to.
         /// </summary>
         /// <value>ScriptableObject instance for layer data.</value>
@@ -125,11 +150,26 @@ namespace Unity.XR.CompositionLayers
             get => m_LayerData;
             internal set
             {
-                m_LayerData = UpdateValue(m_LayerData, value);
-                if (LayerData != null)
-                    LayerData.ReportStateChange = ReportStateChange;
+                var previousLayerData = m_LayerData;
+                m_LayerData = value;
+                InitializeStateChangeReporting();
+
+                // Layers are only managed while they have LayerData.
+                var hadLayerData = previousLayerData != null;
+                var hasLayerData = m_LayerData != null;
+                if (hadLayerData != hasLayerData && CompositionLayerManager.ManagerActive)
+                    CompositionLayerManager.Instance?.CompositionLayerDataChanged(this);
 #if UNITY_EDITOR
                 CacheResetState();
+#endif
+
+                // Reported after assignment, unlike UpdateValue, so the manager sees the new data type.
+                if (!(previousLayerData?.Equals(value) ?? false))
+                    ReportStateChange();
+
+#if UNITY_EDITOR
+                if (previousLayerData is ProjectionLayerRigData previousRig && value is not ProjectionLayerRigData)
+                    previousRig.RemoveFromLayer(this);
 #endif
             }
         }
@@ -176,10 +216,8 @@ namespace Unity.XR.CompositionLayers
         /// <inheritdoc cref="MonoBehaviour"/>=
         void Awake()
         {
-            // Apply the CompositionOutline component when the object is created
-            // to handle drawing outlines for quad and cylinder layers
 #if UNITY_EDITOR
-            if (m_LayerOutline == null) m_LayerOutline = Undo.AddComponent(gameObject, typeof(CompositionOutline));
+            RemoveLegacyOutlineComponent();
 #endif
 
             // Setting up the instance of CompositionLayerManager can send message with creating a new game object
@@ -196,7 +234,7 @@ namespace Unity.XR.CompositionLayers
         {
             if (LayerData != null)
             {
-                LayerData.ReportStateChange = ReportStateChange;
+                InitializeStateChangeReporting();
                 if (!LayerData.Validate(this))
                     return;
             }
@@ -215,6 +253,7 @@ namespace Unity.XR.CompositionLayers
         /// <inheritdoc cref="MonoBehaviour"/>
         void OnDestroy()
         {
+            DetachStateChangeReporting();
             CompositionLayerManager.Instance?.CompositionLayerDestroyed(this);
             m_OrderInitialized = false;
         }
@@ -269,6 +308,32 @@ namespace Unity.XR.CompositionLayers
                 CompositionLayerManager.Instance.CompositionLayerStateChanged(this);
         }
 
+        internal void InitializeStateChangeReporting()
+        {
+            if (m_StateChangeSource != null && m_StateChangeSource != LayerData)
+            {
+                m_StateChangeSource.ReportStateChange -= ReportStateChange;
+            }
+
+            m_StateChangeSource = LayerData;
+            if (LayerData != null)
+            {
+                LayerData.ReportStateChange -= ReportStateChange;
+                LayerData.ReportStateChange += ReportStateChange;
+            }
+        }
+
+        void DetachStateChangeReporting()
+        {
+            if (m_StateChangeSource == null)
+            {
+                return;
+            }
+
+            m_StateChangeSource.ReportStateChange -= ReportStateChange;
+            m_StateChangeSource = null;
+        }
+
         /// <summary>
         /// Check if new value != old value. If it is, then report state change and return new value.
         /// Otherwise return old value
@@ -302,40 +367,58 @@ namespace Unity.XR.CompositionLayers
 
         /// <summary>
         /// Will populate the layer data with existing data associated with that <paramref name="typeFullName"/>.
+        /// If no registered layer data type matches, logs a warning and leaves <see cref="LayerData"/> unchanged.
         /// </summary>
         /// <param name="typeFullName">The layer Id for the <see cref="Layers.LayerData"/> type.</param>
         public void ChangeLayerDataType(string typeFullName)
         {
-            ChangeLayerDataType(CompositionLayerUtils.CreateLayerData(typeFullName));
+            ChangeLayerDataTypeIfRegistered(CompositionLayerUtils.CreateLayerData(typeFullName), typeFullName);
         }
 
         /// <summary>
         /// Sets the layer type from the <see cref="LayerDataDescriptor"/>. <see cref="LayerData"/> is populated from
-        /// data associated with the <see cref="LayerDataDescriptor"/>.
+        /// data associated with the <see cref="LayerDataDescriptor"/>. If the descriptor doesn't match a registered
+        /// layer data type, logs a warning and leaves <see cref="LayerData"/> unchanged.
         /// </summary>
         /// <param name="descriptor">The <see cref="LayerDataDescriptor"/> for a type of <see cref="Layers.LayerData"/></param>
         public void ChangeLayerDataType(LayerDataDescriptor descriptor)
         {
-            ChangeLayerDataType(CompositionLayerUtils.CreateLayerData(descriptor.DataType));
+            ChangeLayerDataTypeIfRegistered(
+                CompositionLayerUtils.CreateLayerData(descriptor.DataType), descriptor.TypeFullName);
         }
 
         /// <summary>
         /// Sets the <see cref="LayerData"/>  base on a <see cref="LayerDataDescriptor"/> subclass of type T.
+        /// If T isn't a registered layer data type, logs a warning and leaves <see cref="LayerData"/> unchanged.
         /// </summary>
         /// <typeparam name="T">The type of <see cref="Layers.LayerData"/> to change the layer type to.</typeparam>
         public void ChangeLayerDataType<T>() where T : LayerData
         {
-            ChangeLayerDataType(CompositionLayerUtils.GetLayerDescriptor(typeof(T)));
+            ChangeLayerDataType(typeof(T));
         }
 
         /// <summary>
         /// Sets the <see cref="LayerData"/> and base on a <see cref="LayerDataDescriptor"/> subclass defined
-        /// by the passed in Type.
+        /// by the passed in Type. If the type isn't a registered layer data type, logs a warning and leaves
+        /// <see cref="LayerData"/> unchanged.
         /// </summary>
         /// <param name="type">The type of <see cref="Layers.LayerData"/> to change the layer type to.</param>
         public void ChangeLayerDataType(Type type)
         {
-            ChangeLayerDataType(CompositionLayerUtils.GetLayerDescriptor(type));
+            var descriptor = CompositionLayerUtils.GetLayerDescriptor(type);
+            ChangeLayerDataTypeIfRegistered(CompositionLayerUtils.CreateLayerData(descriptor.DataType), type.FullName);
+        }
+
+        void ChangeLayerDataTypeIfRegistered(LayerData layerData, string typeFullName)
+        {
+            if (layerData == null)
+            {
+                Debug.LogWarning($"The Composition Layer on '{gameObject.name}' kept its layer data, because " +
+                    $"'{typeFullName}' isn't a registered layer data type.", this);
+                return;
+            }
+
+            ChangeLayerDataType(layerData);
         }
 
         /// <inheritdoc cref="MonoBehaviour"/>
@@ -343,17 +426,37 @@ namespace Unity.XR.CompositionLayers
         {
 #if UNITY_EDITOR
             Gizmos.DrawIcon(transform.position, CompositionLayerConstants.IconPath + "d_LayerUniversal_Gizmo.png");
+            CompositionLayerOutlineGizmo.Draw(this);
 #endif
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Versions before 7.0.0 added a hidden <c>CompositionOutline</c> component to every layer and saved it in the
+        /// scene. The layer draws its own outline now, so a saved component is removed the next time the scene opens.
+        /// </summary>
+        void RemoveLegacyOutlineComponent()
+        {
+            if (Application.isPlaying || m_LayerOutline == null || PrefabUtility.IsPartOfPrefabInstance(this))
+            {
+                return;
+            }
+
+            DestroyImmediate(m_LayerOutline);
+            m_LayerOutline = null;
+            EditorUtility.SetDirty(this);
+        }
+#endif
 
         /// <inheritdoc cref="MonoBehaviour"/>
         void OnValidate()
         {
 #if UNITY_EDITOR
-            if (LayerData != null)
-            {
-                LayerData.ReportStateChange = ReportStateChange;
-            }
+            InitializeStateChangeReporting();
+
+            // Undo, redo and prefab revert restore m_LayerData without calling the setter.
+            if (CompositionLayerManager.ManagerActive)
+                CompositionLayerManager.Instance?.CompositionLayerDataChanged(this);
 
             CacheResetState();
 #endif

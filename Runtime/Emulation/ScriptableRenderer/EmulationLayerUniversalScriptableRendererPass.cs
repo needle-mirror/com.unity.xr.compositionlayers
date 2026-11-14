@@ -1,14 +1,9 @@
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 #if UNITY_RENDER_PIPELINES_UNIVERSAL
-using System;
 using UnityEngine;
 using UnityEngine.Rendering;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
 using System.Collections.Generic;
 using UnityEngine.Rendering.RenderGraphModule;
-#endif
 using UnityEngine.Rendering.Universal;
 
 namespace Unity.XR.CompositionLayers.Emulation
@@ -18,14 +13,12 @@ namespace Unity.XR.CompositionLayers.Emulation
         const RenderPassEvent UnderlayRenderPassEvent = RenderPassEvent.BeforeRenderingGbuffer;
         const RenderPassEvent OverlayRenderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
 
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
         ProfilingSampler m_ProfilingSampler;
         readonly Dictionary<RenderPassEvent, string> RenderPassNames = new Dictionary<RenderPassEvent, string>()
         {
             { UnderlayRenderPassEvent, "XR Composition Layer (Underlay)" },
             { OverlayRenderPassEvent,  "XR Composition Layer (Overlay)" }
         };
-#endif
         class PassData
         {
             public RenderPassEvent renderPassEvent;
@@ -35,38 +28,9 @@ namespace Unity.XR.CompositionLayers.Emulation
         public EmulationLayerUniversalScriptableRendererPass(RenderPassEvent renderPassEvent)
         {
             this.renderPassEvent = renderPassEvent;
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
             m_ProfilingSampler = new ProfilingSampler(RenderPassNames[renderPassEvent]);
-#endif
         }
 
-#if !UNITY_6000_4_OR_NEWER
-        [Obsolete("Execute is deprecated as of XR Composition Layers 2.2, and will be removed in Unity 6.4. At your own risk, you can set URP_COMPATIBILITY_MODE in your project's scripting defines if you require this API.")]
-#pragma warning disable CS0809
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-#pragma warning restore CS0809
-        {
-            var camera = renderingData.cameraData.camera;
-            var commandArgs = new EmulatedLayerData.CommandArgs(camera);
-            var layerDataList = EmulationLayerScriptableRendererManager.GetEmulatedLayerDataList(IsOverlay(renderPassEvent));
-            foreach (var layerData in layerDataList)
-            {
-                if (IsSupported(layerData, camera))
-                {
-                    var commandBuffer = layerData.UpdateCommandBuffer(commandArgs);
-                    context.ExecuteCommandBuffer(commandBuffer);
-                }
-            }
-        }
-#else
-        [Obsolete("URP Compatibility Mode is removed in Unity 6.4. You must upgrade your project to Render Graph.", true)]
-#pragma warning disable CS0114
-        public void Execute(ScriptableRenderContext context, ref RenderingData renderingData) { }
-#pragma warning restore CS0114
-#endif
-
-#if UNITY_RENDER_PIPELINES_UNIVERSAL_17_0_0_OR_NEWER
-        // 17.0.0 or newer
         static void ExecutePass(PassData data, RasterGraphContext rgContext)
         {
             var camera = data.camera;
@@ -93,20 +57,13 @@ namespace Unity.XR.CompositionLayers.Emulation
                 builder.SetRenderFunc((PassData data, RasterGraphContext rgContext) => ExecutePass(data, rgContext));
             }
         }
-#endif
 
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static EmulationLayerUniversalScriptableRendererPass s_UnderlayPass;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         static EmulationLayerUniversalScriptableRendererPass s_OverlayPass;
 
-#if LIFECYCLE_APIS_AVAILABLE
         [NoAutoStaticsCleanup]
-#endif
         internal static bool s_InjectPassRegistered;
 
         static bool IsOverlay(RenderPassEvent renderPassEvent) => renderPassEvent == OverlayRenderPassEvent;

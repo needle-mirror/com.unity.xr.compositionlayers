@@ -1,12 +1,15 @@
 {
     "name": "Unity.XR.CompositionLayers.Editor.Tests",
-    "rootNamespace": "UnityEditor.XR.CompositionLayers.Tests",
+    "rootNamespace": "Unity.XR.CompositionLayers.Editor.Tests",
     "references": [
         "Unity.XR.CompositionLayers.Editor",
+        "Unity.XR.CoreUtils.Editor",
         "Unity.XR.CompositionLayers",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Unity.XR.CompositionLayers.Tests"
+        "Unity.XR.CompositionLayers.Tests",
+        "Unity.XR.CompositionLayers.UIInteraction",
+        "Unity.XR.Interaction.Toolkit"
     ],
     "includePlatforms": [
         "Editor"
@@ -23,9 +26,9 @@
     ],
     "versionDefines": [
         {
-            "name": "Unity",
-            "expression": "6000.5.0a9",
-            "define": "LIFECYCLE_APIS_AVAILABLE"
+            "name": "com.unity.xr.interaction.toolkit",
+            "expression": "3.6.1",
+            "define": "UNITY_XR_INTERACTION_TOOLKIT"
         }
     ],
     "noEngineReferences": false

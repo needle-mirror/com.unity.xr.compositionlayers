@@ -4,21 +4,18 @@ using System.IO;
 using Unity.XR.CompositionLayers;
 using Unity.XR.CompositionLayers.Extensions;
 using Unity.XR.CompositionLayers.Services;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.Layers.Editor
 {
     /// <summary>
     /// Supports workflow for creating projection eye rig.
     /// </summary>
+    [System.Obsolete("ProjectionEyeRigUtil is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
     public partial class ProjectionEyeRigUtil : EditorWindow
     {
         private string newLayerName = ""; // Stores the new layer name
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         private static GameObject projectionObj;
 
         /// <summary>
@@ -94,7 +91,7 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
                 child.gameObject.layer = layerIndex;
             }
             // if found main camera, then eliminate layer from cullingMask
-            var mainCamera = CompositionLayerManager.mainCameraCache;
+            var mainCamera = CompositionLayerManager.MainCameraCache;
             float cameraDepth = 0;
             if (mainCamera != null)
             {
@@ -104,11 +101,10 @@ namespace Unity.XR.CompositionLayers.Layers.Editor
             }
 
             CompositionLayer Layer = projectionObj.GetComponent<CompositionLayer>();
-            if (Layer != null)
+            if (Layer != null
+                && Layer.LayerData is ProjectionLayerRigData rigData
+                && rigData.TryGetCameras(projectionObj.transform, out var leftCam, out var rightCam))
             {
-                //Set render textures to cameras render targets
-                Camera leftCam = projectionObj.transform.GetChild(0).GetComponent<Camera>();
-                Camera rightCam = projectionObj.transform.GetChild(1).GetComponent<Camera>();
                 leftCam.cullingMask = 1 << layerIndex;
                 rightCam.cullingMask = 1 << layerIndex;
                 leftCam.clearFlags = CameraClearFlags.SolidColor;

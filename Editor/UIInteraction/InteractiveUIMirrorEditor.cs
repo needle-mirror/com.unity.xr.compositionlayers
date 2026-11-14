@@ -1,28 +1,31 @@
-#if !UNITY_XR_INTERACTION_TOOLKIT && UNITY_EDITOR
+#if !UNITY_XR_INTERACTION_TOOLKIT_3_6_1_OR_NEWER && UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
-#if LIFECYCLE_APIS_AVAILABLE
 using Unity.Scripting.LifecycleManagement;
-#endif
 
 namespace Unity.XR.CompositionLayers.UIInteraction.Editor
 {
     /// <summary>
-    /// Flags a Warningn in the Inspector if the XR Interaction Toolkit is not installed.
-    /// Directs Users to install the XR Interaction Toolkit.
+    /// Flags a warning in the Inspector if the XR Interaction Toolkit is missing or older than the
+    /// version Composition Layers requires, and offers to install or upgrade it.
     /// </summary>
     [CustomEditor(typeof(InteractableUIMirror))]
+    [System.Obsolete("InteractiveUIMirrorEditor is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
     public partial class InteractiveUIMirrorEditor : UnityEditor.Editor
     {
-#if LIFECYCLE_APIS_AVAILABLE
-        [AutoStaticsCleanup]
+        const string k_PackageName = "com.unity.xr.interaction.toolkit";
+        const string k_MinimumVersion = "3.6.1";
+#if UNITY_XR_INTERACTION_TOOLKIT
+        const bool k_OlderVersionInstalled = true;
+#else
+        const bool k_OlderVersionInstalled = false;
 #endif
+
+        [AutoStaticsCleanup]
         private static AddRequest addPackageRequest;
-#if LIFECYCLE_APIS_AVAILABLE
         [AutoStaticsCleanup]
-#endif
         private static bool isInstalling = false;
 
         void Awake()
@@ -39,23 +42,30 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
         }
 
         /// <summary>
-        /// Prompts users to installs the Unity XRI Package.
+        /// Prompts users to install the XR Interaction Toolkit, or to upgrade it when an older version is installed.
         /// </summary>
         public static void InstallXRIPackage()
         {
             isInstalling = true;
-            bool userWantsToInstall = EditorUtility.DisplayDialog(
-                "Install XR Interaction Toolkit",
-                "The XR Interaction Toolkit is required for Composition Layers Interactive UI. Would you like to install it now?",
-                "Yes", "No");
+            var title = k_OlderVersionInstalled ? "Upgrade XR Interaction Toolkit" : "Install XR Interaction Toolkit";
+            var message = k_OlderVersionInstalled
+                ? $"Composition Layers Interactive UI requires XR Interaction Toolkit {k_MinimumVersion} or newer. Version {GetInstalledVersion()} is installed. Would you like to upgrade it now?"
+                : "The XR Interaction Toolkit is required for Composition Layers Interactive UI. Would you like to install it now?";
+            var userWantsToInstall = EditorUtility.DisplayDialog(title, message, "Yes", "No");
 
             if (userWantsToInstall)
             {
-                addPackageRequest = Client.Add("com.unity.xr.interaction.toolkit");
+                addPackageRequest = Client.Add(k_OlderVersionInstalled ? $"{k_PackageName}@{k_MinimumVersion}" : k_PackageName);
                 EditorApplication.update += Progress;
             }
             else
                 isInstalling = false;
+        }
+
+        static string GetInstalledVersion()
+        {
+            var package = UnityEditor.PackageManager.PackageInfo.FindForPackageName(k_PackageName);
+            return package != null ? package.version : "unknown";
         }
 
         /// <summary>
@@ -76,7 +86,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
         }
 
         /// <summary>
-        /// Add a Warning to the Inspector if the XR Interaction Toolkit is not installed.
+        /// Adds a warning to the Inspector if the XR Interaction Toolkit is missing or too old.
         /// </summary>
         public override void OnInspectorGUI()
         {
@@ -87,8 +97,11 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
             }
 
             base.OnInspectorGUI();
-            EditorGUILayout.HelpBox("Installing the XR Interaction Toolkit is required for this component.", MessageType.Warning);
-            if (GUILayout.Button("Install XRI Package"))
+            var helpText = k_OlderVersionInstalled
+                ? $"XR Interaction Toolkit {k_MinimumVersion} or newer is required for this component. Version {GetInstalledVersion()} is installed."
+                : "Installing the XR Interaction Toolkit is required for this component.";
+            EditorGUILayout.HelpBox(helpText, MessageType.Warning);
+            if (GUILayout.Button(k_OlderVersionInstalled ? "Upgrade XRI Package" : "Install XRI Package"))
             {
                InstallXRIPackage();
             }
@@ -97,7 +110,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
 }
 #endif
 
-#if UNITY_XR_INTERACTION_TOOLKIT && UNITY_EDITOR
+#if UNITY_XR_INTERACTION_TOOLKIT_3_6_1_OR_NEWER && UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 
@@ -108,6 +121,7 @@ namespace Unity.XR.CompositionLayers.UIInteraction.Editor
     /// resolution, which is driven by the Canvas width and height.
     /// </summary>
     [CustomEditor(typeof(InteractableUIMirror))]
+    [System.Obsolete("InteractableUIMirrorResolutionEditor is not intended for use outside the Composition Layers package. It is obsolete as of Composition Layers 7.0.0-pre.1 and will be removed in a future release.")]
     public class InteractableUIMirrorResolutionEditor : UnityEditor.Editor
     {
         public override bool RequiresConstantRepaint() => true;

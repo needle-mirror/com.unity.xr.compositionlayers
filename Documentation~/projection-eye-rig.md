@@ -34,3 +34,31 @@ This action will cull the object from the main camera, and add it to the hidden 
 Unlike the standard Projection Layer where you can manually assign textures to the layer, the Project layer eye rig will not allow for texture assignment. Instead it will generate its own textures from a number of cameras that mimic the active cameras during edit time, play mode, and runtime.
 
 In edit time, the eye rig will follow the Scene Camera. During Play Mode, it will follow the Main Camera, and at runtime it will render from the two eye cameras.
+
+## Projection Eye Rig cameras
+
+When you create a Projection Eye Rig, Unity adds two child GameObjects, **Left Camera** and **Right Camera**, and the rig keeps a reference to each. You can rename these GameObjects. Keep them as the rig's first two children, because platforms that composite the rig natively find the cameras by their order. Don't delete them, because the rig can't render without both cameras.
+
+A Projection Eye Rig created with an earlier version of the package uses its first two child GameObjects, if both have a Camera component.
+
+## Change a Projection Eye Rig to another layer type
+
+In the **Inspector** window, the Composition Layer component's **Layer Type** dropdown is unavailable for a Projection Eye Rig. To change the type from a script, call `CompositionLayer.ChangeLayerDataType`.
+
+In the Editor, changing a Projection Eye Rig to another layer type does the following:
+
+- Removes the **Left Camera** and **Right Camera** GameObjects.
+- Shows the Source Textures component and clears its textures.
+- Sets the GameObject's **Layer** to **Default**.
+
+To restore the rig, select **Edit** > **Undo**. The Unity Layer created for the rig stays in the project, and the Main Camera's culling mask still excludes it.
+
+## Fix a Projection Eye Rig with missing cameras
+
+If a Projection Eye Rig is missing its **Left Camera** or **Right Camera**, the **Inspector** and **Hierarchy** windows display a warning, and each time emulation starts, Unity logs an error that begins with the rig's name, followed by this message:
+
+```
+This Projection Eye Rig is missing its Left Camera or Right Camera, so it cannot render. Delete it and create a new one from GameObject > XR > Composition Layers > Projection Eye Rig.
+```
+
+To fix the rig, delete it and create a new Projection Eye Rig from **GameObject** > **XR** > **Composition Layers** > **Projection Eye Rig**. Then assign your GameObjects to the new rig's Unity Layer as described in [Assign GameObjects to the Projection Eye Rig](#assign-gameobjects-to-the-projection-eye-rig).

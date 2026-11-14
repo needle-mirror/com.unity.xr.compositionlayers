@@ -1,141 +1,130 @@
 using UnityEngine;
 using System;
-using System.Collections;
-using System.IO;
+using UnityEngine.Experimental.Rendering;
 using Unity.XR.CompositionLayers;
+using Unity.XR.CompositionLayers.Extensions;
 using Unity.XR.CompositionLayers.Services;
-#if XR_OPENXR_1_12_0_EXP_1_OR_NEWER
+#if XR_OPENXR_7_0_0_PRE_1_OR_NEWER
 using UnityEngine.XR.OpenXR.CompositionLayers;
 #endif
-using UnityEngine.Networking;
 
 /// <summary>
-/// Class for loading and displaying an image on Android devices.
+/// Class for displaying an image on the Android surface of this GameObject's composition layer.
 /// </summary>
 public class TestAndroidImage : MonoBehaviour
 {
-    public string ImageName;
+    [SerializeField, Tooltip("The image to draw on the Android surface. In its import settings, enable Read/Write, " +
+        "set Non-Power of 2 to None and use an uncompressed format such as RGBA32. Match the Textures Extension " +
+        "resolution to the image size.")]
+    Texture2D m_Image;
+
+    bool m_CanDisplayImage;
 
     /// <summary>
-    /// Coroutine started upon script activation to initiate image loading.
+    /// Checks the image is usable, then displays it.
     /// </summary>
-    /// <returns>IEnumerator for coroutine management.</returns>
-    private IEnumerator Start()
+    void Start()
     {
-        yield return StartCoroutine(LoadImage());
+        m_CanDisplayImage = CanDisplayImage();
+        if (!m_CanDisplayImage)
+        {
+            enabled = false;
+            return;
+        }
+
+        DisplayImageAsync();
     }
 
     /// <summary>
-    /// Main coroutine handling the image loading process based on the platform.
-    /// Loads an image using specified ImageName and displays it if found.
+    /// Checks the image can be drawn on the Android surface, and logs what to fix if not.
     /// </summary>
-    /// <returns>IEnumerator for coroutine management.</returns>
-    private IEnumerator LoadImage()
+    /// <returns><see langword="true"/> if the image can be drawn.</returns>
+    bool CanDisplayImage()
     {
-        if (!string.IsNullOrEmpty(ImageName))
+        var prefix = $"{nameof(TestAndroidImage)} on '{name}'";
+        if (m_Image == null)
         {
-            Texture2D image = null;
+            Debug.LogError($"{prefix} has no Image assigned. Assign a texture.", this);
+            return false;
+        }
 
-#if UNITY_EDITOR
-            // Load image for Unity Editor
-            image = LoadImageForEditor();
-#elif UNITY_ANDROID
-            // Load image for Android
-            yield return StartCoroutine(LoadImageForAndroid(loadedImage => image = loadedImage));
+        if (!m_Image.isReadable)
+        {
+            Debug.LogError($"{prefix} needs Read/Write enabled on Image '{m_Image.name}'.", this);
+            return false;
+        }
+
+        if (GraphicsFormatUtility.IsCompressedFormat(m_Image.graphicsFormat))
+        {
+            Debug.LogError(
+                $"{prefix} needs an uncompressed format, such as RGBA32, on Image '{m_Image.name}'.", this);
+            return false;
+        }
+
+        var textures = GetComponent<TexturesExtension>();
+        if (textures != null && (textures.Resolution.x != m_Image.width || textures.Resolution.y != m_Image.height))
+        {
+            Debug.LogWarning(
+                $"{prefix}: Image '{m_Image.name}' is {m_Image.width}x{m_Image.height}, but the Textures Extension " +
+                $"resolution is {textures.Resolution.x}x{textures.Resolution.y}, so the image may be cut off. " +
+                "Set Non-Power of 2 to None on the texture and match the resolution to the image size.", this);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Waits for the layer's Android surface from OpenXRLayerUtility, then draws the image on it.
+    /// Stops waiting if this GameObject is destroyed first.
+    /// </summary>
+    async void DisplayImageAsync()
+    {
+        try
+        {
+            var layer = GetComponent<CompositionLayer>();
+            var surface = GetAndroidSurface(layer);
+            while (surface == IntPtr.Zero)
+            {
+                await Awaitable.NextFrameAsync(destroyCancellationToken);
+                surface = GetAndroidSurface(layer);
+            }
+
+            AndroidTestSurface.InitTestSurface(surface, m_Image);
+        }
+        catch (OperationCanceledException)
+        {
+            // This GameObject was destroyed before its surface was ready.
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+        }
+    }
+
+    /// <summary>
+    /// Gets the Android surface of a composition layer.
+    /// </summary>
+    /// <param name="layer">The composition layer.</param>
+    /// <returns>The surface, or <see cref="IntPtr.Zero"/> if it is not available yet.</returns>
+    static IntPtr GetAndroidSurface(CompositionLayer layer)
+    {
+#if XR_OPENXR_7_0_0_PRE_1_OR_NEWER
+        if (CompositionLayerManager.TryGetLayerId(layer, out var layerId))
+            return OpenXRLayerUtility.GetLayerAndroidSurfaceObject(layerId);
 #endif
-            if (image != null)
-            {
-                // Display the loaded image
-                yield return DisplayImage(image);
-            }
-            else
-            {
-                Debug.LogError("Image not found at path: " + ImageName);
-            }
-        }
-    }
-
-#if UNITY_EDITOR
-    /// <summary>
-    /// Loads an image from the project's assets when running in the Unity Editor.
-    /// </summary>
-    /// <returns>Texture2D - The loaded image texture.</returns>
-    private Texture2D LoadImageForEditor()
-    {
-        var guids = UnityEditor.AssetDatabase.FindAssets(Path.GetFileNameWithoutExtension(ImageName));
-        if (guids.Length > 0)
-        {
-            string assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[0]);
-            return UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
-        }
-        return null;
-    }
-#elif UNITY_ANDROID
-    /// <summary>
-    /// Coroutine for loading an image in an Android build. Uses UnityWebRequest to fetch the image.
-    /// </summary>
-    /// <param name="onLoaded">Callback action to handle the loaded Texture2D.</param>
-    /// <returns>IEnumerator for coroutine management.</returns>
-    private IEnumerator LoadImageForAndroid(Action<Texture2D> onLoaded)
-    {
-        string filePath = Path.Combine(Application.streamingAssetsPath, ImageName);
-        using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(filePath))
-        {
-            yield return uwr.SendWebRequest();
-            if (uwr.result == UnityWebRequest.Result.ConnectionError || uwr.result == UnityWebRequest.Result.ProtocolError)
-            {
-                Debug.LogError("Error while loading image: " + uwr.error);
-                onLoaded(null);
-            }
-            else
-            {
-                onLoaded(DownloadHandlerTexture.GetContent(uwr));
-            }
-        }
-    }
-#endif
-
-    /// <summary>
-    /// Coroutine handling the display of a loaded image using XR composition layers.
-    /// Waits for the surface from OpenXRLayerUtility before displaying the image.
-    /// </summary>
-    /// <param name="image">The Texture2D image to be displayed.</param>
-    /// <returns>IEnumerator for coroutine management.</returns>
-    private IEnumerator DisplayImage(Texture2D image)
-    {
-        if (image != null)
-        {
-            CompositionLayer layer = gameObject.GetComponent<CompositionLayer>();
-            IntPtr surface = IntPtr.Zero;
-            yield return new WaitUntil(() =>
-            {
-#if XR_OPENXR_1_12_0_EXP_1_OR_NEWER
-                if (CompositionLayerManager.TryGetLayerId(layer, out int layerId))
-                {
-                    surface = OpenXRLayerUtility.GetLayerAndroidSurfaceObject(layerId);
-                }
-#endif
-                return (surface != IntPtr.Zero);
-            });
-
-            AndroidTestSurface.InitTestSurface(surface, image);
-        }
-        else
-        {
-            Debug.LogError("No image provided.");
-        }
+        return IntPtr.Zero;
     }
 
     /// <summary>
     /// Event handler triggered when the application gains or loses focus.
-    /// Restarts image loading process when the application gains focus.
+    /// Displays the image again when the application gains focus.
     /// </summary>
     /// <param name="hasFocus">Boolean indicating if the application has focus.</param>
     void OnApplicationFocus(bool hasFocus)
     {
-        if (hasFocus)
-        {
-            StartCoroutine(LoadImage());
-        }
+        if (!hasFocus || !m_CanDisplayImage)
+            return;
+
+        DisplayImageAsync();
     }
 }

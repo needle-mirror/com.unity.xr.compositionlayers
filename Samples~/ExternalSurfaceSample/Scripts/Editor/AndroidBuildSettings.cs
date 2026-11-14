@@ -34,11 +34,7 @@ public class AndroidBuildSettings : IPreprocessBuildWithReport
     /// </summary>
     private static void SetAndroidBuildSettings()
     {
-#if UNITY_6000_5_OR_NEWER
         var currentMinSdkVersion =  AndroidSdkVersions.AndroidApiLevel26;
-#else
-        var currentMinSdkVersion =  AndroidSdkVersions.AndroidApiLevel24;
-#endif
         if (PlayerSettings.Android.minSdkVersion < currentMinSdkVersion)
         {
             PlayerSettings.Android.minSdkVersion = currentMinSdkVersion;
